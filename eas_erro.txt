@@ -1,0 +1,32 @@
+/data/data/com.termux/files/home/secretario-agenda/node_modules/expo/bin/cli config --json exited with non-zero code: 1
+Error: /data/data/com.termux/files/home/secretario-agenda/node_modules/expo/bin/cli config --json exited with non-zero code: 1
+    at ChildProcess.completionListener (/data/data/com.termux/files/usr/lib/node_modules/eas-cli/node_modules/@expo/spawn-async/build/spawnAsync.js:42:23)
+    at Object.onceWrapper (node:events:631:26)
+    at ChildProcess.emit (node:events:509:28)
+    at ChildProcess.emit (node:domain:489:12)
+    at maybeClose (node:internal/child_process:1124:16)
+    at ChildProcess._handle.onexit (node:internal/child_process:306:5)
+    ...
+    at spawnAsync (/data/data/com.termux/files/usr/lib/node_modules/eas-cli/node_modules/@expo/spawn-async/build/spawnAsync.js:7:23)
+    at spawnExpoCommand (/data/data/com.termux/files/usr/lib/node_modules/eas-cli/build/utils/expoCli.js:85:52)
+    at getExpoConfigInternalAsync (/data/data/com.termux/files/usr/lib/node_modules/eas-cli/build/project/expoConfig.js:33:69)
+    at getPrivateExpoConfigAsync (/data/data/com.termux/files/usr/lib/node_modules/eas-cli/build/project/expoConfig.js:73:18)
+    at initializeWithoutExplicitIDAsync (/data/data/com.termux/files/usr/lib/node_modules/eas-cli/build/project/projectInitialization.js:142:66)
+    at ProjectInit.runAsync (/data/data/com.termux/files/usr/lib/node_modules/eas-cli/build/commands/project/init.js:36:99)
+    at async ProjectInit.run (/data/data/com.termux/files/usr/lib/node_modules/eas-cli/build/commandUtils/EasCommand.js:176:16)
+    at async ProjectInit._run (/data/data/com.termux/files/usr/lib/node_modules/eas-cli/node_modules/@oclif/core/lib/command.js:183:22)
+    at async Config.runCommand (/data/data/com.termux/files/usr/lib/node_modules/eas-cli/node_modules/@oclif/core/lib/config/config.js:422:25)
+    at async run (/data/data/com.termux/files/usr/lib/node_modules/eas-cli/node_modules/@oclif/core/lib/main.js:97:16) {
+  pid: 30201,
+  output: [
+    '',
+    '2026-07-15T00:46:34.039Z expo:telemetry:detachedClient Event received: action\n' +
+      '2026-07-15T00:46:34.074Z expo:env Skipping .env files because EXPO_NO_DOTENV is defined\n'
+  ],
+  stdout: '',
+  stderr: '2026-07-15T00:46:34.039Z expo:telemetry:detachedClient Event received: action\n' +
+    '2026-07-15T00:46:34.074Z expo:env Skipping .env files because EXPO_NO_DOTENV is defined\n',
+  status: 1,
+  signal: null
+}
+    Error: project:init command failed.

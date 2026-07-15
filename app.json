@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "Secretário Agenda",
+    "slug": "secretario-agenda",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "backgroundColor": "#0F172A"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.secretarioagenda.app"
+    },
+    "android": {
+      "package": "com.secretarioagenda.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#0F172A"
+      },
+      "permissions": ["NOTIFICATIONS", "SCHEDULE_EXACT_ALARM"]
+    },
+    "plugins": [
+      "expo-sqlite",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/icon.png",
+          "color": "#0F172A"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "COLOQUE_AQUI_SEU_PROJECT_ID_DO_EAS"
+      }
+    }
+  }
+}
