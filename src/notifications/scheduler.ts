@@ -38,7 +38,6 @@ export async function scheduleForAppointment(
       sound: "default",
     },
     trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.DATE,
       date: triggerDate,
       channelId: "appointments",
     },
@@ -86,7 +85,6 @@ export async function snoozeAppointment(appointmentId: number, minutes = 5): Pro
       sound: "default",
     },
     trigger: {
-      type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
       seconds: minutes * 60,
       channelId: "appointments",
     },
