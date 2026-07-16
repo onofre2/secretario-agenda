@@ -4,6 +4,8 @@ import { colors, spacing } from "../theme/colors";
 import { getPatientTimeline } from "../database/repositories/patientsRepo";
 import { listNotesByPatient, ClinicalNoteWithContext } from "../database/repositories/clinicalNotesRepo";
 import TimelineItem from "./TimelineItem";
+import PrimaryButton from "./PrimaryButton";
+import RetroactiveAppointmentModal from "./RetroactiveAppointmentModal";
 
 interface AppointmentRow {
   id: number;
@@ -24,6 +26,7 @@ interface Props {
 export default function PatientTimelineModal({ visible, patientId, patientName, onClose }: Props) {
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [notes, setNotes] = useState<ClinicalNoteWithContext[]>([]);
+  const [retroModalOpen, setRetroModalOpen] = useState(false);
 
   const load = useCallback(async () => {
     if (!patientId) return;
@@ -51,6 +54,15 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
           </Pressable>
         </View>
 
+        <View style={styles.actionBar}>
+          <PrimaryButton
+            label="+ Atendimento retroativo"
+            variant="outline"
+            onPress={() => setRetroModalOpen(true)}
+            style={{ marginTop: 0 }}
+          />
+        </View>
+
         <FlatList
           data={appointments}
           keyExtractor={(item) => String(item.id)}
@@ -67,6 +79,13 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
           )}
         />
       </View>
+
+      <RetroactiveAppointmentModal
+        visible={retroModalOpen}
+        patientId={patientId}
+        onClose={() => setRetroModalOpen(false)}
+        onSaved={load}
+      />
     </Modal>
   );
 }
@@ -83,5 +102,6 @@ const styles = StyleSheet.create({
   },
   title: { color: colors.text, fontSize: 20, fontWeight: "700" },
   closeLink: { color: colors.primary, fontSize: 15, fontWeight: "600" },
+  actionBar: { paddingHorizontal: spacing.md, paddingTop: spacing.md },
   empty: { color: colors.textMuted, textAlign: "center", marginTop: spacing.xl },
 });
