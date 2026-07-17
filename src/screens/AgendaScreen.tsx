@@ -18,6 +18,7 @@ import {
 import { listPatients } from "../database/repositories/patientsRepo";
 import { listClinics } from "../database/repositories/clinicsRepo";
 import { Schedule, Weekday } from "../database/types";
+import WeeklyGridView from "../components/WeeklyGridView";
 
 interface ScheduleWithNames extends Schedule {
   patient_name?: string;
@@ -30,6 +31,7 @@ export default function AgendaScreen() {
   const [clinics, setClinics] = useState<SelectOption[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [viewMode, setViewMode] = useState<"list" | "week">("list");
 
   const [selectedPatient, setSelectedPatient] = useState<SelectOption | null>(null);
   const [selectedClinic, setSelectedClinic] = useState<SelectOption | null>(null);
@@ -112,39 +114,62 @@ export default function AgendaScreen() {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={schedules}
-        keyExtractor={(item) => String(item.id)}
-        contentContainerStyle={{ padding: spacing.md, paddingBottom: 100 }}
-        ListEmptyComponent={
-          <Text style={styles.empty}>
-            Nenhum horário recorrente cadastrado. Toque em + para adicionar.
+      <View style={styles.viewToggleRow}>
+        <Pressable
+          style={[styles.viewToggleChip, viewMode === "list" && styles.viewToggleChipActive]}
+          onPress={() => setViewMode("list")}
+        >
+          <Text style={[styles.viewToggleText, viewMode === "list" && styles.viewToggleTextActive]}>
+            Lista
           </Text>
-        }
-        renderItem={({ item }) => (
-          <View style={styles.card}>
-            <View style={styles.cardHeader}>
-              <Text style={styles.cardDay}>{weekdayLabel(item.weekday)}</Text>
-              <Text style={styles.cardTime}>{item.time}</Text>
-            </View>
-            <Text style={styles.cardTitle}>{item.patient_name ?? "Paciente removido"}</Text>
-            <Text style={styles.cardSubtitle}>
-              {item.clinic_name ?? "Clínica removida"} · {formatCurrency(item.session_value)}
+        </Pressable>
+        <Pressable
+          style={[styles.viewToggleChip, viewMode === "week" && styles.viewToggleChipActive]}
+          onPress={() => setViewMode("week")}
+        >
+          <Text style={[styles.viewToggleText, viewMode === "week" && styles.viewToggleTextActive]}>
+            Semana
+          </Text>
+        </Pressable>
+      </View>
+
+      {viewMode === "week" ? (
+        <WeeklyGridView schedules={schedules} />
+      ) : (
+        <FlatList
+          data={schedules}
+          keyExtractor={(item) => String(item.id)}
+          contentContainerStyle={{ padding: spacing.md, paddingBottom: 100 }}
+          ListEmptyComponent={
+            <Text style={styles.empty}>
+              Nenhum horário recorrente cadastrado. Toque em + para adicionar.
             </Text>
-            <View style={styles.actionsRow}>
-              <Pressable onPress={() => handlePause(item)}>
-                <Text style={styles.actionLink}>Pausar</Text>
-              </Pressable>
-              <Pressable onPress={() => handleDuplicate(item)}>
-                <Text style={styles.actionLink}>Duplicar</Text>
-              </Pressable>
-              <Pressable onPress={() => handleDelete(item)}>
-                <Text style={[styles.actionLink, { color: colors.danger }]}>Excluir</Text>
-              </Pressable>
+          }
+          renderItem={({ item }) => (
+            <View style={styles.card}>
+              <View style={styles.cardHeader}>
+                <Text style={styles.cardDay}>{weekdayLabel(item.weekday)}</Text>
+                <Text style={styles.cardTime}>{item.time}</Text>
+              </View>
+              <Text style={styles.cardTitle}>{item.patient_name ?? "Paciente removido"}</Text>
+              <Text style={styles.cardSubtitle}>
+                {item.clinic_name ?? "Clínica removida"} · {formatCurrency(item.session_value)}
+              </Text>
+              <View style={styles.actionsRow}>
+                <Pressable onPress={() => handlePause(item)}>
+                  <Text style={styles.actionLink}>Pausar</Text>
+                </Pressable>
+                <Pressable onPress={() => handleDuplicate(item)}>
+                  <Text style={styles.actionLink}>Duplicar</Text>
+                </Pressable>
+                <Pressable onPress={() => handleDelete(item)}>
+                  <Text style={[styles.actionLink, { color: colors.danger }]}>Excluir</Text>
+                </Pressable>
+              </View>
             </View>
-          </View>
-        )}
-      />
+          )}
+        />
+      )}
       <FloatingAddButton onPress={openNew} />
 
       <Modal visible={modalOpen} animationType="slide" onRequestClose={() => setModalOpen(false)}>
@@ -207,6 +232,25 @@ export default function AgendaScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  viewToggleRow: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.xs,
+  },
+  viewToggleChip: {
+    flex: 1,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surfaceLight,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  viewToggleChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  viewToggleText: { color: colors.textMuted, fontWeight: "600" },
+  viewToggleTextActive: { color: "#0F172A" },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,
