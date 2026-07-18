@@ -1,8 +1,10 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { View, Text, Modal, FlatList, StyleSheet, Pressable } from "react-native";
+import { View, Text, Modal, FlatList, StyleSheet, Pressable, ActivityIndicator } from "react-native";
 import { colors, spacing } from "../theme/colors";
 import { getPatientTimeline } from "../database/repositories/patientsRepo";
 import { listNotesByPatient, ClinicalNoteWithContext } from "../database/repositories/clinicalNotesRepo";
+import { ClinicalEvolutionRow } from "../database/repositories/reportsRepo";
+import { exportClinicalEvolutionAsPdf } from "../reports/exportClinicalPdf";
 import TimelineItem from "./TimelineItem";
 import PrimaryButton from "./PrimaryButton";
 import RetroactiveAppointmentModal from "./RetroactiveAppointmentModal";
@@ -27,6 +29,7 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [notes, setNotes] = useState<ClinicalNoteWithContext[]>([]);
   const [retroModalOpen, setRetroModalOpen] = useState(false);
+  const [exportingPdf, setExportingPdf] = useState(false);
 
   const load = useCallback(async () => {
     if (!patientId) return;
@@ -43,6 +46,29 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
   }, [visible, load]);
 
   const noteByAppointment = new Map(notes.map((n) => [n.appointment_id, n]));
+
+  const handleExportPdf = async () => {
+    if (notes.length === 0) return;
+    setExportingPdf(true);
+    try {
+      const rows: ClinicalEvolutionRow[] = notes
+        .slice()
+        .sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time))
+        .map((n) => ({
+          date: n.date,
+          time: n.time,
+          patient_name: patientName,
+          clinic_name: n.clinic_name,
+          content: n.content,
+          is_draft: n.is_draft,
+        }));
+      await exportClinicalEvolutionAsPdf(rows, `— ${patientName}`);
+    } catch (err) {
+      console.error("Erro ao exportar evolução do paciente:", err);
+    } finally {
+      setExportingPdf(false);
+    }
+  };
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={onClose}>
@@ -61,6 +87,14 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
             onPress={() => setRetroModalOpen(true)}
             style={{ marginTop: 0 }}
           />
+          <PrimaryButton
+            label={exportingPdf ? "Gerando PDF..." : "📄 Exportar evolução completa (PDF)"}
+            variant="outline"
+            onPress={handleExportPdf}
+            disabled={notes.length === 0 || exportingPdf}
+            style={{ marginTop: spacing.sm }}
+          />
+          {exportingPdf && <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.sm }} />}
         </View>
 
         <FlatList
