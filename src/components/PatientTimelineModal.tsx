@@ -126,14 +126,7 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
+  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border },
   title: { color: colors.text, fontSize: 20, fontWeight: "700" },
   closeLink: { color: colors.primary, fontSize: 15, fontWeight: "600" },
   actionBar: { paddingHorizontal: spacing.md, paddingTop: spacing.md },

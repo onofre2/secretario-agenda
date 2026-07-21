@@ -58,3 +58,19 @@ export async function getRevenueByClinic(startDate: string, endDate: string) {
     [startDate, endDate]
   );
 }
+
+export interface RevenueTrendPoint {
+  date: string;
+  revenue: number;
+}
+
+export async function getRevenueTrend(startDate: string, endDate: string): Promise<RevenueTrendPoint[]> {
+  const db = await getDb();
+  return db.getAllAsync<RevenueTrendPoint>(
+    `SELECT date, SUM(amount) as revenue
+     FROM financial_records
+     WHERE type = 'revenue' AND date BETWEEN ? AND ?
+     GROUP BY date ORDER BY date ASC`,
+    [startDate, endDate]
+  );
+}
