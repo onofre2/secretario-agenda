@@ -31,7 +31,7 @@ export default function AgendaScreen() {
   const [clinics, setClinics] = useState<SelectOption[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [viewMode, setViewMode] = useState<"list" | "week">("list");
+  const [viewMode, setViewMode] = useState<"list" | "week">("week");
 
   const [selectedPatient, setSelectedPatient] = useState<SelectOption | null>(null);
   const [selectedClinic, setSelectedClinic] = useState<SelectOption | null>(null);
@@ -116,19 +116,19 @@ export default function AgendaScreen() {
     <View style={styles.container}>
       <View style={styles.viewToggleRow}>
         <Pressable
-          style={[styles.viewToggleChip, viewMode === "list" && styles.viewToggleChipActive]}
-          onPress={() => setViewMode("list")}
-        >
-          <Text style={[styles.viewToggleText, viewMode === "list" && styles.viewToggleTextActive]}>
-            Lista
-          </Text>
-        </Pressable>
-        <Pressable
           style={[styles.viewToggleChip, viewMode === "week" && styles.viewToggleChipActive]}
           onPress={() => setViewMode("week")}
         >
           <Text style={[styles.viewToggleText, viewMode === "week" && styles.viewToggleTextActive]}>
             Semana
+          </Text>
+        </Pressable>
+        <Pressable
+          style={[styles.viewToggleChip, viewMode === "list" && styles.viewToggleChipActive]}
+          onPress={() => setViewMode("list")}
+        >
+          <Text style={[styles.viewToggleText, viewMode === "list" && styles.viewToggleTextActive]}>
+            Lista
           </Text>
         </Pressable>
       </View>
