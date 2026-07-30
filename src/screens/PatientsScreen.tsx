@@ -8,11 +8,13 @@ import FloatingAddButton from "../components/FloatingAddButton";
 import PatientTimelineModal from "../components/PatientTimelineModal";
 import {
   listPatients,
+  listPatientsByClinic,
   createPatient,
   updatePatient,
   deletePatient,
 } from "../database/repositories/patientsRepo";
-import { Patient } from "../database/types";
+import { listClinics } from "../database/repositories/clinicsRepo";
+import { Patient, Clinic } from "../database/types";
 
 const emptyForm = {
   full_name: "",
@@ -28,17 +30,29 @@ const emptyForm = {
 
 export default function PatientsScreen() {
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [clinics, setClinics] = useState<Clinic[]>([]);
+  const [selectedClinicId, setSelectedClinicId] = useState<number | "all">("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [timelinePatient, setTimelinePatient] = useState<Patient | null>(null);
 
-  const load = useCallback(async () => {
-    setPatients(await listPatients());
+  const load = useCallback(async (clinicId: number | "all") => {
+    const clinicList = await listClinics();
+    setClinics(clinicList);
+    if (clinicId === "all") {
+      setPatients(await listPatients());
+    } else {
+      setPatients(await listPatientsByClinic(clinicId));
+    }
   }, []);
 
-  useFocusEffect(useCallback(() => { load(); }, [load]));
+  useFocusEffect(
+    useCallback(() => {
+      load(selectedClinicId);
+    }, [load, selectedClinicId])
+  );
 
   const openNew = () => {
     setEditingId(null);
@@ -87,7 +101,7 @@ export default function PatientsScreen() {
         await createPatient(data);
       }
       setModalOpen(false);
-      await load();
+      await load(selectedClinicId);
     } finally {
       setSaving(false);
     }
@@ -97,17 +111,36 @@ export default function PatientsScreen() {
     if (!editingId) return;
     await deletePatient(editingId);
     setModalOpen(false);
-    await load();
+    await load(selectedClinicId);
   };
 
   return (
     <View style={styles.container}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsBar} contentContainerStyle={styles.tabsBarContent}>
+        <Pressable
+          onPress={() => setSelectedClinicId("all")}
+          style={[styles.tab, selectedClinicId === "all" && styles.tabActive]}
+        >
+          <Text style={[styles.tabText, selectedClinicId === "all" && styles.tabTextActive]}>Todos</Text>
+        </Pressable>
+        {clinics.map((clinic) => (
+          <Pressable
+            key={clinic.id}
+            onPress={() => setSelectedClinicId(clinic.id)}
+            style={[styles.tab, selectedClinicId === clinic.id && styles.tabActive]}
+          >
+            <Text style={[styles.tabText, selectedClinicId === clinic.id && styles.tabTextActive]}>
+              {clinic.name}
+            </Text>
+          </Pressable>
+        ))}
+      </ScrollView>
       <FlatList
         data={patients}
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={{ padding: spacing.md, paddingBottom: 100 }}
         ListEmptyComponent={
-          <Text style={styles.empty}>Nenhum paciente cadastrado. Toque em + para adicionar.</Text>
+          <Text style={styles.empty}>Nenhum paciente encontrado nesta clínica.</Text>
         }
         renderItem={({ item }) => (
           <View style={styles.card}>
@@ -122,6 +155,7 @@ export default function PatientsScreen() {
           </View>
         )}
       />
+
       <FloatingAddButton onPress={openNew} />
 
       <PatientTimelineModal
@@ -155,6 +189,16 @@ export default function PatientsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  tabsBar: { maxHeight: 48, borderBottomWidth: 1, borderBottomColor: colors.border },
+  tabsBarContent: { paddingHorizontal: spacing.md, alignItems: "center", gap: spacing.sm },
+  tab: {
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
+  },
+  tabActive: { backgroundColor: colors.primary },
+  tabText: { color: colors.textMuted, fontSize: 14, fontWeight: "600" },
+  tabTextActive: { color: "#FFFFFF" },
   card: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,

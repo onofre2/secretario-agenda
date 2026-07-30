@@ -14,12 +14,15 @@ import {
 import { exportFinancialScreenAsPdf } from "../reports/exportFinancialPdf";
 import SimpleBarChart from "../components/SimpleBarChart";
 import PrimaryButton from "../components/PrimaryButton";
+import FinancialDetailModal from "../components/FinancialDetailModal";
 
 const PERIODS: { key: PeriodKind; label: string }[] = [
   { key: "day", label: "Diário" },
   { key: "week", label: "Semanal" },
   { key: "month", label: "Mensal" },
 ];
+
+type CardKind = "revenue" | "loss" | "appointments" | "attendance" | null;
 
 export default function FinancialScreen() {
   const [period, setPeriod] = useState<PeriodKind>("week");
@@ -28,6 +31,7 @@ export default function FinancialScreen() {
   const [trend, setTrend] = useState<RevenueTrendPoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const [activeCard, setActiveCard] = useState<CardKind>(null);
 
   const load = useCallback(async () => {
     const range = getRangeFor(period);
@@ -62,6 +66,45 @@ export default function FinancialScreen() {
     }
   };
 
+  const getCardDetails = (): { title: string; rows: { label: string; value: string }[] } => {
+    if (activeCard === "revenue") {
+      return {
+        title: "Receita por clínica",
+        rows: byClinic.map((c) => ({ label: c.clinic_name, value: formatCurrency(c.total) })),
+      };
+    }
+    if (activeCard === "loss") {
+      return {
+        title: "Perda por faltas",
+        rows: [
+          { label: "Total perdido no período", value: formatCurrency(summary?.loss ?? 0) },
+          { label: "Faltas registradas", value: String(summary?.absentCount ?? 0) },
+        ],
+      };
+    }
+    if (activeCard === "appointments") {
+      return {
+        title: "Atendimentos no período",
+        rows: [
+          { label: "Total de atendimentos", value: String(summary?.appointmentsCount ?? 0) },
+          { label: "Presenças", value: String(summary?.presentCount ?? 0) },
+          { label: "Faltas", value: String(summary?.absentCount ?? 0) },
+        ],
+      };
+    }
+    if (activeCard === "attendance") {
+      return {
+        title: "Taxa de comparecimento",
+        rows: [
+          { label: "Taxa de comparecimento", value: `${attendanceRate}%` },
+          { label: "Presenças", value: String(summary?.presentCount ?? 0) },
+          { label: "Faltas", value: String(summary?.absentCount ?? 0) },
+        ],
+      };
+    }
+    return { title: "", rows: [] };
+  };
+
   return (
     <ScrollView
       style={styles.container}
@@ -84,10 +127,10 @@ export default function FinancialScreen() {
       <Text style={styles.rangeLabel}>{range.label}</Text>
 
       <View style={styles.cardsGrid}>
-        <SummaryCard label="Receita" value={formatCurrency(summary?.revenue ?? 0)} color={colors.primary} />
-        <SummaryCard label="Perda por faltas" value={formatCurrency(summary?.loss ?? 0)} color={colors.danger} />
-        <SummaryCard label="Atendimentos" value={String(summary?.appointmentsCount ?? 0)} color={colors.text} />
-        <SummaryCard label="Comparecimento" value={`${attendanceRate}%`} color={colors.warning} />
+        <SummaryCard label="Receita" value={formatCurrency(summary?.revenue ?? 0)} color={colors.primary} onPress={() => setActiveCard("revenue")} />
+        <SummaryCard label="Perda por faltas" value={formatCurrency(summary?.loss ?? 0)} color={colors.danger} onPress={() => setActiveCard("loss")} />
+        <SummaryCard label="Atendimentos" value={String(summary?.appointmentsCount ?? 0)} color={colors.text} onPress={() => setActiveCard("appointments")} />
+        <SummaryCard label="Comparecimento" value={`${attendanceRate}%`} color={colors.warning} onPress={() => setActiveCard("attendance")} />
       </View>
 
       <View style={styles.section}>
@@ -113,16 +156,23 @@ export default function FinancialScreen() {
         style={{ marginTop: spacing.lg }}
       />
       {exportingPdf && <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.sm }} />}
+
+      <FinancialDetailModal
+        visible={activeCard !== null}
+        title={getCardDetails().title}
+        rows={getCardDetails().rows}
+        onClose={() => setActiveCard(null)}
+      />
     </ScrollView>
   );
 }
 
-function SummaryCard({ label, value, color }: { label: string; value: string; color: string }) {
+function SummaryCard({ label, value, color, onPress }: { label: string; value: string; color: string; onPress?: () => void }) {
   return (
-    <View style={styles.card}>
+    <Pressable style={styles.card} onPress={onPress}>
       <Text style={styles.cardLabel}>{label}</Text>
       <Text style={[styles.cardValue, { color }]}>{value}</Text>
-    </View>
+    </Pressable>
   );
 }
 
