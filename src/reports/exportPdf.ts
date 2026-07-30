@@ -68,4 +68,38 @@ function buildHtml(rows: ReportRow[], title: string): string {
         </div>`;
     })
     .join("");
-PDF PARTE 1/2 OKcat
+
+  return `
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <style>
+          body { font-family: -apple-system, Arial, sans-serif; padding: 24px; color: #1F2937; }
+          h1 { font-size: 20px; margin-bottom: 4px; }
+          .subtitle { color: #6B7280; margin-bottom: 20px; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <h1>${escapeHtml(title)}</h1>
+        <div class="subtitle">Gerado em ${new Date().toLocaleDateString("pt-BR")}</div>
+        ${sectionsHtml}
+        <div class="summary">
+          <div class="summary-row"><span>Total recebido</span><span>${formatCurrency(totalRevenue)}</span></div>
+          <div class="summary-row"><span>Total em faltas</span><span>${formatCurrency(totalLoss)}</span></div>
+          <div class="summary-row summary-total"><span>Saldo geral</span><span>${formatCurrency(totalRevenue - totalLoss)}</span></div>
+        </div>
+      </body>
+    </html>`;
+}
+
+export async function exportReportPdf(rows: ReportRow[], title: string): Promise<void> {
+  const html = buildHtml(rows, title);
+  const { uri } = await Print.printToFileAsync({ html });
+  const canShare = await Sharing.isAvailableAsync();
+  if (canShare) {
+    await Sharing.shareAsync(uri, {
+      mimeType: "application/pdf",
+      dialogTitle: title,
+    });
+  }
+}
