@@ -1,7 +1,7 @@
 import React from "react";
 import { NavigationContainer, DarkTheme } from "@react-navigation/native";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { Text } from "react-native";
+import { createMaterialTopTabNavigator } from "@react-navigation/material-top-tabs";
+import { Text, View, StyleSheet } from "react-native";
 import { colors } from "../theme/colors";
 
 import TodayScreen from "../screens/TodayScreen";
@@ -12,7 +12,7 @@ import FinancialScreen from "../screens/FinancialScreen";
 import ReportsScreen from "../screens/ReportsScreen";
 import SettingsScreen from "../screens/SettingsScreen";
 
-const Tab = createBottomTabNavigator();
+const Tab = createMaterialTopTabNavigator();
 
 const navTheme = {
   ...DarkTheme,
@@ -36,19 +36,43 @@ const TAB_ICONS: Record<string, string> = {
   Config: "⚙️",
 };
 
+function CustomTabBar({ state, descriptors, navigation }: any) {
+  return (
+    <View style={styles.tabBar}>
+      {state.routes.map((route: any, index: number) => {
+        const isFocused = state.index === index;
+        const onPress = () => {
+          const event = navigation.emit({
+            type: "tabPress",
+            target: route.key,
+            canPreventDefault: true,
+          });
+          if (!isFocused && !event.defaultPrevented) {
+            navigation.navigate(route.name);
+          }
+        };
+        return (
+          <View key={route.key} style={styles.tabItem} onTouchEnd={onPress}>
+            <Text style={{ fontSize: 18, opacity: isFocused ? 1 : 0.6 }}>{TAB_ICONS[route.name]}</Text>
+            <Text style={[styles.tabLabel, { color: isFocused ? colors.primary : colors.textMuted }]}>
+              {route.name}
+            </Text>
+          </View>
+        );
+      })}
+    </View>
+  );
+}
+
 export default function RootNavigator() {
   return (
     <NavigationContainer theme={navTheme}>
       <Tab.Navigator
-        screenOptions={({ route }) => ({
-          headerStyle: { backgroundColor: colors.surface },
-          headerTitleStyle: { color: colors.text },
-          tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
-          tabBarActiveTintColor: colors.primary,
-          tabBarInactiveTintColor: colors.textMuted,
-          tabBarIcon: () => <Text style={{ fontSize: 18 }}>{TAB_ICONS[route.name]}</Text>,
-          tabBarLabelStyle: { fontSize: 10 },
-        })}
+        tabBarPosition="bottom"
+        tabBar={(props) => <CustomTabBar {...props} />}
+        screenOptions={{
+          swipeEnabled: true,
+        }}
       >
         <Tab.Screen name="Hoje" component={TodayScreen} />
         <Tab.Screen name="Agenda" component={AgendaScreen} />
@@ -61,3 +85,24 @@ export default function RootNavigator() {
     </NavigationContainer>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBar: {
+    flexDirection: "row",
+    backgroundColor: colors.surface,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingBottom: 4,
+    paddingTop: 6,
+  },
+  tabItem: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 4,
+  },
+  tabLabel: {
+    fontSize: 10,
+    marginTop: 2,
+  },
+});
