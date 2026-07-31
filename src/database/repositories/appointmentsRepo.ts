@@ -1,5 +1,26 @@
 import { getDb } from "../db";
 import { Appointment, ID } from "../types";
+import { getSetting, setSetting, SETTINGS_KEYS } from "./settingsRepo";
+
+const NOTE_TEMPLATES = [
+  (name: string) =>
+    `O paciente ${name} compareceu ao atendimento agendado na data e horário previstos. As condutas e intervenções planejadas foram executadas com sucesso, sem queixas ou intercorrências relatadas. O plano de cuidado permanece mantido para as próximas sessões.`,
+  (name: string) =>
+    `Atendimento realizado com a presença do paciente ${name}. Foi feita a revisão do quadro atual e a aplicação dos procedimentos programados para a sessão. O paciente demonstrou boa receptividade e tolerância às intervenções, mantendo o acompanhamento conforme o planejamento terapêutico.`,
+  (name: string) =>
+    `O paciente ${name} compareceu à sessão de fisioterapia agendada. Os objetivos terapêuticos foram revisados e as intervenções foram realizadas conforme o plano de tratamento estabelecido.`,
+];
+
+async function pickNoteTemplate(patientName: string): Promise<string> {
+  const lastIndex = await getSetting(SETTINGS_KEYS.LAST_NOTE_TEMPLATE);
+  const lastIdx = lastIndex ? Number(lastIndex) : -1;
+  let nextIdx = Math.floor(Math.random() * NOTE_TEMPLATES.length);
+  while (nextIdx === lastIdx && NOTE_TEMPLATES.length > 1) {
+    nextIdx = Math.floor(Math.random() * NOTE_TEMPLATES.length);
+  }
+  await setSetting(SETTINGS_KEYS.LAST_NOTE_TEMPLATE, String(nextIdx));
+  return NOTE_TEMPLATES[nextIdx](patientName);
+}
 
 export interface TodayAppointment extends Appointment {
   patient_name: string;
@@ -56,7 +77,7 @@ export async function markPresent(appointmentId: ID): Promise<void> {
       [appointmentId, appt.patient_id, appt.clinic_id, appt.date, appt.session_value]
     );
 
-    const draft = `O paciente ${appt.patient_name} compareceu à sessão de fisioterapia agendada. Os objetivos terapêuticos foram revisados e as intervenções foram realizadas conforme o plano de tratamento estabelecido.`;
+    const draft = await pickNoteTemplate(appt.patient_name);
 
     await db.runAsync(
       `INSERT INTO clinical_notes (appointment_id, patient_id, content, is_draft)

@@ -22,4 +22,5 @@ export const SETTINGS_KEYS = {
   THEME: "theme", // "dark" | "light"
   NOTIFICATION_LEAD_MINUTES: "notification_lead_minutes",
   LAST_BACKUP_DATE: "last_backup_date",
+  LAST_NOTE_TEMPLATE: "last_note_template",
 } as const;
