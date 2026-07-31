@@ -8,6 +8,8 @@ import { colors } from "./src/theme/colors";
 import { configureNotifications } from "./src/notifications/config";
 import { scheduleAllPendingForToday } from "./src/notifications/scheduler";
 import { useNotificationResponseListener } from "./src/notifications/responseHandler";
+import { isBackupOverdue } from "./src/backup/backupService";
+import * as Notifications from "expo-notifications";
 
 export default function App() {
   const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
@@ -20,6 +22,15 @@ export default function App() {
       .then(async () => {
         await configureNotifications();
         await scheduleAllPendingForToday();
+        if (await isBackupOverdue()) {
+          await Notifications.scheduleNotificationAsync({
+            content: {
+              title: "Backup pendente",
+              body: "Já faz mais de 31 dias desde o último backup. Toque para fazer um backup em Configurações.",
+            },
+            trigger: null,
+          });
+        }
         setStatus("ready");
       })
       .catch((err) => {

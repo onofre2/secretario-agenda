@@ -4,7 +4,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { colors, spacing, radius } from "../theme/colors";
 import PrimaryButton from "../components/PrimaryButton";
 import { getSetting, setSetting, SETTINGS_KEYS } from "../database/repositories/settingsRepo";
-import { exportBackup, restoreBackup } from "../backup/backupService";
+import { exportBackup, restoreBackup, markBackupDone } from "../backup/backupService";
 import { DEFAULT_LEAD_MINUTES } from "../notifications/config";
 
 export default function SettingsScreen() {
@@ -37,6 +37,7 @@ export default function SettingsScreen() {
     setBusy("backup");
     try {
       await exportBackup();
+      await markBackupDone();
     } catch (err) {
       Alert.alert("Erro ao gerar backup", String(err));
     } finally {

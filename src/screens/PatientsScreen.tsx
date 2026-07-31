@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { View, Text, FlatList, Modal, StyleSheet, Pressable, ScrollView } from "react-native";
+import { View, Text, FlatList, Modal, StyleSheet, Pressable, ScrollView, TextInput } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { colors, spacing, radius } from "../theme/colors";
 import FormInput from "../components/FormInput";
@@ -32,6 +32,7 @@ export default function PatientsScreen() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [selectedClinicId, setSelectedClinicId] = useState<number | "all">("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -114,6 +115,10 @@ export default function PatientsScreen() {
     await load(selectedClinicId);
   };
 
+  const filteredPatients = patients.filter((p) =>
+    p.full_name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <View style={styles.container}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsBar} contentContainerStyle={styles.tabsBarContent}>
@@ -135,8 +140,15 @@ export default function PatientsScreen() {
           </Pressable>
         ))}
       </ScrollView>
+      <TextInput
+        style={styles.searchInput}
+        placeholder="Buscar paciente por nome..."
+        placeholderTextColor={colors.textMuted}
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
       <FlatList
-        data={patients}
+        data={filteredPatients}
         keyExtractor={(item) => String(item.id)}
         contentContainerStyle={{ padding: spacing.md, paddingBottom: 100 }}
         ListEmptyComponent={
@@ -188,6 +200,17 @@ export default function PatientsScreen() {
 }
 
 const styles = StyleSheet.create({
+  searchInput: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    color: colors.text,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginHorizontal: spacing.md,
+    marginTop: spacing.sm,
+  },
   container: { flex: 1, backgroundColor: colors.background },
   tabsBar: { maxHeight: 48, borderBottomWidth: 1, borderBottomColor: colors.border },
   tabsBarContent: { paddingHorizontal: spacing.md, alignItems: "center", gap: spacing.sm },

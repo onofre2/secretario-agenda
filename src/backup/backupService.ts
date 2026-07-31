@@ -47,3 +47,20 @@ export async function restoreBackup(): Promise<"restored" | "cancelled"> {
   await initDatabase();
   return "restored";
 }
+
+import { getSetting, setSetting, SETTINGS_KEYS } from "../database/repositories/settingsRepo";
+
+/** Marca a data de hoje como último backup realizado. */
+export async function markBackupDone(): Promise<void> {
+  await setSetting(SETTINGS_KEYS.LAST_BACKUP_DATE, new Date().toISOString());
+}
+
+/** Retorna true se já passaram 31 dias ou mais desde o último backup (ou se nunca foi feito). */
+export async function isBackupOverdue(): Promise<boolean> {
+  const lastBackup = await getSetting(SETTINGS_KEYS.LAST_BACKUP_DATE);
+  if (!lastBackup) return true;
+  const last = new Date(lastBackup).getTime();
+  const now = Date.now();
+  const daysSince = (now - last) / (1000 * 60 * 60 * 24);
+  return daysSince >= 31;
+}
