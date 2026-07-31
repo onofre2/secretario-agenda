@@ -5,6 +5,7 @@ import { getPatientTimeline } from "../database/repositories/patientsRepo";
 import { listNotesByPatient, ClinicalNoteWithContext } from "../database/repositories/clinicalNotesRepo";
 import { ClinicalEvolutionRow } from "../database/repositories/reportsRepo";
 import { exportClinicalEvolutionAsPdf } from "../reports/exportClinicalPdf";
+import { montarMensagemConfirmacao, abrirWhatsApp } from "../utils/whatsapp";
 import TimelineItem from "./TimelineItem";
 import PrimaryButton from "./PrimaryButton";
 import RetroactiveAppointmentModal from "./RetroactiveAppointmentModal";
@@ -22,10 +23,11 @@ interface Props {
   visible: boolean;
   patientId: number | null;
   patientName: string;
+  patientPhone?: string | null;
   onClose: () => void;
 }
 
-export default function PatientTimelineModal({ visible, patientId, patientName, onClose }: Props) {
+export default function PatientTimelineModal({ visible, patientId, patientName, patientPhone, onClose }: Props) {
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [notes, setNotes] = useState<ClinicalNoteWithContext[]>([]);
   const [retroModalOpen, setRetroModalOpen] = useState(false);
@@ -62,11 +64,22 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
           content: n.content,
           is_draft: n.is_draft,
         }));
-      await exportClinicalEvolutionAsPdf(rows, `— ${patientName}`);
+      await exportClinicalEvolutionAsPdf(rows, patientName);
     } catch (err) {
-      console.error("Erro ao exportar evolução do paciente:", err);
+      console.error("Erro ao exportar evolucao do paciente:", err);
     } finally {
       setExportingPdf(false);
+    }
+  };
+
+  const handleSendWhatsApp = async () => {
+    if (!patientPhone || appointments.length === 0) return;
+    const proxima = appointments[0];
+    const mensagem = montarMensagemConfirmacao(proxima.date, proxima.time);
+    try {
+      await abrirWhatsApp(patientPhone, mensagem);
+    } catch (err) {
+      console.error("Erro ao abrir WhatsApp:", err);
     }
   };
 
@@ -88,12 +101,21 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
             style={{ marginTop: 0 }}
           />
           <PrimaryButton
-            label={exportingPdf ? "Gerando PDF..." : "📄 Exportar evolução completa (PDF)"}
+            label={exportingPdf ? "Gerando PDF..." : "Exportar evolucao completa (PDF)"}
             variant="outline"
             onPress={handleExportPdf}
             disabled={notes.length === 0 || exportingPdf}
             style={{ marginTop: spacing.sm }}
           />
+          {!!patientPhone && (
+            <PrimaryButton
+              label="Enviar lembrete WhatsApp"
+              variant="outline"
+              onPress={handleSendWhatsApp}
+              disabled={appointments.length === 0}
+              style={{ marginTop: spacing.sm }}
+            />
+          )}
           {exportingPdf && <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.sm }} />}
         </View>
 

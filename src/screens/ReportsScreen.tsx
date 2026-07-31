@@ -12,7 +12,7 @@ import {
 } from "../database/repositories/reportsRepo";
 import { exportReportAsCsv } from "../reports/exportCsv";
 import { exportReportAsExcel } from "../reports/exportExcel";
-import { exportReportAsPdf } from "../reports/exportPdf";
+import { exportReportPdf } from "../reports/exportPdf";
 import { exportClinicalEvolutionAsPdf } from "../reports/exportClinicalPdf";
 import PrimaryButton from "../components/PrimaryButton";
 
@@ -58,7 +58,7 @@ export default function ReportsScreen() {
     try {
       if (format === "csv") await exportReportAsCsv(rows, fileLabel);
       if (format === "xlsx") await exportReportAsExcel(rows, fileLabel);
-      if (format === "pdf") await exportReportAsPdf(rows, range.label);
+      if (format === "pdf") await exportReportPdf(rows, range.label);
     } catch (err) {
       console.error("Erro ao exportar relatório financeiro:", err);
     } finally {

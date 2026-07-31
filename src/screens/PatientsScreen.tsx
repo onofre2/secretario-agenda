@@ -174,6 +174,7 @@ export default function PatientsScreen() {
         visible={!!timelinePatient}
         patientId={timelinePatient?.id ?? null}
         patientName={timelinePatient?.full_name ?? ""}
+        patientPhone={timelinePatient?.phone ?? null}
         onClose={() => setTimelinePatient(null)}
       />
 
