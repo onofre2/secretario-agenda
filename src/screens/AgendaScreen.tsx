@@ -15,6 +15,7 @@ import {
   pauseSchedule,
   duplicateSchedule,
   deleteSchedule,
+  updateSchedule,
 } from "../database/repositories/schedulesRepo";
 import { listPatients } from "../database/repositories/patientsRepo";
 import { listClinics } from "../database/repositories/clinicsRepo";
@@ -32,6 +33,7 @@ export default function AgendaScreen() {
   const [clinics, setClinics] = useState<SelectOption[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [editingScheduleId, setEditingScheduleId] = useState<number | null>(null);
   const [viewMode, setViewMode] = useState<"list" | "week">("week");
 
   const [selectedPatient, setSelectedPatient] = useState<SelectOption | null>(null);
@@ -71,6 +73,17 @@ export default function AgendaScreen() {
 
   const openNew = () => {
     resetForm();
+    setEditingScheduleId(null);
+    setModalOpen(true);
+  };
+
+  const openEdit = (s: ScheduleWithNames) => {
+    setEditingScheduleId(s.id);
+    setSelectedPatient(s.patient_name ? { id: s.patient_id, label: s.patient_name } : null);
+    setSelectedClinic(s.clinic_name ? { id: s.clinic_id, label: s.clinic_name } : null);
+    setWeekday(s.weekday as Weekday);
+    setTime(s.time);
+    setSessionValue(String(s.session_value));
     setModalOpen(true);
   };
 
@@ -83,14 +96,19 @@ export default function AgendaScreen() {
     if (!canSave || !selectedPatient || !selectedClinic) return;
     setSaving(true);
     try {
-      await createSchedule({
+      const data = {
         patient_id: selectedPatient.id,
         clinic_id: selectedClinic.id,
         weekday,
         time,
         session_value: Number(sessionValue.replace(",", ".")),
         active: true,
-      });
+      };
+      if (editingScheduleId) {
+        await updateSchedule(editingScheduleId, data);
+      } else {
+        await createSchedule(data);
+      }
       setModalOpen(false);
       await load();
     } finally {
@@ -163,6 +181,9 @@ export default function AgendaScreen() {
                 <Pressable onPress={() => handleDuplicate(item)}>
                   <Text style={styles.actionLink}>Duplicar</Text>
                 </Pressable>
+                <Pressable onPress={() => openEdit(item)}>
+                  <Text style={[styles.actionLink, { color: colors.primary }]}>Editar</Text>
+                </Pressable>
                 <Pressable onPress={() => handleDelete(item)}>
                   <Text style={[styles.actionLink, { color: colors.danger }]}>Excluir</Text>
                 </Pressable>
@@ -175,7 +196,7 @@ export default function AgendaScreen() {
 
       <Modal visible={modalOpen} animationType="slide" onRequestClose={() => setModalOpen(false)}>
         <ScrollView style={styles.modalContainer} contentContainerStyle={{ padding: spacing.md }}>
-          <Text style={styles.modalTitle}>Novo horário recorrente</Text>
+          <Text style={styles.modalTitle}>{editingScheduleId ? "Editar horário" : "Novo horário recorrente"}</Text>
 
           <SelectField
             label="Paciente"
