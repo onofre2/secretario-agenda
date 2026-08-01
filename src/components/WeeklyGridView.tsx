@@ -72,7 +72,7 @@ export default function WeeklyGridView({ schedules }: Props) {
                 items.map((item) => {
                   const clinicColor = clinicColors.get(item.clinic_name ?? "?") ?? colors.border;
                   return (
-                    <View key={item.id} style={[styles.card, { borderLeftColor: clinicColor, borderLeftWidth: 4 }]}>
+                    <View key={item.id} style={[styles.card, { borderLeftColor: clinicColor, borderLeftWidth: 5 }]}>
                       <Text style={styles.cardTime}>{item.time}</Text>
                       <Text style={styles.cardPatient} numberOfLines={1}>
                         {item.patient_name ?? "?"}
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
   columnCount: { color: colors.primary, fontSize: 12, fontWeight: "700" },
   emptySlot: { borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border, borderStyle: "dashed", paddingVertical: spacing.md, alignItems: "center" },
   emptyText: { color: colors.textMuted, fontSize: 13 },
-  card: { backgroundColor: colors.surface, borderRadius: radius.sm, padding: spacing.sm, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.border },
+  card: { backgroundColor: colors.surface, borderRadius: radius.sm, padding: spacing.sm, marginBottom: spacing.sm, borderTopWidth: 1, borderRightWidth: 1, borderBottomWidth: 1, borderTopColor: colors.border, borderRightColor: colors.border, borderBottomColor: colors.border },
   cardTime: { color: colors.primary, fontSize: 13, fontWeight: "700" },
   cardPatient: { color: colors.text, fontSize: 13, fontWeight: "600", marginTop: 2 },
   cardClinic: { color: colors.textMuted, fontSize: 11, marginTop: 1 },
