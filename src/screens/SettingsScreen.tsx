@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, StyleSheet, Switch, Alert, ActivityIndicator, ScrollView } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { colors, spacing, radius } from "../theme/colors";
@@ -73,7 +74,8 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ padding: spacing.md }}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: spacing.md }}>
       <Section title="Aparência">
         <View style={styles.row}>
           <Text style={styles.rowLabel}>Modo escuro</Text>
@@ -123,6 +125,7 @@ export default function SettingsScreen() {
         {busy && <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.sm }} />}
       </Section>
     </ScrollView>
+    </SafeAreaView>
   );
 }
 

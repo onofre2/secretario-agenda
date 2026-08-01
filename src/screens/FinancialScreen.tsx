@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, StyleSheet, Pressable, ScrollView, RefreshControl, ActivityIndicator } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { colors, spacing, radius } from "../theme/colors";
@@ -106,8 +107,9 @@ export default function FinancialScreen() {
   };
 
   return (
-    <ScrollView
-      style={styles.container}
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <ScrollView
+      style={{ flex: 1 }}
       contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.xl }}
       refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.primary} />}
     >
@@ -164,6 +166,7 @@ export default function FinancialScreen() {
         onClose={() => setActiveCard(null)}
       />
     </ScrollView>
+    </SafeAreaView>
   );
 }
 
