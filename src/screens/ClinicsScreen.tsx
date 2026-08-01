@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Text, FlatList, Modal, StyleSheet, Pressable, ScrollView } from "react-native";
+import { View, Text, FlatList, Modal, StyleSheet, Pressable, ScrollView, ActivityIndicator } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { colors, spacing, radius } from "../theme/colors";
 import FormInput from "../components/FormInput";
@@ -12,7 +12,10 @@ import {
   updateClinic,
   deleteClinic,
 } from "../database/repositories/clinicsRepo";
-import { Clinic } from "../database/types";
+import { listPatientsByClinic } from "../database/repositories/patientsRepo";
+import { getClinicalEvolutionByClinic } from "../database/repositories/reportsRepo";
+import { exportClinicalEvolutionAsPdf } from "../reports/exportClinicalPdf";
+import { Clinic, Patient } from "../database/types";
 
 const emptyForm = { name: "", address: "", phone: "", payment_info: "", notes: "" };
 
@@ -22,6 +25,11 @@ export default function ClinicsScreen() {
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+
+  const [patientsModalClinic, setPatientsModalClinic] = useState<Clinic | null>(null);
+  const [clinicPatients, setClinicPatients] = useState<Patient[]>([]);
+  const [loadingPatients, setLoadingPatients] = useState(false);
+  const [exportingClinicId, setExportingClinicId] = useState<number | null>(null);
 
   const load = useCallback(async () => {
     setClinics(await listClinics());
@@ -77,6 +85,26 @@ export default function ClinicsScreen() {
     await load();
   };
 
+  const openPatientsModal = async (clinic: Clinic) => {
+    setPatientsModalClinic(clinic);
+    setLoadingPatients(true);
+    try {
+      setClinicPatients(await listPatientsByClinic(clinic.id));
+    } finally {
+      setLoadingPatients(false);
+    }
+  };
+
+  const handleExportClinicPdf = async (clinic: Clinic) => {
+    setExportingClinicId(clinic.id);
+    try {
+      const rows = await getClinicalEvolutionByClinic(clinic.id);
+      await exportClinicalEvolutionAsPdf(rows, clinic.name);
+    } finally {
+      setExportingClinicId(null);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <FlatList
@@ -87,11 +115,27 @@ export default function ClinicsScreen() {
           <Text style={styles.empty}>Nenhuma clínica cadastrada. Toque em + para adicionar.</Text>
         }
         renderItem={({ item }) => (
-          <Pressable style={styles.card} onPress={() => openEdit(item)}>
-            <Text style={styles.cardTitle}>{item.name}</Text>
-            {!!item.address && <Text style={styles.cardSubtitle}>{item.address}</Text>}
-            {!!item.phone && <Text style={styles.cardSubtitle}>{item.phone}</Text>}
-          </Pressable>
+          <View style={styles.card}>
+            <Pressable onPress={() => openEdit(item)}>
+              <Text style={styles.cardTitle}>{item.name}</Text>
+              {!!item.address && <Text style={styles.cardSubtitle}>{item.address}</Text>}
+              {!!item.phone && <Text style={styles.cardSubtitle}>{item.phone}</Text>}
+            </Pressable>
+            <View style={styles.cardActions}>
+              <Pressable style={styles.cardActionBtn} onPress={() => openPatientsModal(item)}>
+                <Text style={styles.cardActionText}>Ver pacientes</Text>
+              </Pressable>
+              <Pressable
+                style={styles.cardActionBtn}
+                onPress={() => handleExportClinicPdf(item)}
+                disabled={exportingClinicId === item.id}
+              >
+                <Text style={styles.cardActionText}>
+                  {exportingClinicId === item.id ? "Gerando PDF..." : "Exportar evolução"}
+                </Text>
+              </Pressable>
+            </View>
+          </View>
         )}
       />
       <FloatingAddButton onPress={openNew} />
@@ -110,6 +154,39 @@ export default function ClinicsScreen() {
           <PrimaryButton label="Cancelar" variant="outline" onPress={() => setModalOpen(false)} />
         </ScrollView>
       </Modal>
+
+      <Modal
+        visible={!!patientsModalClinic}
+        animationType="slide"
+        onRequestClose={() => setPatientsModalClinic(null)}
+      >
+        <SafeAreaView style={styles.modalContainer} edges={["top"]}>
+          <View style={styles.patientsModalHeader}>
+            <Text style={styles.modalTitle}>{patientsModalClinic?.name ?? ""}</Text>
+            <Pressable onPress={() => setPatientsModalClinic(null)}>
+              <Text style={styles.closeText}>Fechar</Text>
+            </Pressable>
+          </View>
+          {loadingPatients ? (
+            <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.xl }} />
+          ) : (
+            <FlatList
+              data={clinicPatients}
+              keyExtractor={(item) => String(item.id)}
+              contentContainerStyle={{ padding: spacing.md, paddingBottom: 100 }}
+              ListEmptyComponent={
+                <Text style={styles.empty}>Nenhum paciente vinculado a esta clínica.</Text>
+              }
+              renderItem={({ item }) => (
+                <View style={styles.card}>
+                  <Text style={styles.cardTitle}>{item.full_name}</Text>
+                  {!!item.diagnosis && <Text style={styles.cardSubtitle}>{item.diagnosis}</Text>}
+                </View>
+              )}
+            />
+          )}
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -126,7 +203,31 @@ const styles = StyleSheet.create({
   },
   cardTitle: { color: colors.text, fontSize: 17, fontWeight: "600" },
   cardSubtitle: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
+  cardActions: {
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+    paddingTop: spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  cardActionBtn: {
+    flex: 1,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surfaceLight,
+    alignItems: "center",
+  },
+  cardActionText: { color: colors.primary, fontSize: 13, fontWeight: "600" },
   empty: { color: colors.textMuted, textAlign: "center", marginTop: spacing.xl },
   modalContainer: { flex: 1, backgroundColor: colors.background },
   modalTitle: { color: colors.text, fontSize: 20, fontWeight: "700", marginBottom: spacing.md },
+  patientsModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
+  },
+  closeText: { color: colors.primary, fontSize: 16, fontWeight: "600" },
 });

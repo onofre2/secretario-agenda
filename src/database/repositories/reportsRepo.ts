@@ -57,3 +57,28 @@ export async function getClinicalEvolutionRows(
   );
   return rows.map((r) => ({ ...r, is_draft: !!r.is_draft }));
 }
+
+export async function getClinicalEvolutionByClinic(
+  clinicId: number
+): Promise<ClinicalEvolutionRow[]> {
+  const db = await getDb();
+  const rows = await db.getAllAsync<{
+    date: string;
+    time: string;
+    patient_name: string;
+    clinic_name: string;
+    content: string;
+    is_draft: number;
+  }>(
+    `SELECT a.date, a.time, p.full_name as patient_name, c.name as clinic_name,
+            n.content, n.is_draft
+     FROM clinical_notes n
+     JOIN appointments a ON a.id = n.appointment_id
+     JOIN patients p ON p.id = n.patient_id
+     JOIN clinics c ON c.id = a.clinic_id
+     WHERE a.clinic_id = ?
+     ORDER BY p.full_name ASC, a.date ASC, a.time ASC`,
+    [clinicId]
+  );
+  return rows.map((r) => ({ ...r, is_draft: !!r.is_draft }));
+}
