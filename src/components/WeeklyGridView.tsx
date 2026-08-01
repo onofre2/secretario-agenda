@@ -42,7 +42,7 @@ export default function WeeklyGridView({ schedules }: Props) {
       .sort((a, b) => a.time.localeCompare(b.time));
 
   return (
-    <View style={{ flex: 1 }}>
+    <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
       {clinicNames.length > 0 && (
         <View style={styles.legendRow}>
           {clinicNames.map((name) => (
@@ -89,7 +89,7 @@ export default function WeeklyGridView({ schedules }: Props) {
           );
         })}
       </ScrollView>
-    </View>
+    </ScrollView>
   );
 }
 
