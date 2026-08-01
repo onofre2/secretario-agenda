@@ -41,6 +41,15 @@ export default function WeeklyGridView({ schedules }: Props) {
       .filter((s) => s.weekday === weekday)
       .sort((a, b) => a.time.localeCompare(b.time));
 
+  const clinicHours = Array.from(
+    schedules.reduce((map, s) => {
+      const name = s.clinic_name ?? "?";
+      map.set(name, (map.get(name) ?? 0) + 1);
+      return map;
+    }, new Map<string, number>())
+  ).sort((a, b) => b[1] - a[1]);
+  const maxHours = Math.max(1, ...clinicHours.map(([, h]) => h));
+
   return (
     <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
       {clinicNames.length > 0 && (
@@ -89,6 +98,24 @@ export default function WeeklyGridView({ schedules }: Props) {
           );
         })}
       </ScrollView>
+
+      <View style={styles.hoursSection}>
+        <Text style={styles.hoursTitle}>Horas por clínica (semana)</Text>
+        {clinicHours.map(([name, hours]) => (
+          <View key={name} style={styles.hoursRow}>
+            <Text style={styles.hoursLabel} numberOfLines={1}>{name}</Text>
+            <View style={styles.hoursBarTrack}>
+              <View
+                style={[
+                  styles.hoursBarFill,
+                  { width: `${(hours / maxHours) * 100}%`, backgroundColor: clinicColors.get(name) ?? colors.primary },
+                ]}
+              />
+            </View>
+            <Text style={styles.hoursValue}>{hours}h</Text>
+          </View>
+        ))}
+      </View>
     </ScrollView>
   );
 }
@@ -112,4 +139,11 @@ const styles = StyleSheet.create({
   cardPatient: { color: colors.text, fontSize: 13, fontWeight: "600", marginTop: 2 },
   cardClinic: { color: colors.textMuted, fontSize: 11, marginTop: 1 },
   cardValue: { color: colors.textMuted, fontSize: 11, marginTop: 2, fontWeight: "600" },
+  hoursSection: { paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.xl },
+  hoursTitle: { color: colors.text, fontSize: 14, fontWeight: "700", marginBottom: spacing.sm },
+  hoursRow: { flexDirection: "row", alignItems: "center", marginBottom: spacing.xs, gap: spacing.sm },
+  hoursLabel: { color: colors.textMuted, fontSize: 12, width: 110 },
+  hoursBarTrack: { flex: 1, height: 8, borderRadius: 4, backgroundColor: colors.surfaceLight, overflow: "hidden" },
+  hoursBarFill: { height: 8, borderRadius: 4 },
+  hoursValue: { color: colors.text, fontSize: 12, fontWeight: "600", width: 30, textAlign: "right" },
 });
