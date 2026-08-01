@@ -79,9 +79,12 @@ export async function listPatientsByClinic(clinicId: ID): Promise<Patient[]> {
   const db = await getDb();
   return db.getAllAsync<Patient>(
     `SELECT DISTINCT p.* FROM patients p
-     JOIN appointments a ON a.patient_id = p.id
-     WHERE a.clinic_id = ?
+     WHERE p.id IN (
+       SELECT patient_id FROM schedules WHERE clinic_id = ?
+       UNION
+       SELECT patient_id FROM appointments WHERE clinic_id = ?
+     )
      ORDER BY p.full_name ASC`,
-    [clinicId]
+    [clinicId, clinicId]
   );
 }
