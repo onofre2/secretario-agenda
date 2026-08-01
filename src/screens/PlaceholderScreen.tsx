@@ -1,4 +1,5 @@
 import React from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, StyleSheet } from "react-native";
 import { colors, spacing } from "../theme/colors";
 
@@ -9,11 +10,11 @@ interface Props {
 
 export function PlaceholderScreen({ title, description }: Props) {
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.description}>{description}</Text>
       <Text style={styles.soon}>🚧 Em construção</Text>
-    </View>
+    </SafeAreaView>
   );
 }
 

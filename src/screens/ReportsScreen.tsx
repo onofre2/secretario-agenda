@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, StyleSheet, Pressable, FlatList, ActivityIndicator } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { colors, spacing, radius } from "../theme/colors";
@@ -79,7 +80,7 @@ export default function ReportsScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.kindRow}>
         <Pressable
           style={[styles.kindChip, reportKind === "financial" && styles.kindChipActive]}
@@ -202,7 +203,7 @@ export default function ReportsScreen() {
           />
         </>
       )}
-    </View>
+    </SafeAreaView>
   );
 }
 

@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, FlatList, Modal, StyleSheet, Pressable, ScrollView } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { colors, spacing, radius } from "../theme/colors";
@@ -113,7 +114,7 @@ export default function AgendaScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.viewToggleRow}>
         <Pressable
           style={[styles.viewToggleChip, viewMode === "week" && styles.viewToggleChipActive]}
@@ -226,7 +227,7 @@ export default function AgendaScreen() {
           <PrimaryButton label="Cancelar" variant="outline" onPress={() => setModalOpen(false)} />
         </ScrollView>
       </Modal>
-    </View>
+    </SafeAreaView>
   );
 }
 

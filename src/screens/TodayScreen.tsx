@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from "react";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, StyleSheet, FlatList, RefreshControl, Pressable } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { colors, spacing } from "../theme/colors";
@@ -53,7 +54,7 @@ export default function TodayScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container} edges={["top"]}>
       <Text style={styles.dateLabel}>{formatFriendlyDate(date)}</Text>
       <View style={styles.summaryRow}>
         <Text style={styles.summaryText}>
@@ -89,7 +90,7 @@ export default function TodayScreen() {
           />
         )}
       />
-    </View>
+    </SafeAreaView>
   );
 }
 
