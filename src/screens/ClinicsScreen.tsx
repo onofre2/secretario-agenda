@@ -6,6 +6,9 @@ import { colors, spacing, radius } from "../theme/colors";
 import FormInput from "../components/FormInput";
 import PrimaryButton from "../components/PrimaryButton";
 import FloatingAddButton from "../components/FloatingAddButton";
+import PatientTimelineModal from "../components/PatientTimelineModal";
+import SimpleBarChart from "../components/SimpleBarChart";
+import { listSchedules } from "../database/repositories/schedulesRepo";
 import {
   listClinics,
   createClinic,
@@ -28,11 +31,20 @@ export default function ClinicsScreen() {
 
   const [patientsModalClinic, setPatientsModalClinic] = useState<Clinic | null>(null);
   const [clinicPatients, setClinicPatients] = useState<Patient[]>([]);
+  const [timelinePatient, setTimelinePatient] = useState<Patient | null>(null);
   const [loadingPatients, setLoadingPatients] = useState(false);
   const [exportingClinicId, setExportingClinicId] = useState<number | null>(null);
+  const [clinicCounts, setClinicCounts] = useState<{ label: string; value: number }[]>([]);
 
   const load = useCallback(async () => {
-    setClinics(await listClinics());
+    const clinicList = await listClinics();
+    const schedules = await listSchedules(true);
+    setClinics(clinicList);
+    const counts = clinicList.map((c) => ({
+      label: c.name,
+      value: schedules.filter((s) => s.clinic_id === c.id).length,
+    }));
+    setClinicCounts(counts);
   }, []);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -113,6 +125,14 @@ export default function ClinicsScreen() {
         contentContainerStyle={{ padding: spacing.md, paddingBottom: 100 }}
         ListEmptyComponent={
           <Text style={styles.empty}>Nenhuma clínica cadastrada. Toque em + para adicionar.</Text>
+          }
+        ListFooterComponent={
+          clinicCounts.length > 0 ? (
+            <View style={styles.footerSection}>
+              <Text style={styles.footerTitle}>Atendimentos por clínica</Text>
+              <SimpleBarChart data={clinicCounts} emptyMessage="Sem atendimentos cadastrados." />
+            </View>
+          ) : null
         }
         renderItem={({ item }) => (
           <View style={styles.card}>
@@ -178,15 +198,22 @@ export default function ClinicsScreen() {
                 <Text style={styles.empty}>Nenhum paciente vinculado a esta clínica.</Text>
               }
               renderItem={({ item }) => (
-                <View style={styles.card}>
+                <Pressable style={styles.card} onPress={() => setTimelinePatient(item)}>
                   <Text style={styles.cardTitle}>{item.full_name}</Text>
                   {!!item.diagnosis && <Text style={styles.cardSubtitle}>{item.diagnosis}</Text>}
-                </View>
+                </Pressable>
               )}
             />
           )}
         </SafeAreaView>
       </Modal>
+      <PatientTimelineModal
+        visible={!!timelinePatient}
+        patientId={timelinePatient?.id ?? null}
+        patientName={timelinePatient?.full_name ?? ""}
+        patientPhone={timelinePatient?.phone ?? null}
+        onClose={() => setTimelinePatient(null)}
+      />
     </SafeAreaView>
   );
 }
@@ -230,4 +257,6 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
   },
   closeText: { color: colors.primary, fontSize: 16, fontWeight: "600" },
+  footerSection: { marginTop: spacing.lg, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },
+  footerTitle: { color: colors.text, fontSize: 16, fontWeight: "700", marginBottom: spacing.sm },
 });

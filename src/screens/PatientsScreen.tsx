@@ -165,14 +165,16 @@ export default function PatientsScreen() {
                 {!!item.phone && <Text style={styles.cardSubtitle}>{item.phone}</Text>}
                 {!!item.diagnosis && <Text style={styles.cardSubtitle}>{item.diagnosis}</Text>}
               </Pressable>
-              {!!item.phone && (
-                <Pressable
-                  style={styles.whatsappBtn}
-                  onPress={() => abrirWhatsApp(item.phone as string, `Ola ${item.full_name}, tudo bem?`)}
-                >
-                  <FontAwesome name="whatsapp" size={22} color="#FFFFFF" />
-                </Pressable>
-              )}
+              <Pressable
+                style={styles.whatsappBtn}
+                onPress={() =>
+                  item.phone
+                    ? abrirWhatsApp(item.phone, `Ola ${item.full_name}, tudo bem?`)
+                    : openEdit(item)
+                }
+              >
+                <FontAwesome name="whatsapp" size={22} color="#FFFFFF" />
+              </Pressable>
             </View>
             <Pressable onPress={() => setTimelinePatient(item)} style={styles.historyLink}>
               <Text style={styles.historyLinkText}>Ver histórico clínico →</Text>
