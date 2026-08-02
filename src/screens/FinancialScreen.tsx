@@ -17,6 +17,7 @@ import SimpleBarChart from "../components/SimpleBarChart";
 import PrimaryButton from "../components/PrimaryButton";
 import FinancialDetailModal from "../components/FinancialDetailModal";
 import MonthlyGoalCard from "../components/MonthlyGoalCard";
+import MonthlyBreakdownCard from "../components/MonthlyBreakdownCard";
 
 const CLINIC_COLORS = ["#22C55E", "#3B82F6", "#F59E0B", "#EC4899", "#A855F7", "#14B8A6", "#EF4444", "#84CC16"];
 
@@ -129,6 +130,7 @@ export default function FinancialScreen() {
       refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.primary} />}
     >
       <MonthlyGoalCard monthRevenue={monthRevenue} todayRevenue={todayRevenue} weekRevenue={weekRevenue} />
+      <MonthlyBreakdownCard monthRevenue={monthRevenue} />
       <View style={styles.periodRow}>
         {PERIODS.map((p) => (
           <Pressable

@@ -2,9 +2,9 @@ import React from "react";
 import { Pressable, Text, StyleSheet } from "react-native";
 import { colors } from "../theme/colors";
 
-export default function FloatingAddButton({ onPress }: { onPress: () => void }) {
+export default function FloatingAddButton({ onPress, style }: { onPress: () => void; style?: object }) {
   return (
-    <Pressable style={styles.fab} onPress={onPress}>
+    <Pressable style={[styles.fab, style]} onPress={onPress}>
       <Text style={styles.icon}>+</Text>
     </Pressable>
   );

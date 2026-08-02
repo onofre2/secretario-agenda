@@ -192,7 +192,7 @@ export default function AgendaScreen() {
           )}
         />
       )}
-      <FloatingAddButton onPress={openNew} />
+      <FloatingAddButton onPress={openNew} style={viewMode === "week" ? { top: 230, bottom: undefined, right: 20 } : undefined} />
 
       <Modal visible={modalOpen} animationType="slide" onRequestClose={() => setModalOpen(false)}>
         <ScrollView style={styles.modalContainer} contentContainerStyle={{ padding: spacing.md }}>

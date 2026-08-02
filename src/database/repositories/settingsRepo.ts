@@ -24,4 +24,5 @@ export const SETTINGS_KEYS = {
   LAST_BACKUP_DATE: "last_backup_date",
   LAST_NOTE_TEMPLATE: "last_note_template",
   MONTHLY_GOAL: "monthly_financial_goal",
+  INVESTMENT_PERCENT: "investment_percent",
 } as const;
