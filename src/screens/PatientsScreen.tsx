@@ -41,6 +41,10 @@ export default function PatientsScreen() {
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [timelinePatient, setTimelinePatient] = useState<Patient | null>(null);
+  const [broadcastQueue, setBroadcastQueue] = useState<Patient[]>([]);
+  const [broadcastIndex, setBroadcastIndex] = useState(0);
+  const [broadcastModalOpen, setBroadcastModalOpen] = useState(false);
+  const [broadcastMessage, setBroadcastMessage] = useState("");
 
   const load = useCallback(async (clinicId: number | "all") => {
     const clinicList = await listClinics();
@@ -122,6 +126,31 @@ export default function PatientsScreen() {
     p.full_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const startBroadcast = async () => {
+    const queue = filteredPatients.filter((p) => !!p.phone);
+    if (queue.length === 0 || !broadcastMessage.trim()) return;
+    setBroadcastQueue(queue);
+    setBroadcastIndex(0);
+    setBroadcastModalOpen(false);
+    await abrirWhatsApp(queue[0].phone as string, broadcastMessage.trim());
+  };
+
+  const advanceBroadcast = async () => {
+    const next = broadcastIndex + 1;
+    if (next >= broadcastQueue.length) {
+      setBroadcastQueue([]);
+      setBroadcastIndex(0);
+      return;
+    }
+    setBroadcastIndex(next);
+    await abrirWhatsApp(broadcastQueue[next].phone as string, broadcastMessage.trim());
+  };
+
+  const cancelBroadcast = () => {
+    setBroadcastQueue([]);
+    setBroadcastIndex(0);
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tabsBar} contentContainerStyle={styles.tabsBarContent}>
@@ -150,6 +179,9 @@ export default function PatientsScreen() {
         value={searchQuery}
         onChangeText={setSearchQuery}
       />
+      <Pressable style={styles.broadcastBtn} onPress={() => { setBroadcastMessage(""); setBroadcastModalOpen(true); }}>
+        <Text style={styles.broadcastBtnText}>📢 Enviar aviso a todos</Text>
+      </Pressable>
       <FlatList
         data={filteredPatients}
         keyExtractor={(item) => String(item.id)}
@@ -193,6 +225,43 @@ export default function PatientsScreen() {
         onClose={() => setTimelinePatient(null)}
       />
 
+      <Modal visible={broadcastModalOpen} animationType="slide" onRequestClose={() => setBroadcastModalOpen(false)} transparent>
+        <View style={styles.broadcastOverlay}>
+          <View style={styles.broadcastModalBox}>
+            <Text style={styles.modalTitle}>Enviar aviso a todos</Text>
+            <Text style={styles.broadcastInfo}>
+              {filteredPatients.filter((p) => !!p.phone).length} paciente(s) com telefone cadastrado nesta lista.
+            </Text>
+            <FormInput
+              label="Mensagem"
+              value={broadcastMessage}
+              onChangeText={setBroadcastMessage}
+              multiline
+              numberOfLines={4}
+              placeholder="Ex: A clínica não abrirá amanhã, feriado."
+            />
+            <PrimaryButton label="Iniciar envio" onPress={startBroadcast} disabled={!broadcastMessage.trim()} />
+            <PrimaryButton label="Cancelar" variant="outline" onPress={() => setBroadcastModalOpen(false)} />
+          </View>
+        </View>
+      </Modal>
+
+      {broadcastQueue.length > 0 && (
+        <View style={styles.broadcastBanner}>
+          <Text style={styles.broadcastBannerText}>
+            Enviando {broadcastIndex + 1}/{broadcastQueue.length} — {broadcastQueue[broadcastIndex]?.full_name}
+          </Text>
+          <View style={styles.broadcastBannerActions}>
+            <Pressable onPress={advanceBroadcast}>
+              <Text style={styles.broadcastBannerNext}>Próximo →</Text>
+            </Pressable>
+            <Pressable onPress={cancelBroadcast}>
+              <Text style={styles.broadcastBannerCancel}>Cancelar</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
+
       <Modal visible={modalOpen} animationType="slide" onRequestClose={() => setModalOpen(false)}>
         <ScrollView style={styles.modalContainer} contentContainerStyle={{ padding: spacing.md }}>
           <Text style={styles.modalTitle}>{editingId ? "Editar paciente" : "Novo paciente"}</Text>
@@ -228,6 +297,16 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.md,
     marginTop: spacing.sm,
   },
+  broadcastBtn: { backgroundColor: colors.surfaceLight, borderRadius: radius.md, borderWidth: 1, borderColor: colors.border, marginHorizontal: spacing.md, marginTop: spacing.sm, paddingVertical: spacing.sm, alignItems: "center" },
+  broadcastBtnText: { color: colors.primary, fontSize: 14, fontWeight: "600" },
+  broadcastOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", padding: spacing.lg },
+  broadcastModalBox: { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.border },
+  broadcastInfo: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.sm },
+  broadcastBanner: { position: "absolute", bottom: 90, left: spacing.md, right: spacing.md, backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.primary, padding: spacing.md },
+  broadcastBannerText: { color: colors.text, fontSize: 13, fontWeight: "600", marginBottom: spacing.sm },
+  broadcastBannerActions: { flexDirection: "row", justifyContent: "space-between" },
+  broadcastBannerNext: { color: colors.primary, fontSize: 14, fontWeight: "700" },
+  broadcastBannerCancel: { color: colors.danger, fontSize: 14, fontWeight: "600" },
   container: { flex: 1, backgroundColor: colors.background },
   tabsBar: { maxHeight: 48, borderBottomWidth: 1, borderBottomColor: colors.border },
   tabsBarContent: { paddingHorizontal: spacing.md, alignItems: "center", gap: spacing.sm },
