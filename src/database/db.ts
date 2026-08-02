@@ -58,6 +58,11 @@ async function runMigrations(
       "ALTER TABLE notification_log ADD COLUMN notification_identifier TEXT;"
     );
   }
+  if (fromVersion < 3) {
+    await db.execAsync(
+      "ALTER TABLE schedules ADD COLUMN reminder TEXT;"
+    );
+  }
 }
 
 /**

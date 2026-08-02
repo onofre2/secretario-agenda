@@ -16,6 +16,7 @@ import {
   duplicateSchedule,
   deleteSchedule,
   updateSchedule,
+  setScheduleReminder,
 } from "../database/repositories/schedulesRepo";
 import { listPatients } from "../database/repositories/patientsRepo";
 import { listClinics } from "../database/repositories/clinicsRepo";
@@ -34,6 +35,8 @@ export default function AgendaScreen() {
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editingScheduleId, setEditingScheduleId] = useState<number | null>(null);
+  const [reminderSchedule, setReminderSchedule] = useState<ScheduleWithNames | null>(null);
+  const [reminderText, setReminderText] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "week">("week");
 
   const [selectedPatient, setSelectedPatient] = useState<SelectOption | null>(null);
@@ -131,6 +134,26 @@ export default function AgendaScreen() {
     await load();
   };
 
+  const openReminder = (s: ScheduleWithNames) => {
+    setReminderSchedule(s);
+    setReminderText(s.reminder ?? "");
+  };
+
+  const saveReminder = async () => {
+    if (!reminderSchedule) return;
+    const trimmed = reminderText.trim();
+    await setScheduleReminder(reminderSchedule.id, trimmed || null);
+    setReminderSchedule(null);
+    await load();
+  };
+
+  const clearReminder = async () => {
+    if (!reminderSchedule) return;
+    await setScheduleReminder(reminderSchedule.id, null);
+    setReminderSchedule(null);
+    await load();
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <View style={styles.viewToggleRow}>
@@ -166,6 +189,11 @@ export default function AgendaScreen() {
           }
           renderItem={({ item }) => (
             <View style={styles.card}>
+                <Pressable onPress={() => openReminder(item)} style={styles.reminderTag}>
+                  <Text style={[styles.reminderTagText, item.reminder ? styles.reminderTagTextActive : null]}>
+                    Lembrete
+                  </Text>
+                </Pressable>
               <View style={styles.cardHeader}>
                 <Text style={styles.cardDay}>{weekdayLabel(item.weekday)}</Text>
                 <Text style={styles.cardTime}>{item.time}</Text>
@@ -248,6 +276,27 @@ export default function AgendaScreen() {
           <PrimaryButton label="Cancelar" variant="outline" onPress={() => setModalOpen(false)} />
         </ScrollView>
       </Modal>
+
+      <Modal visible={!!reminderSchedule} animationType="slide" transparent onRequestClose={() => setReminderSchedule(null)}>
+        <View style={styles.reminderOverlay}>
+          <View style={styles.reminderModalBox}>
+            <Text style={styles.reminderModalTitle}>Lembrete — {reminderSchedule?.patient_name ?? ""}</Text>
+            <FormInput
+              label="Anotação"
+              value={reminderText}
+              onChangeText={setReminderText}
+              multiline
+              numberOfLines={3}
+              placeholder="Ex: confirmar endereço antes da sessão"
+            />
+            <PrimaryButton label="Salvar" onPress={saveReminder} />
+            {!!reminderSchedule?.reminder && (
+              <PrimaryButton label="Remover lembrete" variant="danger" onPress={clearReminder} />
+            )}
+            <PrimaryButton label="Cancelar" variant="outline" onPress={() => setReminderSchedule(null)} />
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -261,6 +310,12 @@ const styles = StyleSheet.create({
   viewToggleTextActive: { color: "#0F172A" },
   card: { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.border },
   cardHeader: { flexDirection: "row", justifyContent: "space-between" },
+  reminderTag: { alignSelf: "flex-start", marginBottom: spacing.xs },
+  reminderTagText: { color: colors.textMuted, fontSize: 11, fontWeight: "600" },
+  reminderTagTextActive: { color: colors.danger },
+  reminderOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", padding: spacing.lg },
+  reminderModalBox: { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.border },
+  reminderModalTitle: { color: colors.text, fontSize: 17, fontWeight: "700", marginBottom: spacing.md },
   cardDay: { color: colors.primary, fontSize: 14, fontWeight: "700" },
   cardTime: { color: colors.text, fontSize: 14, fontWeight: "700" },
   cardTitle: { color: colors.text, fontSize: 17, fontWeight: "600", marginTop: spacing.xs },

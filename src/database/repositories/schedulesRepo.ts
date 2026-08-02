@@ -87,3 +87,11 @@ export async function updateSchedule(id: ID, data: NewSchedule): Promise<void> {
     [data.patient_id, data.clinic_id, data.weekday, data.time, data.session_value, id]
   );
 }
+
+export async function setScheduleReminder(id: ID, reminder: string | null): Promise<void> {
+  const db = await getDb();
+  await db.runAsync(
+    "UPDATE schedules SET reminder = ? WHERE id = ?",
+    [reminder, id]
+  );
+}

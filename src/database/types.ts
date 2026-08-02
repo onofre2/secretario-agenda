@@ -42,6 +42,7 @@ export interface Schedule {
   time: string; // "HH:mm"
   session_value: number;
   active: boolean; // false = pausado
+  reminder: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -113,5 +114,5 @@ export interface Backup {
 // DTOs usados ao criar registros (sem campos gerados pelo banco)
 export type NewClinic = Omit<Clinic, "id" | "created_at" | "updated_at">;
 export type NewPatient = Omit<Patient, "id" | "created_at" | "updated_at">;
-export type NewSchedule = Omit<Schedule, "id" | "created_at" | "updated_at">;
+export type NewSchedule = Omit<Schedule, "id" | "created_at" | "updated_at" | "reminder"> & { reminder?: string | null };
 export type NewAppointment = Omit<Appointment, "id" | "created_at" | "updated_at">;
