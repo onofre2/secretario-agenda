@@ -35,7 +35,7 @@ export default function AgendaScreen() {
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editingScheduleId, setEditingScheduleId] = useState<number | null>(null);
-  const [reminderSchedule, setReminderSchedule] = useState<ScheduleWithNames | null>(null);
+  const [reminderSchedule, setReminderSchedule] = useState<{ id: number; patient_name?: string; reminder?: string | null } | null>(null);
   const [reminderText, setReminderText] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "week">("week");
 
@@ -134,7 +134,7 @@ export default function AgendaScreen() {
     await load();
   };
 
-  const openReminder = (s: ScheduleWithNames) => {
+  const openReminder = (s: { id: number; patient_name?: string; reminder?: string | null }) => {
     setReminderSchedule(s);
     setReminderText(s.reminder ?? "");
   };
@@ -176,7 +176,7 @@ export default function AgendaScreen() {
       </View>
 
       {viewMode === "week" ? (
-        <WeeklyGridView schedules={schedules} />
+        <WeeklyGridView schedules={schedules} onReminderPress={openReminder} />
       ) : (
         <FlatList
           data={schedules}

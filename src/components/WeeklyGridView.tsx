@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { View, Text, ScrollView, StyleSheet, Pressable } from "react-native";
 import { colors, spacing, radius } from "../theme/colors";
 import { WEEKDAYS } from "../utils/weekdays";
 import { formatCurrency } from "../utils/date";
@@ -11,10 +11,12 @@ interface ScheduleItem {
   patient_name?: string;
   clinic_name?: string;
   session_value: number;
+  reminder?: string | null;
 }
 
 interface Props {
   schedules: ScheduleItem[];
+  onReminderPress: (item: ScheduleItem) => void;
 }
 
 const CLINIC_COLORS = ["#22C55E", "#3B82F6", "#F59E0B", "#EC4899", "#A855F7", "#14B8A6", "#EF4444", "#84CC16"];
@@ -32,7 +34,7 @@ function buildClinicColorMap(schedules: ScheduleItem[]): Map<string, string> {
   return map;
 }
 
-export default function WeeklyGridView({ schedules }: Props) {
+export default function WeeklyGridView({ schedules, onReminderPress }: Props) {
   const clinicColors = buildClinicColorMap(schedules);
   const clinicNames = Array.from(clinicColors.keys());
 
@@ -82,6 +84,9 @@ export default function WeeklyGridView({ schedules }: Props) {
                   const clinicColor = clinicColors.get(item.clinic_name ?? "?") ?? colors.border;
                   return (
                     <View key={item.id} style={[styles.card, { borderLeftColor: clinicColor, borderLeftWidth: 5 }]}>
+                      <Pressable onPress={() => onReminderPress(item)}>
+                        <Text style={[styles.reminderTag, item.reminder ? styles.reminderTagActive : null]}>Lembrete</Text>
+                      </Pressable>
                       <Text style={styles.cardTime}>{item.time}</Text>
                       <Text style={styles.cardPatient} numberOfLines={1}>
                         {item.patient_name ?? "?"}
@@ -136,6 +141,8 @@ const styles = StyleSheet.create({
   emptyText: { color: colors.textMuted, fontSize: 13 },
   card: { backgroundColor: colors.surface, borderRadius: radius.sm, padding: spacing.sm, marginBottom: spacing.sm, borderTopWidth: 1, borderRightWidth: 1, borderBottomWidth: 1, borderTopColor: colors.border, borderRightColor: colors.border, borderBottomColor: colors.border },
   cardTime: { color: colors.primary, fontSize: 13, fontWeight: "700" },
+  reminderTag: { color: colors.textMuted, fontSize: 10, fontWeight: "600", marginBottom: 2 },
+  reminderTagActive: { color: colors.danger },
   cardPatient: { color: colors.text, fontSize: 13, fontWeight: "600", marginTop: 2 },
   cardClinic: { color: colors.textMuted, fontSize: 11, marginTop: 1 },
   cardValue: { color: colors.textMuted, fontSize: 11, marginTop: 2, fontWeight: "600" },
