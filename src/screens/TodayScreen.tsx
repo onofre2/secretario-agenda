@@ -11,7 +11,7 @@ import {
   TodayAppointment,
 } from "../database/repositories/appointmentsRepo";
 import { generateAppointmentsForDate } from "../database/repositories/schedulesRepo";
-import { scheduleAllPendingForToday } from "../notifications/scheduler";
+import { scheduleAllPendingForToday, scheduleMorningAgendaNotification } from "../notifications/scheduler";
 import { speakTodaySchedule, speakEndOfDaySummary } from "../voice/voiceService";
 import AppointmentCard from "../components/AppointmentCard";
 
@@ -30,6 +30,7 @@ export default function TodayScreen() {
     // Mantém os lembretes sincronizados com o estado atual (cancela os de
     // compromissos já marcados, agenda os pendentes).
     scheduleAllPendingForToday().catch((err) => console.error("Erro ao agendar notificações:", err));
+    scheduleMorningAgendaNotification().catch((err) => console.error("Erro ao agendar notificacao matinal:", err));
   }, [date]);
 
   useFocusEffect(

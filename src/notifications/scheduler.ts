@@ -7,9 +7,10 @@ import {
   deleteNotificationLog,
 } from "../database/repositories/notificationsRepo";
 import { todayISO } from "../utils/date";
+import { getSetting, setSetting, SETTINGS_KEYS } from "../database/repositories/settingsRepo";
 
 /** Calcula o Date real de disparo: horário do compromisso menos os minutos de antecedência. */
-function computeTriggerDate(dateISO: string, timeHHmm: string, leadMinutes: number): Date {
+export function computeTriggerDate(dateISO: string, timeHHmm: string, leadMinutes: number): Date {
   const [hours, minutes] = timeHHmm.split(":").map(Number);
   const target = new Date(dateISO + "T00:00:00");
   target.setHours(hours, minutes, 0, 0);
@@ -25,6 +26,9 @@ export async function scheduleForAppointment(
   await cancelForAppointment(appointment.id);
 
   if (appointment.status !== "pending") return;
+
+  const enabled = await getSetting(SETTINGS_KEYS.NOTIFICATIONS_ENABLED);
+  if (enabled === "0") return; // notificacoes desativadas pelo usuario
 
   const triggerDate = computeTriggerDate(appointment.date, appointment.time, leadMinutes);
   if (triggerDate.getTime() <= Date.now()) return; // já passou, não agenda
@@ -90,4 +94,50 @@ export async function snoozeAppointment(appointmentId: number, minutes = 5): Pro
     },
   });
   await upsertNotificationLog(appointmentId, new Date(Date.now() + minutes * 60000).toISOString(), identifier);
+}
+
+/** Cancela a notificação matinal "Bom dia" previamente agendada, se houver. */
+export async function cancelMorningAgendaNotification(): Promise<void> {
+  const identifier = await getSetting(SETTINGS_KEYS.MORNING_NOTIFICATION_ID);
+  if (identifier) {
+    await Notifications.cancelScheduledNotificationAsync(identifier);
+    await setSetting(SETTINGS_KEYS.MORNING_NOTIFICATION_ID, "");
+  }
+}
+
+/**
+ * Agenda a notificação diária "Bom dia", disparada 1 hora antes do primeiro
+ * compromisso do dia. Ao tocar, o app abre e já lê a agenda em áudio.
+ * Chamado no boot do app e sempre que a tela Hoje é aberta/atualizada
+ * (mesmo padrão dos lembretes de compromisso).
+ */
+export async function scheduleMorningAgendaNotification(): Promise<void> {
+  await cancelMorningAgendaNotification();
+
+  const enabled = await getSetting(SETTINGS_KEYS.NOTIFICATIONS_ENABLED);
+  if (enabled === "0") return;
+
+  const appointments = await getAppointmentsByDate(todayISO());
+  if (appointments.length === 0) return;
+
+  const sorted = [...appointments].sort((a, b) => a.time.localeCompare(b.time));
+  const first = sorted[0];
+
+  const triggerDate = computeTriggerDate(todayISO(), first.time, 60);
+  if (triggerDate.getTime() <= Date.now()) return;
+
+  const identifier = await Notifications.scheduleNotificationAsync({
+    content: {
+      title: "Bom dia! Sua agenda começa em 1 hora",
+      body: "Toque para ouvir sua agenda completa em áudio.",
+      data: { morningAgenda: true },
+      sound: "default",
+    },
+    trigger: {
+      date: triggerDate,
+      channelId: "appointments",
+    },
+  });
+
+  await setSetting(SETTINGS_KEYS.MORNING_NOTIFICATION_ID, identifier);
 }

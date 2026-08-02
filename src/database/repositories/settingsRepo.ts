@@ -25,4 +25,6 @@ export const SETTINGS_KEYS = {
   LAST_NOTE_TEMPLATE: "last_note_template",
   MONTHLY_GOAL: "monthly_financial_goal",
   INVESTMENT_PERCENT: "investment_percent",
+  NOTIFICATIONS_ENABLED: "notifications_enabled",
+  MORNING_NOTIFICATION_ID: "morning_notification_id",
 } as const;

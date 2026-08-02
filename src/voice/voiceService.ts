@@ -73,3 +73,31 @@ export function speakEndOfDaySummary(appointments: TodayAppointment[]): void {
 export function stopSpeaking(): void {
   Speech.stop();
 }
+
+/**
+ * Lê a agenda matinal completa, no formato usado pela notificação "Bom dia".
+ * Percorre cada compromisso do dia em ordem, anunciando todos os dados do
+ * card (horário, paciente, clínica, valor) e sinaliza o último atendimento.
+ */
+export function speakMorningAgenda(appointments: TodayAppointment[]): void {
+  Speech.stop();
+
+  if (appointments.length === 0) {
+    Speech.speak("Bom dia! Você não tem nenhum compromisso hoje.", { language: "pt-BR" });
+    return;
+  }
+
+  const sorted = [...appointments].sort((a, b) => a.time.localeCompare(b.time));
+  const parts: string[] = ["Bom dia! Hoje sua agenda se inicia."];
+
+  sorted.forEach((appt, index) => {
+    const isLast = index === sorted.length - 1;
+    let line = `${appt.time}, paciente ${appt.patient_name}, na clínica ${appt.clinic_name}, valor ${formatCurrency(appt.session_value)}.`;
+    if (isLast) {
+      line += " Esse é o último atendimento.";
+    }
+    parts.push(line);
+  });
+
+  Speech.speak(parts.join(" "), { language: "pt-BR", rate: 1.0 });
+}
