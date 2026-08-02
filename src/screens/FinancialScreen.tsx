@@ -3,7 +3,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, StyleSheet, Pressable, ScrollView, RefreshControl, ActivityIndicator } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { colors, spacing, radius } from "../theme/colors";
-import { formatCurrency } from "../utils/date";
+import { formatCurrency, todayISO } from "../utils/date";
 import { getRangeFor, PeriodKind } from "../utils/period";
 import {
   getSummary,
@@ -14,7 +14,6 @@ import {
 } from "../database/repositories/financialRepo";
 import { exportFinancialScreenAsPdf } from "../reports/exportFinancialPdf";
 import SimpleBarChart from "../components/SimpleBarChart";
-import MiniTrendChart from "../components/MiniTrendChart";
 import PrimaryButton from "../components/PrimaryButton";
 import FinancialDetailModal from "../components/FinancialDetailModal";
 import MonthlyGoalCard from "../components/MonthlyGoalCard";
@@ -33,6 +32,8 @@ export default function FinancialScreen() {
   const [byClinic, setByClinic] = useState<{ clinic_name: string; total: number }[]>([]);
   const [trend, setTrend] = useState<RevenueTrendPoint[]>([]);
   const [monthRevenue, setMonthRevenue] = useState(0);
+  const [todayRevenue, setTodayRevenue] = useState(0);
+  const [weekRevenue, setWeekRevenue] = useState(0);
   const [loading, setLoading] = useState(true);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [activeCard, setActiveCard] = useState<CardKind>(null);
@@ -40,16 +41,22 @@ export default function FinancialScreen() {
   const load = useCallback(async () => {
     const range = getRangeFor(period);
     const monthRange = getRangeFor("month");
-    const [s, clinics, trendData, monthSummary] = await Promise.all([
+    const weekRange = getRangeFor("week");
+    const today = todayISO();
+    const [s, clinics, trendData, monthSummary, weekSummary, todaySummary] = await Promise.all([
       getSummary(range.start, range.end),
       getRevenueByClinic(range.start, range.end) as Promise<{ clinic_name: string; total: number }[]>,
       getRevenueTrend(range.start, range.end),
       getSummary(monthRange.start, monthRange.end),
+      getSummary(weekRange.start, weekRange.end),
+      getSummary(today, today),
     ]);
     setSummary(s);
     setByClinic(clinics);
     setTrend(trendData);
     setMonthRevenue(monthSummary.revenue);
+    setWeekRevenue(weekSummary.revenue);
+    setTodayRevenue(todaySummary.revenue);
     setLoading(false);
   }, [period]);
 
@@ -119,7 +126,7 @@ export default function FinancialScreen() {
       contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.xl }}
       refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.primary} />}
     >
-      <MonthlyGoalCard monthRevenue={monthRevenue} />
+      <MonthlyGoalCard monthRevenue={monthRevenue} todayRevenue={todayRevenue} weekRevenue={weekRevenue} />
       <View style={styles.periodRow}>
         {PERIODS.map((p) => (
           <Pressable
@@ -142,13 +149,6 @@ export default function FinancialScreen() {
         <SummaryCard label="Comparecimento" value={`${attendanceRate}%`} color={colors.warning} onPress={() => setActiveCard("attendance")} />
       </View>
 
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Tendência de receita</Text>
-        <MiniTrendChart
-          data={trend.map((t) => ({ label: t.date.slice(5), value: t.revenue }))}
-          emptyMessage="Nenhuma receita registrada neste período."
-        />
-      </View>
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Receita por clínica</Text>

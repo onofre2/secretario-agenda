@@ -6,9 +6,11 @@ import { getSetting, setSetting, SETTINGS_KEYS } from "../database/repositories/
 
 interface Props {
   monthRevenue: number;
+  todayRevenue: number;
+  weekRevenue: number;
 }
 
-export default function MonthlyGoalCard({ monthRevenue }: Props) {
+export default function MonthlyGoalCard({ monthRevenue, todayRevenue, weekRevenue }: Props) {
   const [goal, setGoal] = useState<number | null>(null);
   const [editing, setEditing] = useState(false);
   const [inputValue, setInputValue] = useState("");
@@ -36,6 +38,8 @@ export default function MonthlyGoalCard({ monthRevenue }: Props) {
   const remainingAmount = goal ? Math.max(goal - monthRevenue, 0) : 0;
   const perDayNeeded = remainingAmount / remainingDays;
   const progressPct = goal ? Math.min((monthRevenue / goal) * 100, 100) : 0;
+  const dailyHit = dailyGoal > 0 && todayRevenue >= dailyGoal;
+  const weeklyHit = weeklyGoal > 0 && weekRevenue >= weeklyGoal;
 
   if (!goal || editing) {
     return (
@@ -77,11 +81,11 @@ export default function MonthlyGoalCard({ monthRevenue }: Props) {
       <View style={styles.metaRow}>
         <View style={styles.metaCol}>
           <Text style={styles.metaLabel}>Meta diária</Text>
-          <Text style={styles.metaValue}>{formatCurrency(dailyGoal)}</Text>
+          <Text style={[styles.metaValue, dailyHit && styles.metaValueHit]}>{formatCurrency(dailyGoal)}</Text>
         </View>
         <View style={styles.metaCol}>
           <Text style={styles.metaLabel}>Meta semanal</Text>
-          <Text style={styles.metaValue}>{formatCurrency(weeklyGoal)}</Text>
+          <Text style={[styles.metaValue, weeklyHit && styles.metaValueHit]}>{formatCurrency(weeklyGoal)}</Text>
         </View>
       </View>
 
@@ -97,21 +101,22 @@ export default function MonthlyGoalCard({ monthRevenue }: Props) {
 }
 
 const styles = StyleSheet.create({
-  wrapper: { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: colors.border, marginBottom: spacing.md },
-  title: { color: colors.text, fontSize: 16, fontWeight: "700" },
+  wrapper: { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.border, marginBottom: spacing.md },
+  title: { color: colors.text, fontSize: 18, fontWeight: "700" },
   headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm },
   editLink: { color: colors.primary, fontSize: 13, fontWeight: "600" },
   inputRow: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm },
   input: { flex: 1, backgroundColor: colors.surfaceLight, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border, color: colors.text, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
   saveBtn: { backgroundColor: colors.primary, borderRadius: radius.sm, paddingHorizontal: spacing.md, justifyContent: "center" },
   saveBtnText: { color: "#0F172A", fontWeight: "700" },
-  progressText: { color: colors.text, fontSize: 13, fontWeight: "600", marginBottom: spacing.xs },
+  progressText: { color: colors.text, fontSize: 15, fontWeight: "600", marginBottom: spacing.sm },
   progressTrack: { height: 10, backgroundColor: colors.surfaceLight, borderRadius: radius.sm, overflow: "hidden" },
   progressFill: { height: "100%", backgroundColor: colors.primary, borderRadius: radius.sm },
   metaRow: { flexDirection: "row", gap: spacing.md, marginTop: spacing.md },
   metaCol: { flex: 1 },
-  metaLabel: { color: colors.textMuted, fontSize: 12 },
-  metaValue: { color: colors.text, fontSize: 16, fontWeight: "700", marginTop: 2 },
+  metaLabel: { color: colors.textMuted, fontSize: 13 },
+  metaValue: { color: colors.text, fontSize: 22, fontWeight: "700", marginTop: 4 },
   hint: { color: colors.textMuted, fontSize: 12, marginTop: spacing.sm },
   hintDone: { color: colors.primary, fontSize: 13, fontWeight: "600", marginTop: spacing.sm },
+  metaValueHit: { color: colors.primary },
 });
