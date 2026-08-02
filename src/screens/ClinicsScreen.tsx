@@ -130,7 +130,7 @@ export default function ClinicsScreen() {
           clinicCounts.length > 0 ? (
             <View style={styles.footerSection}>
               <Text style={styles.footerTitle}>Atendimentos por clínica</Text>
-              <SimpleBarChart data={clinicCounts} emptyMessage="Sem atendimentos cadastrados." />
+              <SimpleBarChart data={clinicCounts} emptyMessage="Sem atendimentos cadastrados." formatAsCurrency={false} />
             </View>
           ) : null
         }

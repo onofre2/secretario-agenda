@@ -12,9 +12,10 @@ interface BarDatum {
 interface Props {
   data: BarDatum[];
   emptyMessage?: string;
+  formatAsCurrency?: boolean;
 }
 
-export default function SimpleBarChart({ data, emptyMessage }: Props) {
+export default function SimpleBarChart({ data, emptyMessage, formatAsCurrency = true }: Props) {
   if (data.length === 0) {
     return <Text style={styles.empty}>{emptyMessage ?? "Sem dados neste período."}</Text>;
   }
@@ -29,7 +30,7 @@ export default function SimpleBarChart({ data, emptyMessage }: Props) {
           <View style={styles.barTrack}>
             <View style={[styles.barFill, { width: `${(item.value / max) * 100}%` }, item.color ? { backgroundColor: item.color } : null]} />
           </View>
-          <Text style={styles.value}>{formatCurrency(item.value)}</Text>
+          <Text style={styles.value}>{formatAsCurrency ? formatCurrency(item.value) : String(item.value)}</Text>
         </View>
       ))}
     </View>
