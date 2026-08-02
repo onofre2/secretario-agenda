@@ -1,6 +1,7 @@
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import { ReportRow } from "../database/repositories/reportsRepo";
+import { getSetting, SETTINGS_KEYS } from "../database/repositories/settingsRepo";
 import { formatCurrency } from "../utils/date";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -25,9 +26,15 @@ function groupByClinic(rows: ReportRow[]): Map<string, ReportRow[]> {
   return map;
 }
 
-function buildHtml(rows: ReportRow[], title: string): string {
+function buildHtml(rows: ReportRow[], title: string, extra: { goal: number | null; investmentPercent: number | null }): string {
   const totalRevenue = rows.filter((r) => r.status === "present").reduce((sum, r) => sum + r.session_value, 0);
   const totalLoss = rows.filter((r) => r.status === "absent").reduce((sum, r) => sum + r.session_value, 0);
+  const presentCount = rows.filter((r) => r.status === "present").length;
+  const absentCount = rows.filter((r) => r.status === "absent").length;
+  const attendanceRate = presentCount + absentCount > 0 ? Math.round((presentCount / (presentCount + absentCount)) * 100) : 0;
+  const investmentAmount = extra.investmentPercent ? totalRevenue * (extra.investmentPercent / 100) : 0;
+  const netAmount = totalRevenue - investmentAmount;
+  const goalPct = extra.goal ? Math.min((totalRevenue / extra.goal) * 100, 100) : null;
 
   const grouped = groupByClinic(rows);
   let colorIndex = 0;
@@ -87,13 +94,20 @@ function buildHtml(rows: ReportRow[], title: string): string {
           <div class="summary-row"><span>Total recebido</span><span>${formatCurrency(totalRevenue)}</span></div>
           <div class="summary-row"><span>Total em faltas</span><span>${formatCurrency(totalLoss)}</span></div>
           <div class="summary-row summary-total"><span>Saldo geral</span><span>${formatCurrency(totalRevenue - totalLoss)}</span></div>
+            <div class="summary-row"><span>Atendimentos</span><span>${presentCount + absentCount}</span></div>
+            <div class="summary-row"><span>Comparecimento</span><span>${attendanceRate}%</span></div>
+            ${extra.goal ? `<div class="summary-row"><span>Meta financeira (${Math.round(goalPct ?? 0)}%)</span><span>${formatCurrency(extra.goal)}</span></div>` : ""}
+            ${extra.investmentPercent ? `<div class="summary-row"><span>Reserva financeira (${extra.investmentPercent}%)</span><span>${formatCurrency(investmentAmount)}</span></div>` : ""}
+            ${extra.investmentPercent ? `<div class="summary-row summary-total"><span>Ganho profissional líquido</span><span>${formatCurrency(netAmount)}</span></div>` : ""}
         </div>
       </body>
     </html>`;
 }
 
 export async function exportReportPdf(rows: ReportRow[], title: string): Promise<void> {
-  const html = buildHtml(rows, title);
+  const goalStr = await getSetting(SETTINGS_KEYS.MONTHLY_GOAL);
+  const investStr = await getSetting(SETTINGS_KEYS.INVESTMENT_PERCENT);
+  const html = buildHtml(rows, title, { goal: goalStr ? Number(goalStr) : null, investmentPercent: investStr ? Number(investStr) : null });
   const { uri } = await Print.printToFileAsync({ html });
   const canShare = await Sharing.isAvailableAsync();
   if (canShare) {
