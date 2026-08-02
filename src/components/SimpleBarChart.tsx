@@ -6,6 +6,7 @@ import { formatCurrency } from "../utils/date";
 interface BarDatum {
   label: string;
   value: number;
+  color?: string;
 }
 
 interface Props {
@@ -26,7 +27,7 @@ export default function SimpleBarChart({ data, emptyMessage }: Props) {
         <View key={item.label} style={styles.row}>
           <Text style={styles.label} numberOfLines={1}>{item.label}</Text>
           <View style={styles.barTrack}>
-            <View style={[styles.barFill, { width: `${(item.value / max) * 100}%` }]} />
+            <View style={[styles.barFill, { width: `${(item.value / max) * 100}%` }, item.color ? { backgroundColor: item.color } : null]} />
           </View>
           <Text style={styles.value}>{formatCurrency(item.value)}</Text>
         </View>
