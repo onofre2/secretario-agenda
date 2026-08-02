@@ -2,7 +2,9 @@ import { useEffect } from "react";
 import * as Notifications from "expo-notifications";
 import { NotificationAction } from "./config";
 import { snoozeAppointment } from "./scheduler";
-import { markPresent, markAbsent } from "../database/repositories/appointmentsRepo";
+import { markPresent, markAbsent, getAppointmentsByDate } from "../database/repositories/appointmentsRepo";
+import { todayISO } from "../utils/date";
+import { speakMorningAgenda } from "../voice/voiceService";
 
 /**
  * Hook global: registra o listener de resposta a notificações uma única vez
@@ -12,6 +14,17 @@ import { markPresent, markAbsent } from "../database/repositories/appointmentsRe
 export function useNotificationResponseListener() {
   useEffect(() => {
     const subscription = Notifications.addNotificationResponseReceivedListener(async (response) => {
+        const data = response.notification.request.content.data;
+        if (data?.morningAgenda) {
+          try {
+            const appointments = await getAppointmentsByDate(todayISO());
+            speakMorningAgenda(appointments);
+          } catch (err) {
+            console.error("Erro ao reproduzir agenda matinal:", err);
+          }
+          return;
+        }
+
       const appointmentId = response.notification.request.content.data?.appointmentId as
         | number
         | undefined;

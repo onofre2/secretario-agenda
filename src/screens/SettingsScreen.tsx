@@ -7,9 +7,12 @@ import PrimaryButton from "../components/PrimaryButton";
 import { getSetting, setSetting, SETTINGS_KEYS } from "../database/repositories/settingsRepo";
 import { exportBackup, restoreBackup, markBackupDone } from "../backup/backupService";
 import { DEFAULT_LEAD_MINUTES } from "../notifications/config";
+import * as Notifications from "expo-notifications";
+import { scheduleAllPendingForToday, scheduleMorningAgendaNotification } from "../notifications/scheduler";
 
 export default function SettingsScreen() {
   const [darkMode, setDarkMode] = useState(true);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [leadMinutes, setLeadMinutes] = useState(String(DEFAULT_LEAD_MINUTES));
   const [busy, setBusy] = useState<"backup" | "restore" | null>(null);
 
@@ -18,6 +21,8 @@ export default function SettingsScreen() {
     setDarkMode(theme !== "light");
     const lead = await getSetting(SETTINGS_KEYS.NOTIFICATION_LEAD_MINUTES);
     if (lead) setLeadMinutes(lead);
+    const notifEnabled = await getSetting(SETTINGS_KEYS.NOTIFICATIONS_ENABLED);
+    setNotificationsEnabled(notifEnabled !== "0");
   }, []);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -25,6 +30,17 @@ export default function SettingsScreen() {
   const handleToggleTheme = async (value: boolean) => {
     setDarkMode(value);
     await setSetting(SETTINGS_KEYS.THEME, value ? "dark" : "light");
+  };
+
+  const handleToggleNotifications = async (value: boolean) => {
+    setNotificationsEnabled(value);
+    await setSetting(SETTINGS_KEYS.NOTIFICATIONS_ENABLED, value ? "1" : "0");
+    if (!value) {
+      await Notifications.cancelAllScheduledNotificationsAsync();
+    } else {
+      await scheduleAllPendingForToday();
+      await scheduleMorningAgendaNotification();
+    }
   };
 
   const handleSaveLeadMinutes = async () => {
@@ -77,6 +93,14 @@ export default function SettingsScreen() {
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: spacing.md }}>
       <Section title="Notificações">
+          <View style={styles.row}>
+            <Text style={styles.rowLabel}>Ativar notificações</Text>
+            <Switch
+              value={notificationsEnabled}
+              onValueChange={handleToggleNotifications}
+              trackColor={{ false: colors.surfaceLight, true: colors.primary }}
+            />
+          </View>
         <Text style={styles.rowLabel}>Antecedência do lembrete (minutos)</Text>
         <View style={styles.leadRow}>
           <View style={styles.leadInputBox}>
