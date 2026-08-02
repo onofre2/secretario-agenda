@@ -76,21 +76,6 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: spacing.md }}>
-      <Section title="Aparência">
-        <View style={styles.row}>
-          <Text style={styles.rowLabel}>Modo escuro</Text>
-          <Switch
-            value={darkMode}
-            onValueChange={handleToggleTheme}
-            trackColor={{ false: colors.surfaceLight, true: colors.primary }}
-          />
-        </View>
-        <Text style={styles.hint}>
-          Preferência salva. A troca visual completa para modo claro entra numa
-          próxima atualização — hoje o app usa o tema escuro em todas as telas.
-        </Text>
-      </Section>
-
       <Section title="Notificações">
         <Text style={styles.rowLabel}>Antecedência do lembrete (minutos)</Text>
         <View style={styles.leadRow}>
