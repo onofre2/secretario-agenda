@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, Pressable, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, Pressable, ActivityIndicator, Alert } from "react-native";
 import { colors, spacing, radius } from "../theme/colors";
 import { formatCurrency } from "../utils/date";
 import { TodayAppointment } from "../database/repositories/appointmentsRepo";
@@ -33,6 +33,11 @@ export default function AppointmentCard({ appointment, onMarkPresent, onMarkAbse
         <Text style={styles.time}>{appointment.time}</Text>
         <Text style={styles.value}>{formatCurrency(appointment.session_value)}</Text>
       </View>
+      {!!appointment.reminder && (
+        <Pressable onPress={() => Alert.alert("Lembrete", appointment.reminder as string)}>
+          <Text style={styles.reminderTag}>Lembrete</Text>
+        </Pressable>
+      )}
       <Text style={styles.patient}>{appointment.patient_name}</Text>
       <Text style={styles.clinic}>{appointment.clinic_name}</Text>
 
@@ -82,6 +87,7 @@ const styles = StyleSheet.create({
   value: { color: colors.textMuted, fontSize: 16 },
   patient: { color: colors.text, fontSize: 18, fontWeight: "600" },
   clinic: { color: colors.textMuted, fontSize: 14, marginBottom: spacing.sm },
+  reminderTag: { color: colors.danger, fontSize: 12, fontWeight: "700", marginBottom: 2 },
   buttonsRow: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm },
   button: {
     flex: 1,

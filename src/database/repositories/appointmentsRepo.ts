@@ -25,6 +25,7 @@ async function pickNoteTemplate(patientName: string): Promise<string> {
 export interface TodayAppointment extends Appointment {
   patient_name: string;
   clinic_name: string;
+  reminder?: string | null;
 }
 
 /** Lista os compromissos de uma data, ordenados por horário (tela "Hoje"). */
@@ -33,12 +34,13 @@ export async function getAppointmentsByDate(
 ): Promise<TodayAppointment[]> {
   const db = await getDb();
   return db.getAllAsync<TodayAppointment>(
-    `SELECT a.*, p.full_name as patient_name, c.name as clinic_name
-     FROM appointments a
-     JOIN patients p ON p.id = a.patient_id
-     JOIN clinics c ON c.id = a.clinic_id
-     WHERE a.date = ?
-     ORDER BY a.time ASC`,
+      `SELECT a.*, p.full_name as patient_name, c.name as clinic_name, s.reminder as reminder
+       FROM appointments a
+       JOIN patients p ON p.id = a.patient_id
+       JOIN clinics c ON c.id = a.clinic_id
+       LEFT JOIN schedules s ON s.id = a.schedule_id
+       WHERE a.date = ?
+       ORDER BY a.time ASC`,
     [date]
   );
 }
