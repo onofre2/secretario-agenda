@@ -23,4 +23,5 @@ export const SETTINGS_KEYS = {
   NOTIFICATION_LEAD_MINUTES: "notification_lead_minutes",
   LAST_BACKUP_DATE: "last_backup_date",
   LAST_NOTE_TEMPLATE: "last_note_template",
+  MONTHLY_GOAL: "monthly_financial_goal",
 } as const;

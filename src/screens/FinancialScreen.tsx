@@ -17,6 +17,7 @@ import SimpleBarChart from "../components/SimpleBarChart";
 import MiniTrendChart from "../components/MiniTrendChart";
 import PrimaryButton from "../components/PrimaryButton";
 import FinancialDetailModal from "../components/FinancialDetailModal";
+import MonthlyGoalCard from "../components/MonthlyGoalCard";
 
 const PERIODS: { key: PeriodKind; label: string }[] = [
   { key: "day", label: "Diário" },
@@ -31,20 +32,24 @@ export default function FinancialScreen() {
   const [summary, setSummary] = useState<FinancialSummary | null>(null);
   const [byClinic, setByClinic] = useState<{ clinic_name: string; total: number }[]>([]);
   const [trend, setTrend] = useState<RevenueTrendPoint[]>([]);
+  const [monthRevenue, setMonthRevenue] = useState(0);
   const [loading, setLoading] = useState(true);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [activeCard, setActiveCard] = useState<CardKind>(null);
 
   const load = useCallback(async () => {
     const range = getRangeFor(period);
-    const [s, clinics, trendData] = await Promise.all([
+    const monthRange = getRangeFor("month");
+    const [s, clinics, trendData, monthSummary] = await Promise.all([
       getSummary(range.start, range.end),
       getRevenueByClinic(range.start, range.end) as Promise<{ clinic_name: string; total: number }[]>,
       getRevenueTrend(range.start, range.end),
+      getSummary(monthRange.start, monthRange.end),
     ]);
     setSummary(s);
     setByClinic(clinics);
     setTrend(trendData);
+    setMonthRevenue(monthSummary.revenue);
     setLoading(false);
   }, [period]);
 
@@ -114,6 +119,7 @@ export default function FinancialScreen() {
       contentContainerStyle={{ padding: spacing.md, paddingBottom: spacing.xl }}
       refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={colors.primary} />}
     >
+      <MonthlyGoalCard monthRevenue={monthRevenue} />
       <View style={styles.periodRow}>
         {PERIODS.map((p) => (
           <Pressable

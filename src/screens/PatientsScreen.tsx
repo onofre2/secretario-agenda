@@ -1,5 +1,7 @@
 import React, { useCallback, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { FontAwesome } from "@expo/vector-icons";
+import { abrirWhatsApp } from "../utils/whatsapp";
 import { View, Text, FlatList, Modal, StyleSheet, Pressable, ScrollView, TextInput } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { colors, spacing, radius } from "../theme/colors";
@@ -157,11 +159,21 @@ export default function PatientsScreen() {
         }
         renderItem={({ item }) => (
           <View style={styles.card}>
-            <Pressable onPress={() => openEdit(item)}>
-              <Text style={styles.cardTitle}>{item.full_name}</Text>
-              {!!item.phone && <Text style={styles.cardSubtitle}>{item.phone}</Text>}
-              {!!item.diagnosis && <Text style={styles.cardSubtitle}>{item.diagnosis}</Text>}
-            </Pressable>
+            <View style={styles.cardHeaderRow}>
+              <Pressable style={{ flex: 1 }} onPress={() => openEdit(item)}>
+                <Text style={styles.cardTitle}>{item.full_name}</Text>
+                {!!item.phone && <Text style={styles.cardSubtitle}>{item.phone}</Text>}
+                {!!item.diagnosis && <Text style={styles.cardSubtitle}>{item.diagnosis}</Text>}
+              </Pressable>
+              {!!item.phone && (
+                <Pressable
+                  style={styles.whatsappBtn}
+                  onPress={() => abrirWhatsApp(item.phone as string, `Ola ${item.full_name}, tudo bem?`)}
+                >
+                  <FontAwesome name="whatsapp" size={22} color="#FFFFFF" />
+                </Pressable>
+              )}
+            </View>
             <Pressable onPress={() => setTimelinePatient(item)} style={styles.historyLink}>
               <Text style={styles.historyLinkText}>Ver histórico clínico →</Text>
             </Pressable>
@@ -234,6 +246,8 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   cardTitle: { color: colors.text, fontSize: 17, fontWeight: "600" },
+  cardHeaderRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: spacing.sm },
+  whatsappBtn: { backgroundColor: "#25D366", width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
   cardSubtitle: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
   historyLink: { marginTop: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
   historyLinkText: { color: colors.primary, fontSize: 13, fontWeight: "600" },
