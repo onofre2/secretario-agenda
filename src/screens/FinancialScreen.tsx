@@ -14,6 +14,7 @@ import {
 } from "../database/repositories/financialRepo";
 import { exportFinancialScreenAsPdf } from "../reports/exportFinancialPdf";
 import SimpleBarChart from "../components/SimpleBarChart";
+import MiniTrendChart from "../components/MiniTrendChart";
 import PrimaryButton from "../components/PrimaryButton";
 import FinancialDetailModal from "../components/FinancialDetailModal";
 
@@ -137,7 +138,7 @@ export default function FinancialScreen() {
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Tendência de receita</Text>
-        <SimpleBarChart
+        <MiniTrendChart
           data={trend.map((t) => ({ label: t.date.slice(5), value: t.revenue }))}
           emptyMessage="Nenhuma receita registrada neste período."
         />
