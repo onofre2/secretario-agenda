@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { View, Text, ScrollView, StyleSheet, Pressable, Modal } from "react-native";
+import React from "react";
+import { View, Text, ScrollView, StyleSheet, Pressable } from "react-native";
 import { colors, spacing, radius } from "../theme/colors";
 import { WEEKDAYS } from "../utils/weekdays";
 import { formatCurrency } from "../utils/date";
@@ -34,20 +34,9 @@ function buildClinicColorMap(schedules: ScheduleItem[]): Map<string, string> {
   return map;
 }
 
-function groupByTime(items: ScheduleItem[]): ScheduleItem[][] {
-  const map = new Map<string, ScheduleItem[]>();
-  for (const item of items) {
-    const key = item.time;
-    if (!map.has(key)) map.set(key, []);
-    map.get(key)!.push(item);
-  }
-  return Array.from(map.values());
-}
-
 export default function WeeklyGridView({ schedules, onReminderPress }: Props) {
   const clinicColors = buildClinicColorMap(schedules);
   const clinicNames = Array.from(clinicColors.keys());
-  const [groupModal, setGroupModal] = useState<ScheduleItem[] | null>(null);
 
   const byDay = (weekday: number) =>
     schedules
@@ -87,7 +76,6 @@ export default function WeeklyGridView({ schedules, onReminderPress }: Props) {
       <ScrollView horizontal contentContainerStyle={styles.scrollContent} showsHorizontalScrollIndicator={false}>
         {WEEKDAYS.map((day) => {
           const items = byDay(day.value);
-          const groups = groupByTime(items);
           return (
             <View key={day.value} style={styles.column}>
               <View style={styles.columnHeader}>
@@ -100,40 +88,22 @@ export default function WeeklyGridView({ schedules, onReminderPress }: Props) {
                   <Text style={styles.emptyText}>—</Text>
                 </View>
               ) : (
-                groups.map((group) => {
-                  if (group.length === 1) {
-                    const item = group[0];
-                    const clinicColor = clinicColors.get(item.clinic_name ?? "?") ?? colors.border;
-                    return (
-                      <View key={item.id} style={[styles.card, { borderLeftColor: clinicColor, borderLeftWidth: 5 }]}>
-                        <Pressable onPress={() => onReminderPress(item)}>
-                          <Text style={[styles.reminderTag, item.reminder ? styles.reminderTagActive : null]}>Lembrete</Text>
-                        </Pressable>
-                        <Text style={styles.cardTime}>{item.time}</Text>
-                        <Text style={styles.cardPatient} numberOfLines={1}>
-                          {item.patient_name ?? "?"}
-                        </Text>
-                        <Text style={styles.cardClinic} numberOfLines={1}>
-                          {item.clinic_name ?? ""}
-                        </Text>
-                        <Text style={styles.cardValue}>{formatCurrency(item.session_value)}</Text>
-                      </View>
-                    );
-                  }
-
-                  const totalValue = group.reduce((sum, i) => sum + i.session_value, 0);
-                  const groupKey = `${group[0].weekday}-${group[0].time}`;
+                items.map((item) => {
+                  const clinicColor = clinicColors.get(item.clinic_name ?? "?") ?? colors.border;
                   return (
-                    <Pressable
-                      key={groupKey}
-                      style={[styles.card, styles.groupCard]}
-                      onPress={() => setGroupModal(group)}
-                    >
-                      <Text style={styles.cardTime}>{group[0].time}</Text>
-                      <Text style={styles.groupCardCount}>{group.length} pacientes</Text>
-                      <Text style={styles.cardValue}>{formatCurrency(totalValue)}</Text>
-                      <Text style={styles.groupCardHint}>Toque para ver</Text>
-                    </Pressable>
+                    <View key={item.id} style={[styles.card, { borderLeftColor: clinicColor, borderLeftWidth: 5 }]}>
+                      <Pressable onPress={() => onReminderPress(item)}>
+                        <Text style={[styles.reminderTag, item.reminder ? styles.reminderTagActive : null]}>Lembrete</Text>
+                      </Pressable>
+                      <Text style={styles.cardTime}>{item.time}</Text>
+                      <Text style={styles.cardPatient} numberOfLines={1}>
+                        {item.patient_name ?? "?"}
+                      </Text>
+                      <Text style={styles.cardClinic} numberOfLines={1}>
+                        {item.clinic_name ?? ""}
+                      </Text>
+                      <Text style={styles.cardValue}>{formatCurrency(item.session_value)}</Text>
+                    </View>
                   );
                 })
               )}
@@ -177,36 +147,6 @@ export default function WeeklyGridView({ schedules, onReminderPress }: Props) {
             </View>
           </View>
         )}
-
-      <Modal
-        visible={groupModal !== null}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setGroupModal(null)}
-      >
-        <Pressable style={styles.modalOverlay} onPress={() => setGroupModal(null)}>
-          <Pressable style={styles.modalContent} onPress={() => {}}>
-            <Text style={styles.modalTitle}>
-              {groupModal?.[0]?.time} · {groupModal?.length} pacientes
-            </Text>
-            <ScrollView style={{ maxHeight: 320 }}>
-              {groupModal?.map((item) => {
-                const clinicColor = clinicColors.get(item.clinic_name ?? "?") ?? colors.border;
-                return (
-                  <View key={item.id} style={[styles.modalItem, { borderLeftColor: clinicColor, borderLeftWidth: 4 }]}>
-                    <Text style={styles.cardPatient}>{item.patient_name ?? "?"}</Text>
-                    <Text style={styles.cardClinic}>{item.clinic_name ?? ""}</Text>
-                    <Text style={styles.cardValue}>{formatCurrency(item.session_value)}</Text>
-                  </View>
-                );
-              })}
-            </ScrollView>
-            <Pressable style={styles.modalCloseBtn} onPress={() => setGroupModal(null)}>
-              <Text style={styles.modalCloseText}>Fechar</Text>
-            </Pressable>
-          </Pressable>
-        </Pressable>
-      </Modal>
     </ScrollView>
   );
 }
@@ -232,9 +172,6 @@ const styles = StyleSheet.create({
   cardPatient: { color: colors.text, fontSize: 13, fontWeight: "600", marginTop: 2 },
   cardClinic: { color: colors.textMuted, fontSize: 11, marginTop: 1 },
   cardValue: { color: colors.textMuted, fontSize: 11, marginTop: 2, fontWeight: "600" },
-  groupCard: { borderLeftWidth: 5, borderLeftColor: colors.primary, alignItems: "flex-start" },
-  groupCardCount: { color: colors.text, fontSize: 13, fontWeight: "700", marginTop: 2 },
-  groupCardHint: { color: colors.primary, fontSize: 10, marginTop: 4, fontWeight: "600" },
   hoursSection: { paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.xl },
   hoursTitle: { color: colors.text, fontSize: 14, fontWeight: "700", marginBottom: spacing.sm },
   hoursRow: { flexDirection: "row", alignItems: "center", marginBottom: spacing.xs, gap: spacing.sm },
@@ -248,10 +185,4 @@ const styles = StyleSheet.create({
   dayStatLabel: { color: colors.textMuted, fontSize: 11 },
   dayStatDay: { color: colors.text, fontSize: 15, fontWeight: "700", marginTop: 2 },
   dayStatValue: { fontSize: 13, fontWeight: "700", marginTop: 2 },
-  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", alignItems: "center", padding: spacing.lg },
-  modalContent: { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md, width: "100%", maxWidth: 340, borderWidth: 1, borderColor: colors.border },
-  modalTitle: { color: colors.text, fontSize: 15, fontWeight: "700", marginBottom: spacing.sm },
-  modalItem: { backgroundColor: colors.surfaceLight, borderRadius: radius.sm, padding: spacing.sm, marginBottom: spacing.sm },
-  modalCloseBtn: { marginTop: spacing.sm, paddingVertical: spacing.sm, alignItems: "center", backgroundColor: colors.surfaceLight, borderRadius: radius.sm },
-  modalCloseText: { color: colors.primary, fontSize: 14, fontWeight: "700" },
 });
