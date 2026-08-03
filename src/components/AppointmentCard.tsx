@@ -49,13 +49,13 @@ export default function AppointmentCard({ appointment, onMarkPresent, onMarkAbse
             style={[styles.button, styles.presentButton]}
             onPress={() => handlePress(onMarkPresent)}
           >
-            <Text style={styles.buttonText}>🟢 Presente</Text>
+            <Text style={styles.buttonText}>Presente</Text>
           </Pressable>
           <Pressable
             style={[styles.button, styles.absentButton]}
             onPress={() => handlePress(onMarkAbsent)}
           >
-            <Text style={styles.buttonText}>🔴 Ausente</Text>
+            <Text style={styles.buttonText}>Ausente</Text>
           </Pressable>
         </View>
       ) : (
