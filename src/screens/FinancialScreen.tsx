@@ -75,7 +75,7 @@ export default function FinancialScreen() {
     if (!summary) return;
     setExportingPdf(true);
     try {
-      await exportFinancialScreenAsPdf(summary, byClinic, trend, range.label);
+      await exportFinancialScreenAsPdf(summary, byClinic, trend, range.label, range.start, range.end);
     } catch (err) {
       console.error("Erro ao exportar tela financeira:", err);
     } finally {

@@ -1,6 +1,6 @@
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
-import { FinancialSummary, RevenueTrendPoint, MonthlyRevenuePoint, getMonthlyRevenueLast12Months } from "../database/repositories/financialRepo";
+import { FinancialSummary, RevenueTrendPoint, MonthlyRevenuePoint, getMonthlyRevenueLast12Months, ClinicAttendanceStats, getAttendanceByClinic } from "../database/repositories/financialRepo";
 
 const CLINIC_COLORS = ["#22C55E", "#3B82F6", "#F59E0B", "#EC4899", "#A855F7", "#14B8A6", "#EF4444", "#84CC16"];
 const MONTH_NAMES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
@@ -59,6 +59,7 @@ function buildHtml(
   byClinic: { clinic_name: string; total: number }[],
   trend: RevenueTrendPoint[],
   monthly: MonthlyRevenuePoint[],
+  attendance: ClinicAttendanceStats[],
   rangeLabel: string
 ): string {
   const attendanceRate =
@@ -126,6 +127,12 @@ function buildHtml(
         <h2>Receita por clínica</h2>
         ${byClinic.length > 0 ? clinicBarsHtml : "<p>Sem dados neste período.</p>"}
 
+        <h2>Presencas e faltas por clinica</h2>
+        <table>
+          <thead><tr><th>Clinica</th><th style="text-align:right">Presencas</th><th style="text-align:right">Faltas</th><th style="text-align:right">Total</th></tr></thead>
+          <tbody>${attendance.length > 0 ? attendance.map(a => `<tr><td>${a.clinic_name}</td><td style="text-align:right">${a.present}</td><td style="text-align:right">${a.absent}</td><td style="text-align:right">${a.present + a.absent}</td></tr>`).join("") : "<tr><td colspan=4>Sem dados neste periodo.</td></tr>"}</tbody>
+        </table>
+
         <h2>Tendência de receita por dia</h2>
         <table>
           <thead><tr><th>Data</th><th style="text-align:right">Receita</th></tr></thead>
@@ -140,10 +147,13 @@ export async function exportFinancialScreenAsPdf(
   summary: FinancialSummary,
   byClinic: { clinic_name: string; total: number }[],
   trend: RevenueTrendPoint[],
-  rangeLabel: string
+  rangeLabel: string,
+  startDate: string,
+  endDate: string
 ): Promise<void> {
   const monthly = await getMonthlyRevenueLast12Months();
-  const html = buildHtml(summary, byClinic, trend, monthly, rangeLabel);
+  const attendance = await getAttendanceByClinic(startDate, endDate);
+  const html = buildHtml(summary, byClinic, trend, monthly, attendance, rangeLabel);
   const { uri } = await Print.printToFileAsync({ html });
 
   if (await Sharing.isAvailableAsync()) {
