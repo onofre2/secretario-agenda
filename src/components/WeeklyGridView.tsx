@@ -132,7 +132,7 @@ export default function WeeklyGridView({ schedules, onReminderPress }: Props) {
 
         {bestDay && worstDay && (
           <View style={styles.dayStatsSection}>
-            <Text style={styles.hoursTitle}>Melhor e pior dia (semana)</Text>
+            <Text style={styles.hoursTitle}>Melhor dia de receita e pior dia de Receita da semana</Text>
             <View style={styles.dayStatsRow}>
               <View style={styles.dayStatCard}>
                 <Text style={styles.dayStatLabel}>Melhor dia</Text>
