@@ -19,7 +19,7 @@
       "adaptiveIcon": {
         "backgroundColor": "#0F172A"
       },
-      "permissions": ["NOTIFICATIONS", "SCHEDULE_EXACT_ALARM"]
+      "permissions": ["NOTIFICATIONS", "SCHEDULE_EXACT_ALARM", "CAMERA"]
     },
     "plugins": [
       [
@@ -27,6 +27,21 @@
         {
           "icon": "./assets/icon.png",
           "color": "#0F172A"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O app usa suas fotos para anexar documentos e exames ao paciente.",
+          "cameraPermission": "O app usa a camera para fotografar documentos e exames do paciente."
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "O app salva fotos de documentos na sua galeria para nao perde-las.",
+          "savePhotosPermission": "O app salva fotos de documentos na sua galeria para nao perde-las.",
+          "isAccessMediaLocationEnabled": false
         }
       ]
     ],

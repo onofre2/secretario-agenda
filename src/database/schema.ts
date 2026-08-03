@@ -1,7 +1,7 @@
 // Schema completo do SQLite — Secretário Agenda v1
 // Offline-first, sem backend. Todas as tabelas da Master Spec.
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 export const CREATE_TABLES_SQL = `
 PRAGMA journal_mode = WAL;
@@ -110,6 +110,15 @@ CREATE TABLE IF NOT EXISTS backups (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS patient_documents (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  patient_id INTEGER NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+  file_path TEXT NOT NULL,
+  file_type TEXT NOT NULL CHECK (file_type IN ('photo','pdf')),
+  original_name TEXT,
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_appointments_date ON appointments(date);
 CREATE INDEX IF NOT EXISTS idx_appointments_patient ON appointments(patient_id);
 CREATE INDEX IF NOT EXISTS idx_appointments_clinic ON appointments(clinic_id);
@@ -117,4 +126,5 @@ CREATE INDEX IF NOT EXISTS idx_schedules_weekday ON schedules(weekday);
 CREATE INDEX IF NOT EXISTS idx_attendance_appointment ON attendance(appointment_id);
 CREATE INDEX IF NOT EXISTS idx_financial_date ON financial_records(date);
 CREATE INDEX IF NOT EXISTS idx_clinical_notes_patient ON clinical_notes(patient_id);
+CREATE INDEX IF NOT EXISTS idx_patient_documents_patient ON patient_documents(patient_id);
 `;

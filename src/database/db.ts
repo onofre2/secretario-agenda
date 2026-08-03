@@ -63,6 +63,18 @@ async function runMigrations(
       "ALTER TABLE schedules ADD COLUMN reminder TEXT;"
     );
   }
+  if (fromVersion < 4) {
+    await db.execAsync(
+      `CREATE TABLE IF NOT EXISTS patient_documents (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        patient_id INTEGER NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+        file_path TEXT NOT NULL,
+        file_type TEXT NOT NULL CHECK (file_type IN ('photo','pdf')),
+        original_name TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      );`
+    );
+  }
 }
 
 /**

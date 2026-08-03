@@ -116,3 +116,14 @@ export type NewClinic = Omit<Clinic, "id" | "created_at" | "updated_at">;
 export type NewPatient = Omit<Patient, "id" | "created_at" | "updated_at">;
 export type NewSchedule = Omit<Schedule, "id" | "created_at" | "updated_at" | "reminder"> & { reminder?: string | null };
 export type NewAppointment = Omit<Appointment, "id" | "created_at" | "updated_at">;
+
+export type DocumentType = "photo" | "pdf";
+
+export interface PatientDocument {
+  id: ID;
+  patient_id: ID;
+  file_path: string;
+  file_type: DocumentType;
+  original_name: string | null;
+  created_at: string;
+}
