@@ -22,6 +22,7 @@ import { listPatients } from "../database/repositories/patientsRepo";
 import { listClinics } from "../database/repositories/clinicsRepo";
 import { Schedule, Weekday } from "../database/types";
 import WeeklyGridView from "../components/WeeklyGridView";
+import PatientTimelineModal from "../components/PatientTimelineModal";
 
 interface ScheduleWithNames extends Schedule {
   patient_name?: string;
@@ -36,6 +37,7 @@ export default function AgendaScreen() {
   const [saving, setSaving] = useState(false);
   const [editingScheduleId, setEditingScheduleId] = useState<number | null>(null);
   const [reminderSchedule, setReminderSchedule] = useState<{ id: number; patient_name?: string; reminder?: string | null } | null>(null);
+  const [timelinePatient, setTimelinePatient] = useState<{ id: number; name: string } | null>(null);
   const [reminderText, setReminderText] = useState("");
   const [viewMode, setViewMode] = useState<"list" | "week">("week");
 
@@ -198,10 +200,12 @@ export default function AgendaScreen() {
                 <Text style={styles.cardDay}>{weekdayLabel(item.weekday)}</Text>
                 <Text style={styles.cardTime}>{item.time}</Text>
               </View>
-              <Text style={styles.cardTitle}>{item.patient_name ?? "Paciente removido"}</Text>
-              <Text style={styles.cardSubtitle}>
-                {item.clinic_name ?? "Clínica removida"} · {formatCurrency(item.session_value)}
-              </Text>
+              <Pressable disabled={!item.patient_id} onPress={() => item.patient_id && setTimelinePatient({ id: item.patient_id, name: item.patient_name ?? "Paciente" })}>
+                <Text style={styles.cardTitle}>{item.patient_name ?? "Paciente removido"}</Text>
+                <Text style={styles.cardSubtitle}>
+                  {item.clinic_name ?? "Clínica removida"} · {formatCurrency(item.session_value)}
+                </Text>
+              </Pressable>
               <View style={styles.actionsRow}>
                 <Pressable onPress={() => handlePause(item)}>
                   <Text style={styles.actionLink}>Pausar</Text>
@@ -297,6 +301,12 @@ export default function AgendaScreen() {
           </View>
         </View>
       </Modal>
+      <PatientTimelineModal
+        visible={!!timelinePatient}
+        patientId={timelinePatient?.id ?? null}
+        patientName={timelinePatient?.name ?? ""}
+        onClose={() => setTimelinePatient(null)}
+      />
     </SafeAreaView>
   );
 }
