@@ -74,3 +74,19 @@ export async function getRevenueTrend(startDate: string, endDate: string): Promi
     [startDate, endDate]
   );
 }
+
+export interface MonthlyRevenuePoint {
+  month: string; // "YYYY-MM"
+  revenue: number;
+}
+
+/** Receita agrupada por mes, para os ultimos 12 meses incluindo o atual. */
+export async function getMonthlyRevenueLast12Months(): Promise<MonthlyRevenuePoint[]> {
+  const db = await getDb();
+  return db.getAllAsync<MonthlyRevenuePoint>(
+    `SELECT substr(date, 1, 7) as month, SUM(amount) as revenue
+     FROM financial_records
+     WHERE type = 'revenue' AND date >= date('now', '-12 months', 'start of month')
+     GROUP BY month ORDER BY month ASC`
+  );
+}
