@@ -1,10 +1,11 @@
 import React, { useCallback, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Text, StyleSheet, Switch, Alert, ActivityIndicator, ScrollView } from "react-native";
+import { View, Text, StyleSheet, Switch, Alert, ActivityIndicator, ScrollView, Image } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { colors, spacing, radius } from "../theme/colors";
 import PrimaryButton from "../components/PrimaryButton";
 import { getSetting, setSetting, SETTINGS_KEYS } from "../database/repositories/settingsRepo";
+import { pickSignatureImage, removeSignatureImage } from "../utils/signatureImport";
 import { exportBackup, restoreBackup, markBackupDone } from "../backup/backupService";
 import { DEFAULT_LEAD_MINUTES } from "../notifications/config";
 import * as Notifications from "expo-notifications";
@@ -15,6 +16,7 @@ export default function SettingsScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [leadMinutes, setLeadMinutes] = useState(String(DEFAULT_LEAD_MINUTES));
   const [busy, setBusy] = useState<"backup" | "restore" | null>(null);
+  const [signaturePath, setSignaturePath] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const theme = await getSetting(SETTINGS_KEYS.THEME);
@@ -23,6 +25,8 @@ export default function SettingsScreen() {
     if (lead) setLeadMinutes(lead);
     const notifEnabled = await getSetting(SETTINGS_KEYS.NOTIFICATIONS_ENABLED);
     setNotificationsEnabled(notifEnabled !== "0");
+    const sig = await getSetting(SETTINGS_KEYS.SIGNATURE_IMAGE_PATH);
+    setSignaturePath(sig);
   }, []);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -89,6 +93,19 @@ export default function SettingsScreen() {
     );
   };
 
+  const handlePickSignature = async () => {
+    const ok = await pickSignatureImage();
+    if (ok) {
+      const sig = await getSetting(SETTINGS_KEYS.SIGNATURE_IMAGE_PATH);
+      setSignaturePath(sig);
+    }
+  };
+
+  const handleRemoveSignature = async () => {
+    await removeSignatureImage();
+    setSignaturePath(null);
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: spacing.md }}>
@@ -133,6 +150,23 @@ export default function SettingsScreen() {
         />
         {busy && <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.sm }} />}
       </Section>
+
+        <Section title="Assinatura digital">
+          <Text style={styles.hint}>
+            A assinatura escolhida aparece automaticamente no rodapé dos PDFs de Financeiro e
+            Evolução, na aba Relatórios.
+          </Text>
+          {signaturePath && (
+            <Image source={{ uri: signaturePath }} style={styles.signaturePreview} resizeMode="contain" />
+          )}
+          <PrimaryButton
+            label={signaturePath ? "Trocar assinatura" : "Escolher assinatura"}
+            onPress={handlePickSignature}
+          />
+          {signaturePath && (
+            <PrimaryButton label="Remover assinatura" onPress={handleRemoveSignature} variant="outline" />
+          )}
+        </Section>
     </ScrollView>
     </SafeAreaView>
   );
@@ -172,4 +206,5 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
   },
   leadValue: { color: colors.text, fontSize: 16 },
+  signaturePreview: { width: "100%", height: 80, marginVertical: spacing.sm, backgroundColor: colors.surfaceLight, borderRadius: radius.sm },
 });

@@ -1,6 +1,7 @@
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import { FinancialSummary, RevenueTrendPoint, MonthlyRevenuePoint, getMonthlyRevenueLast12Months, ClinicAttendanceStats, getAttendanceByClinic } from "../database/repositories/financialRepo";
+import { getSignatureImageBase64 } from "../utils/signatureImport";
 
 const CLINIC_COLORS = ["#22C55E", "#3B82F6", "#F59E0B", "#EC4899", "#A855F7", "#14B8A6", "#EF4444", "#84CC16"];
 const MONTH_NAMES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
@@ -60,7 +61,8 @@ function buildHtml(
   trend: RevenueTrendPoint[],
   monthly: MonthlyRevenuePoint[],
   attendance: ClinicAttendanceStats[],
-  rangeLabel: string
+  rangeLabel: string,
+  signatureBase64: string | null
 ): string {
   const attendanceRate =
     summary.presentCount + summary.absentCount > 0
@@ -138,6 +140,7 @@ function buildHtml(
           <thead><tr><th>Data</th><th style="text-align:right">Receita</th></tr></thead>
           <tbody>${trendRows || "<tr><td colspan='2'>Sem dados neste período.</td></tr>"}</tbody>
         </table>
+          ${signatureBase64 ? `<div style="margin-top:40px; text-align:center;"><img src="${signatureBase64}" style="max-width:200px; max-height:80px;" /><div style="border-top:1px solid #334155; width:220px; margin:4px auto 0;"></div><div style="font-size:11px; color:#64748B; margin-top:4px;">Assinatura</div></div>` : ""}
       </body>
     </html>
   `;
@@ -153,7 +156,8 @@ export async function exportFinancialScreenAsPdf(
 ): Promise<void> {
   const monthly = await getMonthlyRevenueLast12Months();
   const attendance = await getAttendanceByClinic(startDate, endDate);
-  const html = buildHtml(summary, byClinic, trend, monthly, attendance, rangeLabel);
+    const signatureBase64 = await getSignatureImageBase64();
+    const html = buildHtml(summary, byClinic, trend, monthly, attendance, rangeLabel, signatureBase64);
   const { uri } = await Print.printToFileAsync({ html });
 
   if (await Sharing.isAvailableAsync()) {

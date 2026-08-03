@@ -27,4 +27,5 @@ export const SETTINGS_KEYS = {
   INVESTMENT_PERCENT: "investment_percent",
   NOTIFICATIONS_ENABLED: "notifications_enabled",
   MORNING_NOTIFICATION_ID: "morning_notification_id",
+  SIGNATURE_IMAGE_PATH: "signature_image_path",
 } as const;
