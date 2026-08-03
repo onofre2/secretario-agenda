@@ -52,6 +52,14 @@ export default function WeeklyGridView({ schedules, onReminderPress }: Props) {
   ).sort((a, b) => b[1] - a[1]);
   const maxHours = Math.max(1, ...clinicHours.map(([, h]) => h));
 
+  const dayRevenue = WEEKDAYS.map((day) => ({
+    label: day.short,
+    value: schedules.filter((s) => s.weekday === day.value).reduce((sum, s) => sum + s.session_value, 0),
+    count: schedules.filter((s) => s.weekday === day.value).length,
+  })).filter((d) => d.count > 0);
+  const bestDay = dayRevenue.length > 0 ? dayRevenue.reduce((a, b) => (b.value > a.value ? b : a)) : null;
+  const worstDay = dayRevenue.length > 0 ? dayRevenue.reduce((a, b) => (b.value < a.value ? b : a)) : null;
+
   return (
     <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
       {clinicNames.length > 0 && (
@@ -121,6 +129,24 @@ export default function WeeklyGridView({ schedules, onReminderPress }: Props) {
           </View>
         ))}
       </View>
+
+        {bestDay && worstDay && (
+          <View style={styles.dayStatsSection}>
+            <Text style={styles.hoursTitle}>Melhor e pior dia (semana)</Text>
+            <View style={styles.dayStatsRow}>
+              <View style={styles.dayStatCard}>
+                <Text style={styles.dayStatLabel}>Melhor dia</Text>
+                <Text style={styles.dayStatDay}>{bestDay.label}</Text>
+                <Text style={[styles.dayStatValue, { color: colors.primary }]}>{formatCurrency(bestDay.value)}</Text>
+              </View>
+              <View style={styles.dayStatCard}>
+                <Text style={styles.dayStatLabel}>Pior dia</Text>
+                <Text style={styles.dayStatDay}>{worstDay.label}</Text>
+                <Text style={[styles.dayStatValue, { color: colors.danger }]}>{formatCurrency(worstDay.value)}</Text>
+              </View>
+            </View>
+          </View>
+        )}
     </ScrollView>
   );
 }
@@ -153,4 +179,10 @@ const styles = StyleSheet.create({
   hoursBarTrack: { flex: 1, height: 8, borderRadius: 4, backgroundColor: colors.surfaceLight, overflow: "hidden" },
   hoursBarFill: { height: 8, borderRadius: 4 },
   hoursValue: { color: colors.text, fontSize: 12, fontWeight: "600", width: 30, textAlign: "right" },
+  dayStatsSection: { paddingHorizontal: spacing.md, paddingTop: spacing.xs, paddingBottom: spacing.xl },
+  dayStatsRow: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm },
+  dayStatCard: { flex: 1, backgroundColor: colors.surface, borderRadius: radius.sm, padding: spacing.sm, borderWidth: 1, borderColor: colors.border },
+  dayStatLabel: { color: colors.textMuted, fontSize: 11 },
+  dayStatDay: { color: colors.text, fontSize: 15, fontWeight: "700", marginTop: 2 },
+  dayStatValue: { fontSize: 13, fontWeight: "700", marginTop: 2 },
 });
