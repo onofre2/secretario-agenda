@@ -9,6 +9,7 @@ import FloatingAddButton from "../components/FloatingAddButton";
 import PatientTimelineModal from "../components/PatientTimelineModal";
 import SimpleBarChart from "../components/SimpleBarChart";
 import { listSchedules } from "../database/repositories/schedulesRepo";
+import { getAttendanceByClinic } from "../database/repositories/financialRepo";
 import {
   listClinics,
   createClinic,
@@ -35,6 +36,8 @@ export default function ClinicsScreen() {
   const [loadingPatients, setLoadingPatients] = useState(false);
   const [exportingClinicId, setExportingClinicId] = useState<number | null>(null);
   const [clinicCounts, setClinicCounts] = useState<{ label: string; value: number }[]>([]);
+  const [presentCounts, setPresentCounts] = useState<{ label: string; value: number }[]>([]);
+  const [absentCounts, setAbsentCounts] = useState<{ label: string; value: number }[]>([]);
 
   const load = useCallback(async () => {
     const clinicList = await listClinics();
@@ -45,6 +48,10 @@ export default function ClinicsScreen() {
       value: schedules.filter((s) => s.clinic_id === c.id).length,
     }));
     setClinicCounts(counts);
+    const attendance = await getAttendanceByClinic("1900-01-01", "2100-01-01");
+    const attByName = new Map(attendance.map((a) => [a.clinic_name, a]));
+    setPresentCounts(clinicList.map((c) => ({ label: c.name, value: attByName.get(c.name)?.present ?? 0 })));
+    setAbsentCounts(clinicList.map((c) => ({ label: c.name, value: attByName.get(c.name)?.absent ?? 0 })));
   }, []);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -131,6 +138,10 @@ export default function ClinicsScreen() {
             <View style={styles.footerSection}>
               <Text style={styles.footerTitle}>Atendimentos por clínica</Text>
               <SimpleBarChart data={clinicCounts} emptyMessage="Sem atendimentos cadastrados." formatAsCurrency={false} />
+              <Text style={[styles.footerTitle, { marginTop: spacing.md }]}>Presenças por clínica</Text>
+              <SimpleBarChart data={presentCounts} emptyMessage="Sem presencas registradas." formatAsCurrency={false} />
+              <Text style={[styles.footerTitle, { marginTop: spacing.md }]}>Faltas por clínica</Text>
+              <SimpleBarChart data={absentCounts} emptyMessage="Sem faltas registradas." formatAsCurrency={false} />
             </View>
           ) : null
         }

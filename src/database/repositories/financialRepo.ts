@@ -90,3 +90,24 @@ export async function getMonthlyRevenueLast12Months(): Promise<MonthlyRevenuePoi
      GROUP BY month ORDER BY month ASC`
   );
 }
+
+export interface ClinicAttendanceStats {
+  clinic_name: string;
+  present: number;
+  absent: number;
+}
+
+export async function getAttendanceByClinic(startDate: string, endDate: string): Promise<ClinicAttendanceStats[]> {
+  const db = await getDb();
+  return db.getAllAsync<ClinicAttendanceStats>(
+    `SELECT c.name as clinic_name,
+            SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) as present,
+            SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END) as absent
+     FROM appointments a
+     JOIN clinics c ON c.id = a.clinic_id
+     WHERE a.date BETWEEN ? AND ?
+     GROUP BY c.id
+     ORDER BY c.name ASC`,
+    [startDate, endDate]
+  );
+}
