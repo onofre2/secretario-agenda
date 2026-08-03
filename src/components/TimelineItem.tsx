@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, StyleSheet, Pressable } from "react-native";
+import { View, Text, TextInput, StyleSheet, Pressable, Alert } from "react-native";
 import { colors, spacing, radius } from "../theme/colors";
 import { formatCurrency } from "../utils/date";
 import { ClinicalNoteWithContext } from "../database/repositories/clinicalNotesRepo";
@@ -22,9 +22,10 @@ interface Props {
   };
   note: ClinicalNoteWithContext | null;
   onSaved: () => void;
+  onDelete: (id: number) => void;
 }
 
-export default function TimelineItem({ appointment, note, onSaved }: Props) {
+export default function TimelineItem({ appointment, note, onSaved, onDelete }: Props) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(note?.content ?? "");
   const [saving, setSaving] = useState(false);
@@ -41,11 +42,25 @@ export default function TimelineItem({ appointment, note, onSaved }: Props) {
     }
   };
 
+  const handleDelete = () => {
+    Alert.alert(
+      "Excluir atendimento",
+      "Isso remove este atendimento e a evolucao clinica associada. Essa acao nao pode ser desfeita.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        { text: "Excluir", style: "destructive", onPress: () => onDelete(appointment.id) },
+      ]
+    );
+  };
+
   return (
     <View style={styles.card}>
       <View style={styles.header}>
         <Text style={styles.date}>{appointment.date} · {appointment.time}</Text>
         <Text style={styles.status}>{STATUS_LABEL[appointment.status] ?? appointment.status}</Text>
+          <Pressable onPress={handleDelete}>
+            <Text style={styles.deleteLink}>Excluir</Text>
+          </Pressable>
       </View>
       <Text style={styles.clinic}>
         {appointment.clinic_name} · {formatCurrency(appointment.session_value)}
@@ -104,6 +119,7 @@ const styles = StyleSheet.create({
   header: { flexDirection: "row", justifyContent: "space-between" },
   date: { color: colors.text, fontSize: 14, fontWeight: "700" },
   status: { color: colors.textMuted, fontSize: 12 },
+  deleteLink: { color: colors.danger, fontSize: 12, fontWeight: "600" },
   clinic: { color: colors.textMuted, fontSize: 13, marginTop: 2, marginBottom: spacing.sm },
   noteBox: {
     backgroundColor: colors.surfaceLight,

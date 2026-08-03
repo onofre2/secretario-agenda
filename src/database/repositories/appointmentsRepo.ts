@@ -150,3 +150,9 @@ export async function createAppointment(data: {
   );
   return result.lastInsertRowId;
 }
+
+/** Exclui um atendimento (e cascata: nota clinica, registro financeiro, presenca). */
+export async function deleteAppointment(id: ID): Promise<void> {
+  const db = await getDb();
+  await db.runAsync("DELETE FROM appointments WHERE id = ?", [id]);
+}

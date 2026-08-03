@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { View, Text, Modal, FlatList, StyleSheet, Pressable, ActivityIndicator } from "react-native";
 import { colors, spacing } from "../theme/colors";
 import { getPatientTimeline } from "../database/repositories/patientsRepo";
+import { deleteAppointment } from "../database/repositories/appointmentsRepo";
 import { listNotesByPatient, ClinicalNoteWithContext } from "../database/repositories/clinicalNotesRepo";
 import { ClinicalEvolutionRow } from "../database/repositories/reportsRepo";
 import { exportClinicalEvolutionAsPdf } from "../reports/exportClinicalPdf";
@@ -48,6 +49,11 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
   }, [visible, load]);
 
   const noteByAppointment = new Map(notes.map((n) => [n.appointment_id, n]));
+
+  const handleDeleteAppointment = async (id: number) => {
+    await deleteAppointment(id);
+    await load();
+  };
 
   const handleExportPdf = async () => {
     if (notes.length === 0) return;
@@ -131,6 +137,7 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
               appointment={item}
               note={noteByAppointment.get(item.id) ?? null}
               onSaved={load}
+                onDelete={handleDeleteAppointment}
             />
           )}
         />
