@@ -7,7 +7,7 @@ import FormInput from "../components/FormInput";
 import PrimaryButton from "../components/PrimaryButton";
 import FloatingAddButton from "../components/FloatingAddButton";
 import PatientTimelineModal from "../components/PatientTimelineModal";
-import SimpleBarChart from "../components/SimpleBarChart";
+import RadarChart from "../components/RadarChart";
 import { listSchedules } from "../database/repositories/schedulesRepo";
 import { getAttendanceByClinic } from "../database/repositories/financialRepo";
 import {
@@ -20,6 +20,8 @@ import { listPatientsByClinic } from "../database/repositories/patientsRepo";
 import { getClinicalEvolutionByClinic } from "../database/repositories/reportsRepo";
 import { exportClinicalEvolutionAsPdf } from "../reports/exportClinicalPdf";
 import { Clinic, Patient } from "../database/types";
+
+const CLINIC_COLORS = ["#22C55E", "#3B82F6", "#F59E0B", "#EC4899", "#A855F7", "#14B8A6", "#EF4444", "#84CC16"];
 
 const emptyForm = { name: "", address: "", phone: "", payment_info: "", notes: "" };
 
@@ -35,23 +37,25 @@ export default function ClinicsScreen() {
   const [timelinePatient, setTimelinePatient] = useState<Patient | null>(null);
   const [loadingPatients, setLoadingPatients] = useState(false);
   const [exportingClinicId, setExportingClinicId] = useState<number | null>(null);
-  const [clinicCounts, setClinicCounts] = useState<{ label: string; value: number }[]>([]);
-  const [presentCounts, setPresentCounts] = useState<{ label: string; value: number }[]>([]);
-  const [absentCounts, setAbsentCounts] = useState<{ label: string; value: number }[]>([]);
+  const [radarSeries, setRadarSeries] = useState<{ label: string; color: string; values: number[] }[]>([]);
 
   const load = useCallback(async () => {
     const clinicList = await listClinics();
     const schedules = await listSchedules(true);
     setClinics(clinicList);
-    const counts = clinicList.map((c) => ({
-      label: c.name,
-      value: schedules.filter((s) => s.clinic_id === c.id).length,
-    }));
-    setClinicCounts(counts);
     const attendance = await getAttendanceByClinic("1900-01-01", "2100-01-01");
     const attByName = new Map(attendance.map((a) => [a.clinic_name, a]));
-    setPresentCounts(clinicList.map((c) => ({ label: c.name, value: attByName.get(c.name)?.present ?? 0 })));
-    setAbsentCounts(clinicList.map((c) => ({ label: c.name, value: attByName.get(c.name)?.absent ?? 0 })));
+    setRadarSeries(
+      clinicList.map((c, i) => ({
+        label: c.name,
+        color: CLINIC_COLORS[i % CLINIC_COLORS.length],
+        values: [
+          schedules.filter((s) => s.clinic_id === c.id).length,
+          attByName.get(c.name)?.present ?? 0,
+          attByName.get(c.name)?.absent ?? 0,
+        ],
+      }))
+    );
   }, []);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -133,18 +137,14 @@ export default function ClinicsScreen() {
         ListEmptyComponent={
           <Text style={styles.empty}>Nenhuma clínica cadastrada. Toque em + para adicionar.</Text>
           }
-        ListFooterComponent={
-          clinicCounts.length > 0 ? (
-            <View style={styles.footerSection}>
-              <Text style={styles.footerTitle}>Atendimentos por clínica</Text>
-              <SimpleBarChart data={clinicCounts} emptyMessage="Sem atendimentos cadastrados." formatAsCurrency={false} />
-              <Text style={[styles.footerTitle, { marginTop: spacing.md }]}>Presenças por clínica</Text>
-              <SimpleBarChart data={presentCounts} emptyMessage="Sem presencas registradas." formatAsCurrency={false} />
-              <Text style={[styles.footerTitle, { marginTop: spacing.md }]}>Faltas por clínica</Text>
-              <SimpleBarChart data={absentCounts} emptyMessage="Sem faltas registradas." formatAsCurrency={false} />
-            </View>
-          ) : null
-        }
+          ListFooterComponent={
+            radarSeries.length > 0 ? (
+              <View style={styles.footerSection}>
+                <Text style={styles.footerTitle}>Atendimentos, presenças e faltas por clínica</Text>
+                <RadarChart axisLabels={["Atendimentos", "Presenças", "Faltas"]} series={radarSeries} />
+              </View>
+            ) : null
+          }
         renderItem={({ item }) => (
           <View style={styles.card}>
             <Pressable onPress={() => openEdit(item)}>
