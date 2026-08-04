@@ -55,11 +55,19 @@ export default function WeeklyGridView({ schedules, onReminderPress }: Props) {
       .sort((a, b) => a.time.localeCompare(b.time));
 
   const clinicHours = Array.from(
-    schedules.reduce((map, s) => {
-      const name = s.clinic_name ?? "?";
-      map.set(name, (map.get(name) ?? 0) + 1);
-      return map;
-    }, new Map<string, number>())
+    (() => {
+      const seenSlots = new Set<string>();
+      const counts = new Map<string, number>();
+      for (const s of schedules) {
+        const name = s.clinic_name ?? "?";
+        const slotKey = `${s.weekday}-${s.time}-${name}`;
+        if (!seenSlots.has(slotKey)) {
+          seenSlots.add(slotKey);
+          counts.set(name, (counts.get(name) ?? 0) + 1);
+        }
+      }
+      return counts;
+    })()
   ).sort((a, b) => b[1] - a[1]);
   const maxHours = Math.max(1, ...clinicHours.map(([, h]) => h));
 
