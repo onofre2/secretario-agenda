@@ -85,12 +85,32 @@ export default function RadarChart({ axisLabels, series, size = 260 }: Props) {
               key={s.label}
               points={points}
               fill={s.color}
-              fillOpacity={0.25}
+              fillOpacity={0.22}
               stroke={s.color}
               strokeWidth={2}
             />
           );
         })}
+
+        {series.map((s) =>
+          s.values.map((v, i) => {
+            const fraction = (v ?? 0) / axisMax[i];
+            const p = pointForAxis(i, Math.max(fraction, 0.08));
+            return (
+              <SvgText
+                key={`${s.label}-${i}`}
+                x={p.x}
+                y={p.y - 6}
+                fontSize={11}
+                fontWeight="bold"
+                fill={s.color}
+                textAnchor="middle"
+              >
+                {v ?? 0}
+              </SvgText>
+            );
+          })
+        )}
 
         {axisLabels.map((label, i) => {
           const p = pointForAxis(i, 1.18);
@@ -109,11 +129,14 @@ export default function RadarChart({ axisLabels, series, size = 260 }: Props) {
         })}
       </Svg>
 
-      <View style={styles.legendRow}>
+      <View style={styles.legendColumn}>
         {series.map((s) => (
-          <View key={s.label} style={styles.legendItem}>
+          <View key={s.label} style={styles.legendRow}>
             <View style={[styles.legendDot, { backgroundColor: s.color }]} />
-            <Text style={styles.legendText} numberOfLines={1}>{s.label}</Text>
+            <Text style={styles.legendName} numberOfLines={1}>{s.label}</Text>
+            <Text style={styles.legendValues}>
+              {axisLabels.map((label, i) => `${label.slice(0, 4)}: ${s.values[i] ?? 0}`).join("  ·  ")}
+            </Text>
           </View>
         ))}
       </View>
@@ -123,8 +146,9 @@ export default function RadarChart({ axisLabels, series, size = 260 }: Props) {
 
 const styles = StyleSheet.create({
   wrapper: { alignItems: "center" },
-  legendRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, marginTop: spacing.md, justifyContent: "center", paddingHorizontal: spacing.sm },
-  legendItem: { flexDirection: "row", alignItems: "center", gap: 4, maxWidth: 150 },
+  legendColumn: { width: "100%", marginTop: spacing.md, gap: spacing.xs },
+  legendRow: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 6 },
   legendDot: { width: 8, height: 8, borderRadius: 4 },
-  legendText: { color: colors.textMuted, fontSize: 12 },
+  legendName: { color: colors.text, fontSize: 12, fontWeight: "700" },
+  legendValues: { color: colors.textMuted, fontSize: 11 },
 });
