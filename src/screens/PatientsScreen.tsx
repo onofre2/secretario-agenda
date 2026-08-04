@@ -209,7 +209,7 @@ export default function PatientsScreen() {
               </Pressable>
             </View>
             <Pressable onPress={() => setTimelinePatient(item)} style={styles.historyLink}>
-              <Text style={styles.historyLinkText}>Ver histórico clínico →</Text>
+              <Text style={styles.historyLinkText}>Histórico do paciente →</Text>
             </Pressable>
           </View>
         )}

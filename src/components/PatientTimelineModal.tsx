@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { View, Text, Modal, FlatList, StyleSheet, Pressable, ActivityIndicator, Alert, Image } from "react-native";
 import { colors, spacing } from "../theme/colors";
-import { getPatientTimeline } from "../database/repositories/patientsRepo";
+import { getPatientTimeline, getPatient } from "../database/repositories/patientsRepo";
 import { deleteAppointment } from "../database/repositories/appointmentsRepo";
 import { listNotesByPatient, ClinicalNoteWithContext } from "../database/repositories/clinicalNotesRepo";
 import { ClinicalEvolutionRow } from "../database/repositories/reportsRepo";
@@ -37,17 +37,20 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
   const [retroModalOpen, setRetroModalOpen] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [documents, setDocuments] = useState<PatientDocument[]>([]);
+  const [patientInfo, setPatientInfo] = useState<{ diagnosis: string | null; treatment_goals: string | null } | null>(null);
 
   const load = useCallback(async () => {
     if (!patientId) return;
-    const [timeline, noteList, docList] = await Promise.all([
+    const [timeline, noteList, docList, patient] = await Promise.all([
       getPatientTimeline(patientId) as Promise<AppointmentRow[]>,
       listNotesByPatient(patientId),
       listDocumentsByPatient(patientId),
+      getPatient(patientId),
     ]);
     setAppointments(timeline);
     setNotes(noteList);
     setDocuments(docList);
+    setPatientInfo(patient ? { diagnosis: patient.diagnosis, treatment_goals: patient.treatment_goals } : null);
   }, [patientId]);
 
   useEffect(() => {
@@ -139,6 +142,23 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
             <Text style={styles.closeLink}>Fechar</Text>
           </Pressable>
         </View>
+
+        {patientInfo && (patientInfo.diagnosis || patientInfo.treatment_goals) && (
+          <View style={styles.infoSection}>
+            {!!patientInfo.diagnosis && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Diagnóstico</Text>
+                <Text style={styles.infoValue}>{patientInfo.diagnosis}</Text>
+              </View>
+            )}
+            {!!patientInfo.treatment_goals && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>Objetivos e tratamento</Text>
+                <Text style={styles.infoValue}>{patientInfo.treatment_goals}</Text>
+              </View>
+            )}
+          </View>
+        )}
 
         <View style={styles.actionBar}>
           <PrimaryButton
@@ -237,4 +257,8 @@ const styles = StyleSheet.create({
   docName: { color: colors.text, fontSize: 13, fontWeight: "600" },
   docDate: { color: colors.textMuted, fontSize: 11, marginTop: 2 },
   docDelete: { color: colors.danger, fontSize: 12, fontWeight: "600" },
+  infoSection: { paddingHorizontal: spacing.md, paddingTop: spacing.md, gap: spacing.sm },
+  infoRow: { backgroundColor: colors.surface, borderRadius: 10, padding: spacing.sm, borderWidth: 1, borderColor: colors.border },
+  infoLabel: { color: colors.primary, fontSize: 12, fontWeight: "700", marginBottom: 2 },
+  infoValue: { color: colors.text, fontSize: 14, lineHeight: 19 },
 });
