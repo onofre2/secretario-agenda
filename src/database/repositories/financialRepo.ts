@@ -59,6 +59,18 @@ export async function getRevenueByClinic(startDate: string, endDate: string) {
   );
 }
 
+export async function getLossByClinic(startDate: string, endDate: string) {
+  const db = await getDb();
+  return db.getAllAsync<{ clinic_name: string; total: number }>(
+    `SELECT c.name as clinic_name, SUM(f.amount) as total
+     FROM financial_records f
+     JOIN clinics c ON c.id = f.clinic_id
+     WHERE f.type = 'loss' AND f.date BETWEEN ? AND ?
+     GROUP BY c.id ORDER BY total DESC`,
+    [startDate, endDate]
+  );
+}
+
 export interface RevenueTrendPoint {
   date: string;
   revenue: number;

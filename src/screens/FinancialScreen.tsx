@@ -8,6 +8,7 @@ import { getRangeFor, PeriodKind } from "../utils/period";
 import {
   getSummary,
   getRevenueByClinic,
+  getLossByClinic,
   getRevenueTrend,
   FinancialSummary,
   RevenueTrendPoint,
@@ -33,6 +34,7 @@ export default function FinancialScreen() {
   const [period, setPeriod] = useState<PeriodKind>("week");
   const [summary, setSummary] = useState<FinancialSummary | null>(null);
   const [byClinic, setByClinic] = useState<{ clinic_name: string; total: number }[]>([]);
+  const [lossByClinic, setLossByClinic] = useState<{ clinic_name: string; total: number }[]>([]);
   const [trend, setTrend] = useState<RevenueTrendPoint[]>([]);
   const [monthRevenue, setMonthRevenue] = useState(0);
   const [todayRevenue, setTodayRevenue] = useState(0);
@@ -46,9 +48,10 @@ export default function FinancialScreen() {
     const monthRange = getRangeFor("month");
     const weekRange = getRangeFor("week");
     const today = todayISO();
-    const [s, clinics, trendData, monthSummary, weekSummary, todaySummary] = await Promise.all([
+    const [s, clinics, clinicLosses, trendData, monthSummary, weekSummary, todaySummary] = await Promise.all([
       getSummary(range.start, range.end),
       getRevenueByClinic(range.start, range.end) as Promise<{ clinic_name: string; total: number }[]>,
+      getLossByClinic(range.start, range.end),
       getRevenueTrend(range.start, range.end),
       getSummary(monthRange.start, monthRange.end),
       getSummary(weekRange.start, weekRange.end),
@@ -56,6 +59,7 @@ export default function FinancialScreen() {
     ]);
     setSummary(s);
     setByClinic(clinics);
+    setLossByClinic(clinicLosses);
     setTrend(trendData);
     setMonthRevenue(monthSummary.revenue);
     setWeekRevenue(weekSummary.revenue);
@@ -96,6 +100,7 @@ export default function FinancialScreen() {
         rows: [
           { label: "Total perdido no período", value: formatCurrency(summary?.loss ?? 0) },
           { label: "Faltas registradas", value: String(summary?.absentCount ?? 0) },
+          ...lossByClinic.map((c) => ({ label: `  ↳ ${c.clinic_name}`, value: formatCurrency(c.total) })),
         ],
       };
     }
