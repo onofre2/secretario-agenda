@@ -2,7 +2,7 @@ import React, { useCallback, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesome } from "@expo/vector-icons";
 import { abrirWhatsApp } from "../utils/whatsapp";
-import { View, Text, FlatList, Modal, StyleSheet, Pressable, ScrollView, TextInput } from "react-native";
+import { View, Text, FlatList, Modal, StyleSheet, Pressable, ScrollView, TextInput, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { colors, spacing, radius } from "../theme/colors";
 import FormInput from "../components/FormInput";
@@ -115,11 +115,24 @@ export default function PatientsScreen() {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!editingId) return;
-    await deletePatient(editingId);
-    setModalOpen(false);
-    await load(selectedClinicId);
+    Alert.alert(
+      "Excluir paciente",
+      "Essa acao nao pode ser desfeita. Todos os atendimentos e evolucoes deste paciente tambem serao removidos.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Excluir",
+          style: "destructive",
+          onPress: async () => {
+            await deletePatient(editingId);
+            setModalOpen(false);
+            await load(selectedClinicId);
+          },
+        },
+      ]
+    );
   };
 
   const filteredPatients = patients.filter((p) =>

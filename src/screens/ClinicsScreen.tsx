@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Text, FlatList, Modal, StyleSheet, Pressable, ScrollView, ActivityIndicator } from "react-native";
+import { View, Text, FlatList, Modal, StyleSheet, Pressable, ScrollView, ActivityIndicator, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { colors, spacing, radius } from "../theme/colors";
 import FormInput from "../components/FormInput";
@@ -101,11 +101,24 @@ export default function ClinicsScreen() {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!editingId) return;
-    await deleteClinic(editingId);
-    setModalOpen(false);
-    await load();
+    Alert.alert(
+      "Excluir clinica",
+      "Essa acao APAGA PERMANENTEMENTE todos os pacientes, agendamentos, evolucoes e registros financeiros vinculados a esta clinica. Faca um backup antes se quiser manter esses dados. Essa acao nao pode ser desfeita.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Excluir",
+          style: "destructive",
+          onPress: async () => {
+            await deleteClinic(editingId);
+            setModalOpen(false);
+            await load();
+          },
+        },
+      ]
+    );
   };
 
   const openPatientsModal = async (clinic: Clinic) => {
@@ -181,6 +194,11 @@ export default function ClinicsScreen() {
           <FormInput label="Notas" value={form.notes} onChangeText={(v) => setForm({ ...form, notes: v })} multiline numberOfLines={3} />
 
           <PrimaryButton label={saving ? "Salvando..." : "Salvar"} onPress={handleSave} disabled={saving || !form.name.trim()} />
+          {editingId && (
+            <Text style={styles.dangerWarning}>
+              ⚠ Excluir esta clinica apaga permanentemente todos os pacientes, agendamentos, evolucoes e registros financeiros vinculados a ela. Faca um backup antes (aba Config) se quiser manter esses dados.
+            </Text>
+          )}
           {editingId && <PrimaryButton label="Excluir clínica" variant="danger" onPress={handleDelete} />}
           <PrimaryButton label="Cancelar" variant="outline" onPress={() => setModalOpen(false)} />
         </ScrollView>
@@ -268,6 +286,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.md,
   },
   closeText: { color: colors.primary, fontSize: 16, fontWeight: "600" },
+  dangerWarning: { color: colors.danger, fontSize: 12, lineHeight: 17, backgroundColor: "rgba(239,68,68,0.1)", borderRadius: radius.sm, borderWidth: 1, borderColor: colors.danger, padding: spacing.sm, marginTop: spacing.md },
   footerSection: { marginTop: spacing.lg, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },
   footerTitle: { color: colors.text, fontSize: 16, fontWeight: "700", marginBottom: spacing.sm },
 });

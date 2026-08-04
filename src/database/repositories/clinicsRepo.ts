@@ -39,5 +39,15 @@ export async function updateClinic(
 
 export async function deleteClinic(id: ID): Promise<void> {
   const db = await getDb();
-  await db.runAsync("DELETE FROM clinics WHERE id = ?", [id]);
+  await db.withTransactionAsync(async () => {
+    await db.runAsync(
+      `DELETE FROM patients WHERE id IN (
+         SELECT patient_id FROM schedules WHERE clinic_id = ?
+         UNION
+         SELECT patient_id FROM appointments WHERE clinic_id = ?
+       )`,
+      [id, id]
+    );
+    await db.runAsync("DELETE FROM clinics WHERE id = ?", [id]);
+  });
 }

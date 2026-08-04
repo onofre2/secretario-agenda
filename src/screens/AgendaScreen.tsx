@@ -1,6 +1,6 @@
 import React, { useCallback, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Text, FlatList, Modal, StyleSheet, Pressable, ScrollView } from "react-native";
+import { View, Text, FlatList, Modal, StyleSheet, Pressable, ScrollView, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { colors, spacing, radius } from "../theme/colors";
 import FormInput from "../components/FormInput";
@@ -20,7 +20,7 @@ import {
 } from "../database/repositories/schedulesRepo";
 import { listPatients } from "../database/repositories/patientsRepo";
 import { listClinics } from "../database/repositories/clinicsRepo";
-import { Schedule, Weekday } from "../database/types";
+import { Schedule, Weekday, Patient } from "../database/types";
 import WeeklyGridView from "../components/WeeklyGridView";
 import PatientTimelineModal from "../components/PatientTimelineModal";
 
@@ -32,6 +32,7 @@ interface ScheduleWithNames extends Schedule {
 export default function AgendaScreen() {
   const [schedules, setSchedules] = useState<ScheduleWithNames[]>([]);
   const [patients, setPatients] = useState<SelectOption[]>([]);
+  const [patientDetails, setPatientDetails] = useState<Patient[]>([]);
   const [clinics, setClinics] = useState<SelectOption[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -64,6 +65,7 @@ export default function AgendaScreen() {
     );
     setPatients(patientList.map((p) => ({ id: p.id, label: p.full_name })));
     setClinics(clinicList.map((c) => ({ id: c.id, label: c.name })));
+    setPatientDetails(patientList);
   }, []);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -74,6 +76,21 @@ export default function AgendaScreen() {
     setWeekday(1);
     setTime("");
     setSessionValue("");
+  };
+
+  const handleSelectPatient = (option: SelectOption) => {
+    setSelectedPatient(option);
+    if (editingScheduleId) return;
+    const patient = patientDetails.find((p) => p.id === option.id);
+    if (patient?.default_session_value != null && !sessionValue.trim()) {
+      setSessionValue(String(patient.default_session_value));
+    }
+    if (!selectedClinic) {
+      const lastSchedule = schedules.find((s) => s.patient_id === option.id);
+      if (lastSchedule?.clinic_id && lastSchedule.clinic_name) {
+        setSelectedClinic({ id: lastSchedule.clinic_id, label: lastSchedule.clinic_name });
+      }
+    }
   };
 
   const openNew = () => {
@@ -131,9 +148,22 @@ export default function AgendaScreen() {
     await load();
   };
 
-  const handleDelete = async (s: ScheduleWithNames) => {
-    await deleteSchedule(s.id);
-    await load();
+  const handleDelete = (s: ScheduleWithNames) => {
+    Alert.alert(
+      "Excluir horario",
+      `Remover o horario recorrente de ${s.patient_name ?? "paciente"} as ${s.time}? Isso nao apaga atendimentos ja realizados.`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Excluir",
+          style: "destructive",
+          onPress: async () => {
+            await deleteSchedule(s.id);
+            await load();
+          },
+        },
+      ]
+    );
   };
 
   const openReminder = (s: { id: number; patient_name?: string; reminder?: string | null }) => {
@@ -234,7 +264,7 @@ export default function AgendaScreen() {
             label="Paciente"
             value={selectedPatient}
             options={patients}
-            onSelect={setSelectedPatient}
+            onSelect={handleSelectPatient}
             emptyMessage="Cadastre um paciente primeiro, na aba Pacientes."
           />
           <SelectField
