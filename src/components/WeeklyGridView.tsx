@@ -202,6 +202,9 @@ export default function WeeklyGridView({ schedules, onReminderPress }: Props) {
                 const clinicColor = clinicColors.get(item.clinic_name ?? "?") ?? colors.border;
                 return (
                   <View key={item.id} style={[styles.modalItem, { borderLeftColor: clinicColor, borderLeftWidth: 4 }]}>
+                      <Pressable onPress={() => onReminderPress(item)}>
+                        <Text style={[styles.reminderTag, item.reminder ? styles.reminderTagActive : null]}>Lembrete</Text>
+                      </Pressable>
                     <Text style={styles.cardPatient}>{item.patient_name ?? "?"}</Text>
                     <Text style={styles.cardClinic}>{item.clinic_name ?? ""}</Text>
                     <Text style={styles.cardValue}>{formatCurrency(item.session_value)}</Text>
