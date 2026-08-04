@@ -6,7 +6,7 @@ const NOTE_TEMPLATES = [
   (name: string) =>
     `Paciente ${name} compareceu ao atendimento agendado na data e horário previstos. As condutas e intervenções planejadas foram executadas com sucesso, sem queixas ou intercorrências relatadas. O plano de cuidado permanece mantido para as próximas sessões.`,
   (name: string) =>
-    `Atendimento realizado com a presença do paciente ${name}. Foi feita a revisão do quadro atual e a aplicação dos procedimentos programados para a sessão. Paciente demonstrou boa receptividade e tolerância às intervenções, mantendo o acompanhamento conforme o planejamento terapêutico.`,
+    `Realizado o atendimento com a presença de ${name}. Foi feita a revisão do quadro atual e a aplicação dos procedimentos programados para a sessão. Paciente demonstrou boa receptividade e tolerância às intervenções, mantendo o acompanhamento conforme o planejamento terapêutico.`,
   (name: string) =>
     `Paciente ${name} compareceu à sessão de fisioterapia agendada. Os objetivos terapêuticos foram revisados e as intervenções foram realizadas conforme o plano de tratamento estabelecido.`,
 ];
