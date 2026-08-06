@@ -2,24 +2,51 @@ import { getDb } from "../db";
 import { Appointment, ID } from "../types";
 import { getSetting, setSetting, SETTINGS_KEYS } from "./settingsRepo";
 
-const NOTE_TEMPLATES = [
-  (name: string) =>
-    `Paciente ${name} compareceu ao atendimento agendado na data e horário previstos. As condutas e intervenções planejadas foram executadas com sucesso, sem queixas ou intercorrências relatadas. O plano de cuidado permanece mantido para as próximas sessões.`,
-  (name: string) =>
-    `Realizado o atendimento com a presença de ${name}. Foi feita a revisão do quadro atual e a aplicação dos procedimentos programados para a sessão. Paciente demonstrou boa receptividade e tolerância às intervenções, mantendo o acompanhamento conforme o planejamento terapêutico.`,
-  (name: string) =>
-    `Paciente ${name} compareceu à sessão de fisioterapia agendada. Os objetivos terapêuticos foram revisados e as intervenções foram realizadas conforme o plano de tratamento estabelecido.`,
-];
+const NOTE_BLOCKS = {
+  abertura: [
+    (name: string) => `Comparecimento à sessão conforme agendamento de ${name}.`,
+    (name: string) => `Atendimento realizado conforme cronograma para ${name}.`,
+    (name: string) => `Sessão de fisioterapia realizada conforme programação de ${name}.`,
+    (name: string) => `Comparecimento registrado para atendimento de ${name}.`,
+  ],
+  avaliacao: [
+    "Os objetivos terapêuticos foram revisados.",
+    "Foi realizada reavaliação do quadro funcional.",
+    "Houve revisão da evolução clínica.",
+    "As condições apresentadas foram analisadas antes das intervenções.",
+  ],
+  intervencao: [
+    "Foram executadas as condutas previstas no plano terapêutico.",
+    "As intervenções programadas foram realizadas.",
+    "Desenvolveram-se as atividades propostas para a sessão.",
+    "Aplicaram-se os procedimentos planejados.",
+  ],
+  encerramento: [
+    "Mantendo a continuidade do plano terapêutico.",
+    "Dando seguimento ao processo de reabilitação.",
+    "Respeitando os objetivos estabelecidos.",
+    "Mantendo acompanhamento evolutivo conforme planejamento.",
+  ],
+};
+
+function pickFromBlock(block: string[]): string {
+  return block[Math.floor(Math.random() * block.length)];
+}
 
 async function pickNoteTemplate(patientName: string): Promise<string> {
-  const lastIndex = await getSetting(SETTINGS_KEYS.LAST_NOTE_TEMPLATE);
-  const lastIdx = lastIndex ? Number(lastIndex) : -1;
-  let nextIdx = Math.floor(Math.random() * NOTE_TEMPLATES.length);
-  while (nextIdx === lastIdx && NOTE_TEMPLATES.length > 1) {
-    nextIdx = Math.floor(Math.random() * NOTE_TEMPLATES.length);
-  }
-  await setSetting(SETTINGS_KEYS.LAST_NOTE_TEMPLATE, String(nextIdx));
-  return NOTE_TEMPLATES[nextIdx](patientName);
+  const lastCombo = await getSetting(SETTINGS_KEYS.LAST_NOTE_TEMPLATE);
+  let combo: string;
+  let attempts = 0;
+  do {
+    const abertura = NOTE_BLOCKS.abertura[Math.floor(Math.random() * NOTE_BLOCKS.abertura.length)](patientName);
+    const avaliacao = pickFromBlock(NOTE_BLOCKS.avaliacao);
+    const intervencao = pickFromBlock(NOTE_BLOCKS.intervencao);
+    const encerramento = pickFromBlock(NOTE_BLOCKS.encerramento);
+    combo = `${abertura} ${avaliacao} ${intervencao} ${encerramento}`;
+    attempts++;
+  } while (combo === lastCombo && attempts < 5);
+  await setSetting(SETTINGS_KEYS.LAST_NOTE_TEMPLATE, combo);
+  return combo;
 }
 
 export interface TodayAppointment extends Appointment {
