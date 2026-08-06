@@ -68,7 +68,7 @@ export async function getPatientTimeline(patientId: ID) {
     `SELECT a.id, a.date, a.time, a.status, a.session_value, c.name as clinic_name
      FROM appointments a
      JOIN clinics c ON c.id = a.clinic_id
-     WHERE a.patient_id = ?
+     WHERE a.patient_id = ? AND a.status != 'cancelled'
      ORDER BY a.date DESC, a.time DESC`,
     [patientId]
   );

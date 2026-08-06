@@ -34,7 +34,7 @@ export async function getSummary(
        SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) as present,
        SUM(CASE WHEN status = 'absent' THEN 1 ELSE 0 END) as absent
      FROM appointments
-     WHERE date BETWEEN ? AND ?`,
+     WHERE date BETWEEN ? AND ? AND status != 'cancelled'`,
     [startDate, endDate]
   );
 
@@ -117,7 +117,7 @@ export async function getAttendanceByClinic(startDate: string, endDate: string):
             SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END) as absent
      FROM appointments a
      JOIN clinics c ON c.id = a.clinic_id
-     WHERE a.date BETWEEN ? AND ?
+     WHERE a.date BETWEEN ? AND ? AND a.status != 'cancelled'
      GROUP BY c.id
      ORDER BY c.name ASC`,
     [startDate, endDate]

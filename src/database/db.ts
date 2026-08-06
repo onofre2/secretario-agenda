@@ -75,6 +75,32 @@ async function runMigrations(
       );`
     );
   }
+  if (fromVersion < 5) {
+    await db.execAsync("PRAGMA foreign_keys = OFF;");
+    await db.withTransactionAsync(async () => {
+      await db.execAsync(`
+        CREATE TABLE appointments_new (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          schedule_id INTEGER REFERENCES schedules(id) ON DELETE SET NULL,
+          patient_id INTEGER NOT NULL REFERENCES patients(id) ON DELETE CASCADE,
+          clinic_id INTEGER NOT NULL REFERENCES clinics(id) ON DELETE CASCADE,
+          date TEXT NOT NULL,
+          time TEXT NOT NULL,
+          session_value REAL NOT NULL DEFAULT 0,
+          status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','present','absent','cancelled')),
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+        INSERT INTO appointments_new SELECT * FROM appointments;
+        DROP TABLE appointments;
+        ALTER TABLE appointments_new RENAME TO appointments;
+        CREATE INDEX IF NOT EXISTS idx_appointments_date ON appointments(date);
+        CREATE INDEX IF NOT EXISTS idx_appointments_patient ON appointments(patient_id);
+        CREATE INDEX IF NOT EXISTS idx_appointments_clinic ON appointments(clinic_id);
+      `);
+    });
+    await db.execAsync("PRAGMA foreign_keys = ON;");
+  }
 }
 
 /**

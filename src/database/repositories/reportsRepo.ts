@@ -17,7 +17,7 @@ export async function getReportRows(startDate: string, endDate: string): Promise
      FROM appointments a
      JOIN patients p ON p.id = a.patient_id
      JOIN clinics c ON c.id = a.clinic_id
-     WHERE a.date BETWEEN ? AND ?
+     WHERE a.date BETWEEN ? AND ? AND a.status != 'cancelled'
      ORDER BY a.date ASC, a.time ASC`,
     [startDate, endDate]
   );

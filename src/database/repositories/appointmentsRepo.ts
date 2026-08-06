@@ -39,7 +39,7 @@ export async function getAppointmentsByDate(
        JOIN patients p ON p.id = a.patient_id
        JOIN clinics c ON c.id = a.clinic_id
        LEFT JOIN schedules s ON s.id = a.schedule_id
-       WHERE a.date = ?
+       WHERE a.date = ? AND a.status != 'cancelled'
        ORDER BY a.time ASC`,
     [date]
   );
@@ -158,5 +158,24 @@ export async function createAppointment(data: {
 /** Exclui um atendimento (e cascata: nota clinica, registro financeiro, presenca). */
 export async function deleteAppointment(id: ID): Promise<void> {
   const db = await getDb();
-  await db.runAsync("DELETE FROM appointments WHERE id = ?", [id]);
+  await db.withTransactionAsync(async () => {
+    const appt = await db.getFirstAsync<{ schedule_id: number | null }>(
+      "SELECT schedule_id FROM appointments WHERE id = ?",
+      [id]
+    );
+    if (!appt) return;
+
+    await db.runAsync("DELETE FROM attendance WHERE appointment_id = ?", [id]);
+    await db.runAsync("DELETE FROM clinical_notes WHERE appointment_id = ?", [id]);
+    await db.runAsync("DELETE FROM financial_records WHERE appointment_id = ?", [id]);
+
+    if (appt.schedule_id) {
+      await db.runAsync(
+        "UPDATE appointments SET status = 'cancelled', updated_at = datetime('now') WHERE id = ?",
+        [id]
+      );
+    } else {
+      await db.runAsync("DELETE FROM appointments WHERE id = ?", [id]);
+    }
+  });
 }
