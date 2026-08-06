@@ -31,6 +31,7 @@ export function useNotificationResponseListener() {
       if (!appointmentId) return;
 
       const actionId = response.actionIdentifier;
+      const isActionButton = actionId !== Notifications.DEFAULT_ACTION_IDENTIFIER;
 
       try {
         if (actionId === NotificationAction.PRESENT) {
@@ -44,6 +45,14 @@ export function useNotificationResponseListener() {
         // (abre o app na tela Hoje via navegação padrão, nenhuma ação extra necessária)
       } catch (err) {
         console.error("Erro ao processar ação da notificação:", err);
+      } finally {
+        if (isActionButton) {
+          try {
+            await Notifications.dismissNotificationAsync(response.notification.request.identifier);
+          } catch (dismissErr) {
+            console.error("Erro ao remover notificação da tela:", dismissErr);
+          }
+        }
       }
     });
 

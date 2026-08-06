@@ -18,6 +18,15 @@ export async function upsertNotificationLog(
   });
 }
 
+export async function getNotificationLog(appointmentId: ID): Promise<{ identifier: string; scheduledFor: string } | null> {
+  const db = await getDb();
+  const row = await db.getFirstAsync<{ notification_identifier: string | null; scheduled_for: string }>(
+    "SELECT notification_identifier, scheduled_for FROM notification_log WHERE appointment_id = ?",
+    [appointmentId]
+  );
+  if (!row?.notification_identifier) return null;
+  return { identifier: row.notification_identifier, scheduledFor: row.scheduled_for };
+}
 export async function getNotificationIdentifier(appointmentId: ID): Promise<string | null> {
   const db = await getDb();
   const row = await db.getFirstAsync<{ notification_identifier: string | null }>(

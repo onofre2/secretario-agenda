@@ -28,17 +28,17 @@ export async function configureNotifications(): Promise<void> {
     {
       identifier: NotificationAction.PRESENT,
       buttonTitle: "🟢 Presente",
-      options: { opensAppToForeground: false },
+      options: { opensAppToForeground: true },
     },
     {
       identifier: NotificationAction.ABSENT,
       buttonTitle: "🔴 Ausente",
-      options: { opensAppToForeground: false },
+      options: { opensAppToForeground: true },
     },
     {
       identifier: NotificationAction.SNOOZE,
       buttonTitle: "Adiar 5 min",
-      options: { opensAppToForeground: false },
+      options: { opensAppToForeground: true },
     },
   ]);
 

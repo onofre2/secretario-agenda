@@ -3,7 +3,7 @@ import { APPOINTMENT_CATEGORY, DEFAULT_LEAD_MINUTES } from "./config";
 import { getAppointmentsByDate, TodayAppointment } from "../database/repositories/appointmentsRepo";
 import {
   upsertNotificationLog,
-  getNotificationIdentifier,
+  getNotificationLog,
   deleteNotificationLog,
 } from "../database/repositories/notificationsRepo";
 import { todayISO } from "../utils/date";
@@ -18,20 +18,40 @@ export function computeTriggerDate(dateISO: string, timeHHmm: string, leadMinute
   return target;
 }
 
-/** Agenda (ou reagenda) o lembrete de um único compromisso, se ele ainda estiver no futuro. */
+/**
+ * Agenda (ou reagenda) o lembrete de um único compromisso, se ele ainda estiver no futuro.
+ * Idempotente: se já existe uma notificação agendada para o mesmo horário exato,
+ * não cancela nem recria (evita sobrecarregar o AlarmManager do Android, que pode
+ * atrasar/agrupar notificações quando canceladas e recriadas repetidamente).
+ */
 export async function scheduleForAppointment(
   appointment: TodayAppointment,
   leadMinutes = DEFAULT_LEAD_MINUTES
 ): Promise<void> {
-  await cancelForAppointment(appointment.id);
-
-  if (appointment.status !== "pending") return;
+  if (appointment.status !== "pending") {
+    await cancelForAppointment(appointment.id);
+    return;
+  }
 
   const enabled = await getSetting(SETTINGS_KEYS.NOTIFICATIONS_ENABLED);
-  if (enabled === "0") return; // notificacoes desativadas pelo usuario
+  if (enabled === "0") {
+    await cancelForAppointment(appointment.id);
+    return;
+  }
 
   const triggerDate = computeTriggerDate(appointment.date, appointment.time, leadMinutes);
-  if (triggerDate.getTime() <= Date.now()) return; // já passou, não agenda
+  if (triggerDate.getTime() <= Date.now()) {
+    await cancelForAppointment(appointment.id);
+    return;
+  }
+
+  const existing = await getNotificationLog(appointment.id);
+  if (existing && existing.scheduledFor === triggerDate.toISOString()) {
+    // Já está agendado para o horário certo — não mexe, evita instabilidade no Android.
+    return;
+  }
+
+  await cancelForAppointment(appointment.id);
 
   const identifier = await Notifications.scheduleNotificationAsync({
     content: {
@@ -50,11 +70,24 @@ export async function scheduleForAppointment(
   await upsertNotificationLog(appointment.id, triggerDate.toISOString(), identifier);
 }
 
-/** Cancela a notificação agendada de um compromisso (ex: quando já foi marcado presente/ausente). */
+/**
+ * Cancela a notificação agendada de um compromisso (ex: quando já foi marcado presente/ausente)
+ * e também remove da tela qualquer notificação já entregue para ele (Android mantém notificações
+ * entregues na barra até serem removidas explicitamente ou pelo usuário).
+ */
 export async function cancelForAppointment(appointmentId: number): Promise<void> {
-  const identifier = await getNotificationIdentifier(appointmentId);
-  if (identifier) {
-    await Notifications.cancelScheduledNotificationAsync(identifier);
+  const log = await getNotificationLog(appointmentId);
+  if (log) {
+    try {
+      await Notifications.cancelScheduledNotificationAsync(log.identifier);
+    } catch (err) {
+      console.error("Erro ao cancelar notificação agendada:", err);
+    }
+    try {
+      await Notifications.dismissNotificationAsync(log.identifier);
+    } catch (err) {
+      console.error("Erro ao remover notificação entregue:", err);
+    }
   }
   await deleteNotificationLog(appointmentId);
 }
@@ -62,18 +95,12 @@ export async function cancelForAppointment(appointmentId: number): Promise<void>
 /**
  * Agenda os lembretes de todos os compromissos pendentes de hoje.
  * Chamado no boot do app e sempre que a tela Hoje é aberta/atualizada.
- * Compromissos já marcados presente/ausente não geram notificação
- * (efeito colateral: após o último paciente do dia, não sobra nenhum
- * lembrete pendente — "parar notificações após o último paciente").
+ * Idempotente: compromissos já com notificação correta agendada não são tocados.
  */
 export async function scheduleAllPendingForToday(leadMinutes = DEFAULT_LEAD_MINUTES): Promise<void> {
   const appointments = await getAppointmentsByDate(todayISO());
   for (const appt of appointments) {
-    if (appt.status === "pending") {
-      await scheduleForAppointment(appt, leadMinutes);
-    } else {
-      await cancelForAppointment(appt.id);
-    }
+    await scheduleForAppointment(appt, leadMinutes);
   }
 }
 
@@ -112,19 +139,35 @@ export async function cancelMorningAgendaNotification(): Promise<void> {
  * (mesmo padrão dos lembretes de compromisso).
  */
 export async function scheduleMorningAgendaNotification(): Promise<void> {
-  await cancelMorningAgendaNotification();
-
   const enabled = await getSetting(SETTINGS_KEYS.NOTIFICATIONS_ENABLED);
-  if (enabled === "0") return;
+  if (enabled === "0") {
+    await cancelMorningAgendaNotification();
+    return;
+  }
 
   const appointments = await getAppointmentsByDate(todayISO());
-  if (appointments.length === 0) return;
+  if (appointments.length === 0) {
+    await cancelMorningAgendaNotification();
+    return;
+  }
 
   const sorted = [...appointments].sort((a, b) => a.time.localeCompare(b.time));
   const first = sorted[0];
 
   const triggerDate = computeTriggerDate(todayISO(), first.time, 60);
-  if (triggerDate.getTime() <= Date.now()) return;
+  if (triggerDate.getTime() <= Date.now()) {
+    await cancelMorningAgendaNotification();
+    return;
+  }
+
+  const existingId = await getSetting(SETTINGS_KEYS.MORNING_NOTIFICATION_ID);
+  const existingTriggerKey = await getSetting(SETTINGS_KEYS.MORNING_NOTIFICATION_TRIGGER);
+  if (existingId && existingTriggerKey === triggerDate.toISOString()) {
+    // Já agendada para o horário certo — não mexe.
+    return;
+  }
+
+  await cancelMorningAgendaNotification();
 
   const identifier = await Notifications.scheduleNotificationAsync({
     content: {
@@ -140,4 +183,5 @@ export async function scheduleMorningAgendaNotification(): Promise<void> {
   });
 
   await setSetting(SETTINGS_KEYS.MORNING_NOTIFICATION_ID, identifier);
+  await setSetting(SETTINGS_KEYS.MORNING_NOTIFICATION_TRIGGER, triggerDate.toISOString());
 }
