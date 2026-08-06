@@ -123,3 +123,21 @@ export async function getAttendanceByClinic(startDate: string, endDate: string):
     [startDate, endDate]
   );
 }
+
+export interface ClinicAppointmentCount {
+  clinic_name: string;
+  count: number;
+}
+
+export async function getAppointmentsCountByClinic(startDate: string, endDate: string): Promise<ClinicAppointmentCount[]> {
+  const db = await getDb();
+  return db.getAllAsync<ClinicAppointmentCount>(
+    `SELECT c.name as clinic_name, COUNT(*) as count
+     FROM appointments a
+     JOIN clinics c ON c.id = a.clinic_id
+     WHERE a.date BETWEEN ? AND ? AND a.status != 'cancelled'
+     GROUP BY c.id
+     ORDER BY c.name ASC`,
+    [startDate, endDate]
+  );
+}

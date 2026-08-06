@@ -7,9 +7,11 @@ import FormInput from "../components/FormInput";
 import PrimaryButton from "../components/PrimaryButton";
 import FloatingAddButton from "../components/FloatingAddButton";
 import PatientTimelineModal from "../components/PatientTimelineModal";
-import RadarChart from "../components/RadarChart";
+import ClinicStatsList, { ClinicStatsRow } from "../components/ClinicStatsList";
 import { listSchedules } from "../database/repositories/schedulesRepo";
-import { getAttendanceByClinic } from "../database/repositories/financialRepo";
+import { getAttendanceByClinic, getAppointmentsCountByClinic } from "../database/repositories/financialRepo";
+import { todayISO } from "../utils/date";
+import { getRangeFor } from "../utils/period";
 import {
   listClinics,
   createClinic,
@@ -37,23 +39,29 @@ export default function ClinicsScreen() {
   const [timelinePatient, setTimelinePatient] = useState<Patient | null>(null);
   const [loadingPatients, setLoadingPatients] = useState(false);
   const [exportingClinicId, setExportingClinicId] = useState<number | null>(null);
-  const [radarSeries, setRadarSeries] = useState<{ label: string; color: string; values: number[] }[]>([]);
+  const [clinicStats, setClinicStats] = useState<ClinicStatsRow[]>([]);
 
   const load = useCallback(async () => {
     const clinicList = await listClinics();
-    const schedules = await listSchedules(true);
     setClinics(clinicList);
-    const attendance = await getAttendanceByClinic("1900-01-01", "2100-01-01");
-    const attByName = new Map(attendance.map((a) => [a.clinic_name, a]));
-    setRadarSeries(
+    const today = todayISO();
+    const monthRange = getRangeFor("month");
+    const [monthCounts, dayCounts, dayAttendance] = await Promise.all([
+      getAppointmentsCountByClinic(monthRange.start, monthRange.end),
+      getAppointmentsCountByClinic(today, today),
+      getAttendanceByClinic(today, today),
+    ]);
+    const monthMap = new Map(monthCounts.map((c) => [c.clinic_name, c.count]));
+    const dayMap = new Map(dayCounts.map((c) => [c.clinic_name, c.count]));
+    const attMap = new Map(dayAttendance.map((a) => [a.clinic_name, a]));
+    setClinicStats(
       clinicList.map((c, i) => ({
-        label: c.name,
-        color: CLINIC_COLORS[i % CLINIC_COLORS.length],
-        values: [
-          schedules.filter((s) => s.clinic_id === c.id).length,
-          attByName.get(c.name)?.present ?? 0,
-          attByName.get(c.name)?.absent ?? 0,
-        ],
+        clinicName: c.name,
+        clinicColor: CLINIC_COLORS[i % CLINIC_COLORS.length],
+        monthCount: monthMap.get(c.name) ?? 0,
+        dayCount: dayMap.get(c.name) ?? 0,
+        present: attMap.get(c.name)?.present ?? 0,
+        absent: attMap.get(c.name)?.absent ?? 0,
       }))
     );
   }, []);
@@ -151,10 +159,10 @@ export default function ClinicsScreen() {
           <Text style={styles.empty}>Nenhuma clínica cadastrada. Toque em + para adicionar.</Text>
           }
           ListFooterComponent={
-            radarSeries.length > 0 ? (
+            clinicStats.length > 0 ? (
               <View style={styles.footerSection}>
-                <Text style={styles.footerTitle}>Atendimentos, presenças e faltas por clínica</Text>
-                <RadarChart axisLabels={["Atendimentos", "Presenças", "Faltas"]} series={radarSeries} />
+                <Text style={styles.footerTitle}>Atendimentos e presença por clínica</Text>
+                <ClinicStatsList rows={clinicStats} />
               </View>
             ) : null
           }
