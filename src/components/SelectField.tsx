@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, Text, Pressable, Modal, FlatList, StyleSheet } from "react-native";
+import { View, Text, Pressable, Modal, FlatList, StyleSheet, TextInput } from "react-native";
 import { colors, spacing, radius } from "../theme/colors";
 
 export interface SelectOption {
@@ -17,6 +17,16 @@ interface Props {
 
 export default function SelectField({ label, value, options, onSelect, emptyMessage }: Props) {
   const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+
+  const filteredOptions = options.filter((o) =>
+    o.label.toLowerCase().includes(query.toLowerCase())
+  );
+
+  const handleClose = () => {
+    setOpen(false);
+    setQuery("");
+  };
 
   return (
     <View style={styles.wrapper}>
@@ -27,22 +37,33 @@ export default function SelectField({ label, value, options, onSelect, emptyMess
         </Text>
       </Pressable>
 
-      <Modal visible={open} animationType="slide" transparent onRequestClose={() => setOpen(false)}>
+      <Modal visible={open} animationType="slide" transparent onRequestClose={handleClose}>
         <View style={styles.overlay}>
           <View style={styles.sheet}>
             <Text style={styles.sheetTitle}>{label}</Text>
+            {options.length > 0 && (
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Buscar por nome..."
+                placeholderTextColor={colors.textMuted}
+                value={query}
+                onChangeText={setQuery}
+              />
+            )}
             {options.length === 0 ? (
               <Text style={styles.empty}>{emptyMessage ?? "Nenhuma opção cadastrada ainda."}</Text>
-            ) : (
+            ) : filteredOptions.length === 0 ? (
+                <Text style={styles.empty}>Nenhum resultado para "{query}".</Text>
+              ) : (
               <FlatList
-                data={options}
+                data={filteredOptions}
                 keyExtractor={(item) => String(item.id)}
                 renderItem={({ item }) => (
                   <Pressable
                     style={styles.option}
                     onPress={() => {
                       onSelect(item);
-                      setOpen(false);
+                      handleClose();
                     }}
                   >
                     <Text style={styles.optionText}>{item.label}</Text>
@@ -50,7 +71,7 @@ export default function SelectField({ label, value, options, onSelect, emptyMess
                 )}
               />
             )}
-            <Pressable style={styles.closeButton} onPress={() => setOpen(false)}>
+            <Pressable style={styles.closeButton} onPress={handleClose}>
               <Text style={styles.closeText}>Fechar</Text>
             </Pressable>
           </View>
@@ -87,4 +108,5 @@ const styles = StyleSheet.create({
   empty: { color: colors.textMuted, textAlign: "center", paddingVertical: spacing.lg },
   closeButton: { marginTop: spacing.md, alignItems: "center", padding: spacing.sm },
   closeText: { color: colors.primary, fontSize: 16, fontWeight: "600" },
+  searchInput: { backgroundColor: colors.surfaceLight, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border, color: colors.text, fontSize: 14, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, marginBottom: spacing.sm },
 });
