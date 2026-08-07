@@ -1,8 +1,9 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, StyleSheet, Switch, Alert, ActivityIndicator, ScrollView, Image } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { colors, spacing, radius } from "../theme/colors";
+import { spacing, radius } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
 import PrimaryButton from "../components/PrimaryButton";
 import FormInput from "../components/FormInput";
 import { getSetting, setSetting, SETTINGS_KEYS } from "../database/repositories/settingsRepo";
@@ -13,7 +14,7 @@ import * as Notifications from "expo-notifications";
 import { scheduleAllPendingForToday, scheduleMorningAgendaNotification } from "../notifications/scheduler";
 
 export default function SettingsScreen() {
-  const [darkMode, setDarkMode] = useState(true);
+  const { colors, isDark, toggleTheme } = useTheme();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [leadMinutes, setLeadMinutes] = useState(String(DEFAULT_LEAD_MINUTES));
   const [therapistName, setTherapistName] = useState("");
@@ -22,9 +23,35 @@ export default function SettingsScreen() {
   const [busy, setBusy] = useState<"backup" | "restore" | null>(null);
   const [signaturePath, setSignaturePath] = useState<string | null>(null);
 
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    section: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      padding: spacing.md,
+      marginBottom: spacing.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    sectionTitle: { color: colors.text, fontSize: 16, fontWeight: "700", marginBottom: spacing.sm },
+    row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+    rowLabel: { color: colors.text, fontSize: 15 },
+    hint: { color: colors.textMuted, fontSize: 12, marginTop: spacing.xs, lineHeight: 16 },
+    leadRow: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.xs, alignItems: "center" },
+    leadInputBox: {
+      flex: 1,
+      backgroundColor: colors.surfaceLight,
+      borderRadius: radius.sm,
+      paddingVertical: spacing.sm,
+      paddingHorizontal: spacing.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    leadValue: { color: colors.text, fontSize: 16 },
+    signaturePreview: { width: "100%", height: 80, marginVertical: spacing.sm, backgroundColor: colors.surfaceLight, borderRadius: radius.sm },
+  }), [colors]);
+
   const load = useCallback(async () => {
-    const theme = await getSetting(SETTINGS_KEYS.THEME);
-    setDarkMode(theme !== "light");
     const lead = await getSetting(SETTINGS_KEYS.NOTIFICATION_LEAD_MINUTES);
     if (lead) setLeadMinutes(lead);
     const notifEnabled = await getSetting(SETTINGS_KEYS.NOTIFICATIONS_ENABLED);
@@ -46,11 +73,6 @@ export default function SettingsScreen() {
     await setSetting(SETTINGS_KEYS.THERAPIST_PROFESSION, therapistProfession.trim());
     await setSetting(SETTINGS_KEYS.THERAPIST_REGISTRATION, therapistRegistration.trim());
     Alert.alert("Salvo", "Dados do terapeuta atualizados. Aparecerão no rodapé dos PDFs.");
-  };
-
-  const handleToggleTheme = async (value: boolean) => {
-    setDarkMode(value);
-    await setSetting(SETTINGS_KEYS.THEME, value ? "dark" : "light");
   };
 
   const handleToggleNotifications = async (value: boolean) => {
@@ -115,12 +137,6 @@ export default function SettingsScreen() {
     if (ok) {
       const sig = await getSetting(SETTINGS_KEYS.SIGNATURE_IMAGE_PATH);
       setSignaturePath(sig);
-    const tn = await getSetting(SETTINGS_KEYS.THERAPIST_NAME);
-    if (tn) setTherapistName(tn);
-    const tp = await getSetting(SETTINGS_KEYS.THERAPIST_PROFESSION);
-    if (tp) setTherapistProfession(tp);
-    const tr = await getSetting(SETTINGS_KEYS.THERAPIST_REGISTRATION);
-    if (tr) setTherapistRegistration(tr);
     }
   };
 
@@ -132,7 +148,21 @@ export default function SettingsScreen() {
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: spacing.md }}>
-      <Section title="Notificações">
+      <Section title="Aparência" styles={styles}>
+        <View style={styles.row}>
+          <Text style={styles.rowLabel}>Modo escuro</Text>
+          <Switch
+            value={isDark}
+            onValueChange={toggleTheme}
+            trackColor={{ false: colors.surfaceLight, true: colors.primary }}
+          />
+        </View>
+        <Text style={styles.hint}>
+          Alterna entre tema escuro e claro em todo o aplicativo.
+        </Text>
+      </Section>
+
+      <Section title="Notificações" styles={styles}>
           <View style={styles.row}>
             <Text style={styles.rowLabel}>Ativar notificações</Text>
             <Switch
@@ -155,7 +185,7 @@ export default function SettingsScreen() {
         </Text>
       </Section>
 
-      <Section title="Backup e Restauração">
+      <Section title="Backup e Restauração" styles={styles}>
         <Text style={styles.hint}>
           Gera um arquivo com todos os dados (pacientes, clínicas, agenda, financeiro,
           evoluções clínicas) para guardar em local seguro.
@@ -174,7 +204,7 @@ export default function SettingsScreen() {
         {busy && <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.sm }} />}
       </Section>
 
-        <Section title="Dados do terapeuta">
+        <Section title="Dados do terapeuta" styles={styles}>
           <Text style={styles.hint}>
             Aparecem no rodapé dos PDFs de Financeiro e Evolução.
           </Text>
@@ -184,7 +214,7 @@ export default function SettingsScreen() {
           <PrimaryButton label="Salvar dados do terapeuta" onPress={handleSaveTherapistInfo} />
         </Section>
 
-        <Section title="Assinatura digital">
+        <Section title="Assinatura digital" styles={styles}>
           <Text style={styles.hint}>
             A assinatura escolhida aparece automaticamente no rodapé dos PDFs de Financeiro e
             Evolução, na aba Relatórios.
@@ -205,7 +235,7 @@ export default function SettingsScreen() {
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, children, styles }: { title: string; children: React.ReactNode; styles: ReturnType<typeof StyleSheet.create> }) {
   return (
     <View style={styles.section}>
       <Text style={styles.sectionTitle}>{title}</Text>
@@ -213,31 +243,3 @@ function Section({ title, children }: { title: string; children: React.ReactNode
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  section: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  sectionTitle: { color: colors.text, fontSize: 16, fontWeight: "700", marginBottom: spacing.sm },
-  row: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  rowLabel: { color: colors.text, fontSize: 15 },
-  hint: { color: colors.textMuted, fontSize: 12, marginTop: spacing.xs, lineHeight: 16 },
-  leadRow: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.xs, alignItems: "center" },
-  leadInputBox: {
-    flex: 1,
-    backgroundColor: colors.surfaceLight,
-    borderRadius: radius.sm,
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  leadValue: { color: colors.text, fontSize: 16 },
-  signaturePreview: { width: "100%", height: 80, marginVertical: spacing.sm, backgroundColor: colors.surfaceLight, borderRadius: radius.sm },
-});

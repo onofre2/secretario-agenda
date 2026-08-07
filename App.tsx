@@ -4,6 +4,7 @@ import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { initDatabase } from "./src/database/db";
 import RootNavigator from "./src/navigation/RootNavigator";
+import { ThemeProvider } from "./src/context/ThemeContext";
 import { colors } from "./src/theme/colors";
 import { configureNotifications } from "./src/notifications/config";
 import { scheduleAllPendingForToday } from "./src/notifications/scheduler";
@@ -61,8 +62,10 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <StatusBar style="light" />
-      <RootNavigator />
+      <ThemeProvider>
+        <StatusBar style="light" />
+        <RootNavigator />
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }
