@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { View, Text, StyleSheet, Pressable, ActivityIndicator, Alert } from "react-native";
-import { colors, spacing, radius } from "../theme/colors";
+import { spacing, radius } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
 import { formatCurrency } from "../utils/date";
 import { TodayAppointment } from "../database/repositories/appointmentsRepo";
 
@@ -11,7 +12,42 @@ interface Props {
 }
 
 export default function AppointmentCard({ appointment, onMarkPresent, onMarkAbsent }: Props) {
+  const { colors } = useTheme();
   const [busy, setBusy] = useState(false);
+
+  const styles = useMemo(() => StyleSheet.create({
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.lg,
+      padding: spacing.md,
+      marginBottom: spacing.md,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    cardPresent: { borderColor: colors.primary },
+    cardAbsent: { borderColor: colors.danger, opacity: 0.7 },
+    header: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginBottom: spacing.xs,
+    },
+    time: { color: colors.primary, fontSize: 20, fontWeight: "700" },
+    value: { color: colors.textMuted, fontSize: 16 },
+    patient: { color: colors.text, fontSize: 18, fontWeight: "600" },
+    clinic: { color: colors.textMuted, fontSize: 14, marginBottom: spacing.sm },
+    reminderTag: { color: colors.danger, fontSize: 12, fontWeight: "700", marginBottom: 2 },
+    buttonsRow: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm },
+    button: {
+      flex: 1,
+      paddingVertical: spacing.md,
+      borderRadius: radius.md,
+      alignItems: "center",
+    },
+    presentButton: { backgroundColor: colors.primary },
+    absentButton: { backgroundColor: colors.danger },
+    buttonText: { color: "#0F172A", fontSize: 16, fontWeight: "700" },
+    statusLabel: { color: colors.textMuted, fontSize: 14, marginTop: spacing.sm },
+  }), [colors]);
 
   const handlePress = async (action: (id: number) => Promise<void>) => {
     if (busy) return;
@@ -66,37 +102,3 @@ export default function AppointmentCard({ appointment, onMarkPresent, onMarkAbse
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    marginBottom: spacing.md,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  cardPresent: { borderColor: colors.primary },
-  cardAbsent: { borderColor: colors.danger, opacity: 0.7 },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: spacing.xs,
-  },
-  time: { color: colors.primary, fontSize: 20, fontWeight: "700" },
-  value: { color: colors.textMuted, fontSize: 16 },
-  patient: { color: colors.text, fontSize: 18, fontWeight: "600" },
-  clinic: { color: colors.textMuted, fontSize: 14, marginBottom: spacing.sm },
-  reminderTag: { color: colors.danger, fontSize: 12, fontWeight: "700", marginBottom: 2 },
-  buttonsRow: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm },
-  button: {
-    flex: 1,
-    paddingVertical: spacing.md,
-    borderRadius: radius.md,
-    alignItems: "center",
-  },
-  presentButton: { backgroundColor: colors.primary },
-  absentButton: { backgroundColor: colors.danger },
-  buttonText: { color: "#0F172A", fontSize: 16, fontWeight: "700" },
-  statusLabel: { color: colors.textMuted, fontSize: 14, marginTop: spacing.sm },
-});
