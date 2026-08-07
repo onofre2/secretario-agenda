@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { Pressable, Text, StyleSheet, ViewStyle } from "react-native";
-import { colors, spacing, radius } from "../theme/colors";
+import { spacing, radius } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
 
 interface Props {
   label: string;
@@ -11,6 +12,23 @@ interface Props {
 }
 
 export default function PrimaryButton({ label, onPress, variant = "primary", style, disabled }: Props) {
+  const { colors } = useTheme();
+
+  const styles = useMemo(() => StyleSheet.create({
+    base: {
+      paddingVertical: spacing.md,
+      borderRadius: radius.md,
+      alignItems: "center",
+      marginTop: spacing.sm,
+    },
+    primary: { backgroundColor: colors.primary },
+    danger: { backgroundColor: colors.danger },
+    outline: { backgroundColor: "transparent", borderWidth: 1, borderColor: colors.border },
+    disabled: { opacity: 0.5 },
+    text: { color: "#0F172A", fontSize: 16, fontWeight: "700" },
+    textOutline: { color: colors.text },
+  }), [colors]);
+
   return (
     <Pressable
       onPress={onPress}
@@ -28,18 +46,3 @@ export default function PrimaryButton({ label, onPress, variant = "primary", sty
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  base: {
-    paddingVertical: spacing.md,
-    borderRadius: radius.md,
-    alignItems: "center",
-    marginTop: spacing.sm,
-  },
-  primary: { backgroundColor: colors.primary },
-  danger: { backgroundColor: colors.danger },
-  outline: { backgroundColor: "transparent", borderWidth: 1, borderColor: colors.border },
-  disabled: { opacity: 0.5 },
-  text: { color: "#0F172A", fontSize: 16, fontWeight: "700" },
-  textOutline: { color: colors.text },
-});
