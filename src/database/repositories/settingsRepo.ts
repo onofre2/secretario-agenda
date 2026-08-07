@@ -29,4 +29,7 @@ export const SETTINGS_KEYS = {
   MORNING_NOTIFICATION_ID: "morning_notification_id",
   MORNING_NOTIFICATION_TRIGGER: "morning_notification_trigger",
   SIGNATURE_IMAGE_PATH: "signature_image_path",
+  THERAPIST_NAME: "therapist_name",
+  THERAPIST_PROFESSION: "therapist_profession",
+  THERAPIST_REGISTRATION: "therapist_registration",
 } as const;

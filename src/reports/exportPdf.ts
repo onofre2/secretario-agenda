@@ -2,6 +2,7 @@ import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import { ReportRow } from "../database/repositories/reportsRepo";
 import { getSetting, SETTINGS_KEYS } from "../database/repositories/settingsRepo";
+import { getTherapistInfo, buildTherapistFooterHtml } from "./therapistInfo";
 import { formatCurrency } from "../utils/date";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -26,7 +27,7 @@ function groupByClinic(rows: ReportRow[]): Map<string, ReportRow[]> {
   return map;
 }
 
-function buildHtml(rows: ReportRow[], title: string, extra: { goal: number | null; investmentPercent: number | null }): string {
+function buildHtml(rows: ReportRow[], title: string, extra: { goal: number | null; investmentPercent: number | null }, therapistFooter: string): string {
   const totalRevenue = rows.filter((r) => r.status === "present").reduce((sum, r) => sum + r.session_value, 0);
   const totalLoss = rows.filter((r) => r.status === "absent").reduce((sum, r) => sum + r.session_value, 0);
   const presentCount = rows.filter((r) => r.status === "present").length;
@@ -100,6 +101,7 @@ function buildHtml(rows: ReportRow[], title: string, extra: { goal: number | nul
             ${extra.investmentPercent ? `<div class="summary-row"><span>Reserva financeira (${extra.investmentPercent}%)</span><span>${formatCurrency(investmentAmount)}</span></div>` : ""}
             ${extra.investmentPercent ? `<div class="summary-row summary-total"><span>Ganho profissional líquido</span><span>${formatCurrency(netAmount)}</span></div>` : ""}
         </div>
+          ${therapistFooter}
       </body>
     </html>`;
 }
@@ -107,7 +109,9 @@ function buildHtml(rows: ReportRow[], title: string, extra: { goal: number | nul
 export async function exportReportPdf(rows: ReportRow[], title: string): Promise<void> {
   const goalStr = await getSetting(SETTINGS_KEYS.MONTHLY_GOAL);
   const investStr = await getSetting(SETTINGS_KEYS.INVESTMENT_PERCENT);
-  const html = buildHtml(rows, title, { goal: goalStr ? Number(goalStr) : null, investmentPercent: investStr ? Number(investStr) : null });
+  const therapist = await getTherapistInfo();
+  const therapistFooter = buildTherapistFooterHtml(therapist);
+  const html = buildHtml(rows, title, { goal: goalStr ? Number(goalStr) : null, investmentPercent: investStr ? Number(investStr) : null }, therapistFooter);
   const { uri } = await Print.printToFileAsync({ html });
   const canShare = await Sharing.isAvailableAsync();
   if (canShare) {

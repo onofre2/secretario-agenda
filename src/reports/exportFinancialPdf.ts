@@ -2,6 +2,7 @@ import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import { FinancialSummary, RevenueTrendPoint, MonthlyRevenuePoint, getMonthlyRevenueLast12Months, ClinicAttendanceStats, getAttendanceByClinic } from "../database/repositories/financialRepo";
 import { getSignatureImageBase64 } from "../utils/signatureImport";
+import { getTherapistInfo, buildTherapistFooterHtml } from "./therapistInfo";
 
 const CLINIC_COLORS = ["#22C55E", "#3B82F6", "#F59E0B", "#EC4899", "#A855F7", "#14B8A6", "#EF4444", "#84CC16"];
 const MONTH_NAMES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
@@ -62,8 +63,10 @@ function buildHtml(
   monthly: MonthlyRevenuePoint[],
   attendance: ClinicAttendanceStats[],
   rangeLabel: string,
-  signatureBase64: string | null
+  signatureBase64: string | null,
+  therapistFooter: string
 ): string {
+  const clinicNames = byClinic.map((c) => c.clinic_name).join(", ");
   const attendanceRate =
     summary.presentCount + summary.absentCount > 0
       ? Math.round((summary.presentCount / (summary.presentCount + summary.absentCount)) * 100)
@@ -106,7 +109,8 @@ function buildHtml(
         </style>
       </head>
       <body>
-        <h1>Secretário Agenda — Relatório Financeiro Geral</h1>
+        <h1>${clinicNames || "Relatório Financeiro Geral"}</h1>
+        <div class="period">Relatório Financeiro Geral</div>
         <div class="period">Período: ${rangeLabel}</div>
 
         <div class="cards">
@@ -141,6 +145,7 @@ function buildHtml(
           <tbody>${trendRows || "<tr><td colspan='2'>Sem dados neste período.</td></tr>"}</tbody>
         </table>
           ${signatureBase64 ? `<div style="margin-top:40px; text-align:center;"><img src="${signatureBase64}" style="max-width:200px; max-height:80px;" /><div style="border-top:1px solid #334155; width:220px; margin:4px auto 0;"></div><div style="font-size:11px; color:#64748B; margin-top:4px;">Assinatura</div></div>` : ""}
+          ${therapistFooter}
       </body>
     </html>
   `;
@@ -156,8 +161,10 @@ export async function exportFinancialScreenAsPdf(
 ): Promise<void> {
   const monthly = await getMonthlyRevenueLast12Months();
   const attendance = await getAttendanceByClinic(startDate, endDate);
-    const signatureBase64 = await getSignatureImageBase64();
-    const html = buildHtml(summary, byClinic, trend, monthly, attendance, rangeLabel, signatureBase64);
+  const signatureBase64 = await getSignatureImageBase64();
+  const therapist = await getTherapistInfo();
+  const therapistFooter = buildTherapistFooterHtml(therapist);
+  const html = buildHtml(summary, byClinic, trend, monthly, attendance, rangeLabel, signatureBase64, therapistFooter);
   const { uri } = await Print.printToFileAsync({ html });
 
   if (await Sharing.isAvailableAsync()) {

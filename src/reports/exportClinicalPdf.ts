@@ -2,12 +2,14 @@ import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import { ClinicalEvolutionRow } from "../database/repositories/reportsRepo";
 import { getSignatureImageBase64 } from "../utils/signatureImport";
+import { getTherapistInfo, buildTherapistFooterHtml } from "./therapistInfo";
 
 function escapeHtml(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function buildHtml(rows: ClinicalEvolutionRow[], title: string, signatureBase64: string | null): string {
+function buildHtml(rows: ClinicalEvolutionRow[], title: string, signatureBase64: string | null, therapistFooter: string): string {
+  const clinicNames = Array.from(new Set(rows.map((r) => r.clinic_name))).join(", ");
   const entriesHtml = rows
     .map(
       (r) => `
@@ -37,10 +39,12 @@ function buildHtml(rows: ClinicalEvolutionRow[], title: string, signatureBase64:
         </style>
       </head>
       <body>
-        <h1>Secretário Agenda — Evolução Clínica ${escapeHtml(title)}</h1>
+        <h1>${clinicNames || "Evolução Clínica"}</h1>
+        <div class="summary">Evolução Clínica — ${escapeHtml(title)}</div>
         <div class="summary">Total de registros: ${rows.length}</div>
         ${entriesHtml || "<p>Nenhuma evolução registrada neste período.</p>"}
           ${signatureBase64 ? `<div style="margin-top:40px; text-align:center;"><img src="${signatureBase64}" style="max-width:200px; max-height:80px;" /><div style="border-top:1px solid #334155; width:220px; margin:4px auto 0;"></div><div style="font-size:11px; color:#64748B; margin-top:4px;">Assinatura</div></div>` : ""}
+          ${therapistFooter}
       </body>
     </html>
   `;
@@ -50,8 +54,10 @@ export async function exportClinicalEvolutionAsPdf(
   rows: ClinicalEvolutionRow[],
   title: string
 ): Promise<void> {
-    const signatureBase64 = await getSignatureImageBase64();
-    const html = buildHtml(rows, title, signatureBase64);
+  const signatureBase64 = await getSignatureImageBase64();
+  const therapist = await getTherapistInfo();
+  const therapistFooter = buildTherapistFooterHtml(therapist);
+  const html = buildHtml(rows, title, signatureBase64, therapistFooter);
   const { uri } = await Print.printToFileAsync({ html });
 
   if (await Sharing.isAvailableAsync()) {
