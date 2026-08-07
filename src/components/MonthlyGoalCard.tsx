@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { View, Text, TextInput, Pressable, StyleSheet } from "react-native";
-import { colors, spacing, radius } from "../theme/colors";
+import { spacing, radius } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
 import { formatCurrency } from "../utils/date";
 import { getSetting, setSetting, SETTINGS_KEYS } from "../database/repositories/settingsRepo";
 
@@ -11,9 +12,31 @@ interface Props {
 }
 
 export default function MonthlyGoalCard({ monthRevenue, todayRevenue, weekRevenue }: Props) {
+  const { colors } = useTheme();
   const [goal, setGoal] = useState<number | null>(null);
   const [editing, setEditing] = useState(false);
   const [inputValue, setInputValue] = useState("");
+
+  const styles = useMemo(() => StyleSheet.create({
+    wrapper: { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.border, marginBottom: spacing.md },
+    title: { color: colors.text, fontSize: 18, fontWeight: "700" },
+    headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm },
+    editLink: { color: colors.primary, fontSize: 13, fontWeight: "600" },
+    inputRow: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm },
+    input: { flex: 1, backgroundColor: colors.surfaceLight, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border, color: colors.text, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
+    saveBtn: { backgroundColor: colors.primary, borderRadius: radius.sm, paddingHorizontal: spacing.md, justifyContent: "center" },
+    saveBtnText: { color: "#0F172A", fontWeight: "700" },
+    progressText: { color: colors.text, fontSize: 15, fontWeight: "600", marginBottom: spacing.sm },
+    progressTrack: { height: 10, backgroundColor: colors.surfaceLight, borderRadius: radius.sm, overflow: "hidden" },
+    progressFill: { height: "100%", backgroundColor: colors.primary, borderRadius: radius.sm },
+    metaRow: { flexDirection: "row", gap: spacing.md, marginTop: spacing.md },
+    metaCol: { flex: 1 },
+    metaLabel: { color: colors.textMuted, fontSize: 13 },
+    metaValue: { color: colors.text, fontSize: 22, fontWeight: "700", marginTop: 4 },
+    hint: { color: colors.textMuted, fontSize: 12, marginTop: spacing.sm },
+    hintDone: { color: colors.primary, fontSize: 13, fontWeight: "600", marginTop: spacing.sm },
+    metaValueHit: { color: colors.primary },
+  }), [colors]);
 
   useEffect(() => {
     (async () => {
@@ -99,24 +122,3 @@ export default function MonthlyGoalCard({ monthRevenue, todayRevenue, weekRevenu
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrapper: { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.border, marginBottom: spacing.md },
-  title: { color: colors.text, fontSize: 18, fontWeight: "700" },
-  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm },
-  editLink: { color: colors.primary, fontSize: 13, fontWeight: "600" },
-  inputRow: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm },
-  input: { flex: 1, backgroundColor: colors.surfaceLight, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border, color: colors.text, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
-  saveBtn: { backgroundColor: colors.primary, borderRadius: radius.sm, paddingHorizontal: spacing.md, justifyContent: "center" },
-  saveBtnText: { color: "#0F172A", fontWeight: "700" },
-  progressText: { color: colors.text, fontSize: 15, fontWeight: "600", marginBottom: spacing.sm },
-  progressTrack: { height: 10, backgroundColor: colors.surfaceLight, borderRadius: radius.sm, overflow: "hidden" },
-  progressFill: { height: "100%", backgroundColor: colors.primary, borderRadius: radius.sm },
-  metaRow: { flexDirection: "row", gap: spacing.md, marginTop: spacing.md },
-  metaCol: { flex: 1 },
-  metaLabel: { color: colors.textMuted, fontSize: 13 },
-  metaValue: { color: colors.text, fontSize: 22, fontWeight: "700", marginTop: 4 },
-  hint: { color: colors.textMuted, fontSize: 12, marginTop: spacing.sm },
-  hintDone: { color: colors.primary, fontSize: 13, fontWeight: "600", marginTop: spacing.sm },
-  metaValueHit: { color: colors.primary },
-});
