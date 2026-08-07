@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { View, Text, ScrollView, StyleSheet, Pressable, Modal } from "react-native";
-import { colors, spacing, radius } from "../theme/colors";
+import { spacing, radius } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
 import { WEEKDAYS } from "../utils/weekdays";
 import { formatCurrency } from "../utils/date";
 import { getClinicColor } from "../utils/clinicColors";
@@ -42,6 +43,7 @@ function groupByTime(items: ScheduleItem[]): ScheduleItem[][] {
 }
 
 export default function WeeklyGridView({ schedules, onReminderPress }: Props) {
+  const { colors } = useTheme();
   const clinicColors = buildClinicColorMap(schedules);
   const clinicNames = Array.from(clinicColors.keys());
   const [groupModal, setGroupModal] = useState<ScheduleItem[] | null>(null);
@@ -75,6 +77,49 @@ export default function WeeklyGridView({ schedules, onReminderPress }: Props) {
   })).filter((d) => d.count > 0);
   const bestDay = dayRevenue.length > 0 ? dayRevenue.reduce((a, b) => (b.value > a.value ? b : a)) : null;
   const worstDay = dayRevenue.length > 0 ? dayRevenue.reduce((a, b) => (b.value < a.value ? b : a)) : null;
+
+  const styles = useMemo(() => StyleSheet.create({
+    legendRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, paddingHorizontal: spacing.md, paddingBottom: spacing.sm },
+    legendItem: { flexDirection: "row", alignItems: "center", gap: 4, maxWidth: 140 },
+    legendDot: { width: 8, height: 8, borderRadius: 4 },
+    legendText: { color: colors.textMuted, fontSize: 11 },
+    scrollContent: { paddingHorizontal: spacing.md, paddingBottom: spacing.xl, gap: spacing.sm },
+    column: { width: COLUMN_WIDTH },
+    columnHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: colors.surfaceLight, borderRadius: radius.sm, paddingVertical: spacing.xs, paddingHorizontal: spacing.sm, marginBottom: spacing.sm },
+    columnHeaderText: { color: colors.text, fontSize: 13, fontWeight: "700" },
+    columnCount: { color: colors.primary, fontSize: 12, fontWeight: "700" },
+    emptySlot: { borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border, borderStyle: "dashed", paddingVertical: spacing.md, alignItems: "center" },
+    emptyText: { color: colors.textMuted, fontSize: 13 },
+    card: { backgroundColor: colors.surface, borderRadius: radius.sm, padding: spacing.sm, marginBottom: spacing.sm, borderTopWidth: 1, borderRightWidth: 1, borderBottomWidth: 1, borderTopColor: colors.border, borderRightColor: colors.border, borderBottomColor: colors.border },
+    cardTime: { color: colors.primary, fontSize: 13, fontWeight: "700" },
+    reminderTag: { color: colors.textMuted, fontSize: 10, fontWeight: "600", marginBottom: 2 },
+    reminderTagActive: { color: colors.danger },
+    cardPatient: { color: colors.text, fontSize: 13, fontWeight: "600", marginTop: 2 },
+    cardClinic: { color: colors.textMuted, fontSize: 11, marginTop: 1 },
+    cardValue: { color: colors.textMuted, fontSize: 11, marginTop: 2, fontWeight: "600" },
+    groupCard: { borderLeftWidth: 5, borderLeftColor: colors.primary, alignItems: "flex-start" },
+    groupCardCount: { color: colors.text, fontSize: 13, fontWeight: "700", marginTop: 2 },
+    groupCardHint: { color: colors.primary, fontSize: 10, marginTop: 4, fontWeight: "600" },
+    hoursSection: { paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.xl },
+    hoursTitle: { color: colors.text, fontSize: 14, fontWeight: "700", marginBottom: spacing.sm },
+    hoursRow: { flexDirection: "row", alignItems: "center", marginBottom: spacing.xs, gap: spacing.sm },
+    hoursLabel: { color: colors.textMuted, fontSize: 12, width: 110 },
+    hoursBarTrack: { flex: 1, height: 8, borderRadius: 4, backgroundColor: colors.surfaceLight, overflow: "hidden" },
+    hoursBarFill: { height: 8, borderRadius: 4 },
+    hoursValue: { color: colors.text, fontSize: 12, fontWeight: "600", width: 30, textAlign: "right" },
+    dayStatsSection: { paddingHorizontal: spacing.md, paddingTop: spacing.xs, paddingBottom: spacing.xl },
+    dayStatsRow: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm },
+    dayStatCard: { flex: 1, backgroundColor: colors.surface, borderRadius: radius.sm, padding: spacing.sm, borderWidth: 1, borderColor: colors.border },
+    dayStatLabel: { color: colors.textMuted, fontSize: 11 },
+    dayStatDay: { color: colors.text, fontSize: 15, fontWeight: "700", marginTop: 2 },
+    dayStatValue: { fontSize: 13, fontWeight: "700", marginTop: 2 },
+    modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", alignItems: "center", padding: spacing.lg },
+    modalContent: { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md, width: "100%", maxWidth: 340, borderWidth: 1, borderColor: colors.border },
+    modalTitle: { color: colors.text, fontSize: 15, fontWeight: "700", marginBottom: spacing.sm },
+    modalItem: { backgroundColor: colors.surfaceLight, borderRadius: radius.sm, padding: spacing.sm, marginBottom: spacing.sm },
+    modalCloseBtn: { marginTop: spacing.sm, paddingVertical: spacing.sm, alignItems: "center", backgroundColor: colors.surfaceLight, borderRadius: radius.sm },
+    modalCloseText: { color: colors.primary, fontSize: 14, fontWeight: "700" },
+  }), [colors]);
 
   return (
     <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
@@ -199,9 +244,9 @@ export default function WeeklyGridView({ schedules, onReminderPress }: Props) {
                 const clinicColor = clinicColors.get(item.clinic_name ?? "?") ?? colors.border;
                 return (
                   <View key={item.id} style={[styles.modalItem, { borderLeftColor: clinicColor, borderLeftWidth: 4 }]}>
-                      <Pressable onPress={() => onReminderPress(item)}>
-                        <Text style={[styles.reminderTag, item.reminder ? styles.reminderTagActive : null]}>Lembrete</Text>
-                      </Pressable>
+                    <Pressable onPress={() => onReminderPress(item)}>
+                      <Text style={[styles.reminderTag, item.reminder ? styles.reminderTagActive : null]}>Lembrete</Text>
+                    </Pressable>
                     <Text style={styles.cardPatient}>{item.patient_name ?? "?"}</Text>
                     <Text style={styles.cardClinic}>{item.clinic_name ?? ""}</Text>
                     <Text style={styles.cardValue}>{formatCurrency(item.session_value)}</Text>
@@ -220,46 +265,3 @@ export default function WeeklyGridView({ schedules, onReminderPress }: Props) {
 }
 
 const COLUMN_WIDTH = 128;
-
-const styles = StyleSheet.create({
-  legendRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, paddingHorizontal: spacing.md, paddingBottom: spacing.sm },
-  legendItem: { flexDirection: "row", alignItems: "center", gap: 4, maxWidth: 140 },
-  legendDot: { width: 8, height: 8, borderRadius: 4 },
-  legendText: { color: colors.textMuted, fontSize: 11 },
-  scrollContent: { paddingHorizontal: spacing.md, paddingBottom: spacing.xl, gap: spacing.sm },
-  column: { width: COLUMN_WIDTH },
-  columnHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: colors.surfaceLight, borderRadius: radius.sm, paddingVertical: spacing.xs, paddingHorizontal: spacing.sm, marginBottom: spacing.sm },
-  columnHeaderText: { color: colors.text, fontSize: 13, fontWeight: "700" },
-  columnCount: { color: colors.primary, fontSize: 12, fontWeight: "700" },
-  emptySlot: { borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border, borderStyle: "dashed", paddingVertical: spacing.md, alignItems: "center" },
-  emptyText: { color: colors.textMuted, fontSize: 13 },
-  card: { backgroundColor: colors.surface, borderRadius: radius.sm, padding: spacing.sm, marginBottom: spacing.sm, borderTopWidth: 1, borderRightWidth: 1, borderBottomWidth: 1, borderTopColor: colors.border, borderRightColor: colors.border, borderBottomColor: colors.border },
-  cardTime: { color: colors.primary, fontSize: 13, fontWeight: "700" },
-  reminderTag: { color: colors.textMuted, fontSize: 10, fontWeight: "600", marginBottom: 2 },
-  reminderTagActive: { color: colors.danger },
-  cardPatient: { color: colors.text, fontSize: 13, fontWeight: "600", marginTop: 2 },
-  cardClinic: { color: colors.textMuted, fontSize: 11, marginTop: 1 },
-  cardValue: { color: colors.textMuted, fontSize: 11, marginTop: 2, fontWeight: "600" },
-  groupCard: { borderLeftWidth: 5, borderLeftColor: colors.primary, alignItems: "flex-start" },
-  groupCardCount: { color: colors.text, fontSize: 13, fontWeight: "700", marginTop: 2 },
-  groupCardHint: { color: colors.primary, fontSize: 10, marginTop: 4, fontWeight: "600" },
-  hoursSection: { paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.xl },
-  hoursTitle: { color: colors.text, fontSize: 14, fontWeight: "700", marginBottom: spacing.sm },
-  hoursRow: { flexDirection: "row", alignItems: "center", marginBottom: spacing.xs, gap: spacing.sm },
-  hoursLabel: { color: colors.textMuted, fontSize: 12, width: 110 },
-  hoursBarTrack: { flex: 1, height: 8, borderRadius: 4, backgroundColor: colors.surfaceLight, overflow: "hidden" },
-  hoursBarFill: { height: 8, borderRadius: 4 },
-  hoursValue: { color: colors.text, fontSize: 12, fontWeight: "600", width: 30, textAlign: "right" },
-  dayStatsSection: { paddingHorizontal: spacing.md, paddingTop: spacing.xs, paddingBottom: spacing.xl },
-  dayStatsRow: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm },
-  dayStatCard: { flex: 1, backgroundColor: colors.surface, borderRadius: radius.sm, padding: spacing.sm, borderWidth: 1, borderColor: colors.border },
-  dayStatLabel: { color: colors.textMuted, fontSize: 11 },
-  dayStatDay: { color: colors.text, fontSize: 15, fontWeight: "700", marginTop: 2 },
-  dayStatValue: { fontSize: 13, fontWeight: "700", marginTop: 2 },
-  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", alignItems: "center", padding: spacing.lg },
-  modalContent: { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md, width: "100%", maxWidth: 340, borderWidth: 1, borderColor: colors.border },
-  modalTitle: { color: colors.text, fontSize: 15, fontWeight: "700", marginBottom: spacing.sm },
-  modalItem: { backgroundColor: colors.surfaceLight, borderRadius: radius.sm, padding: spacing.sm, marginBottom: spacing.sm },
-  modalCloseBtn: { marginTop: spacing.sm, paddingVertical: spacing.sm, alignItems: "center", backgroundColor: colors.surfaceLight, borderRadius: radius.sm },
-  modalCloseText: { color: colors.primary, fontSize: 14, fontWeight: "700" },
-});
