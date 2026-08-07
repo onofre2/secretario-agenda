@@ -113,6 +113,7 @@ export async function markPresent(appointmentId: ID): Promise<void> {
     if (!appt) throw new Error(`Compromisso ${appointmentId} não encontrado`);
 
       await db.runAsync("DELETE FROM attendance WHERE appointment_id = ?", [appointmentId]);
+      await db.runAsync("DELETE FROM clinical_notes WHERE appointment_id = ?", [appointmentId]);
       await db.runAsync("DELETE FROM financial_records WHERE appointment_id = ?", [appointmentId]);
     await db.runAsync(
       "UPDATE appointments SET status = 'present', updated_at = datetime('now') WHERE id = ?",
@@ -185,6 +186,7 @@ export async function resetStatus(appointmentId: ID): Promise<void> {
       [appointmentId]
     );
     await db.runAsync("DELETE FROM attendance WHERE appointment_id = ?", [appointmentId]);
+    await db.runAsync("DELETE FROM clinical_notes WHERE appointment_id = ?", [appointmentId]);
     await db.runAsync("DELETE FROM financial_records WHERE appointment_id = ?", [appointmentId]);
   });
 }
