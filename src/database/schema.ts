@@ -1,7 +1,7 @@
 // Schema completo do SQLite — Secretário Agenda v1
 // Offline-first, sem backend. Todas as tabelas da Master Spec.
 
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 
 export const CREATE_TABLES_SQL = `
 PRAGMA journal_mode = WAL;
@@ -24,11 +24,11 @@ CREATE TABLE IF NOT EXISTS patients (
   diagnosis TEXT,
   treatment_goals TEXT,
   clinical_history TEXT,
+  qp TEXT,
   insurance TEXT,
   default_session_value REAL,
   phone TEXT,
   email TEXT,
-  emergency_contact TEXT,
   observations TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))

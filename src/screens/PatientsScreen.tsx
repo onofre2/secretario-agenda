@@ -25,9 +25,10 @@ const emptyForm = {
   email: "",
   diagnosis: "",
   treatment_goals: "",
+  qp: "",
+  clinical_history: "",
   insurance: "",
   default_session_value: "",
-  emergency_contact: "",
   observations: "",
 };
 
@@ -76,10 +77,11 @@ export default function PatientsScreen() {
       email: patient.email ?? "",
       diagnosis: patient.diagnosis ?? "",
       treatment_goals: patient.treatment_goals ?? "",
+      qp: patient.qp ?? "",
+      clinical_history: patient.clinical_history ?? "",
       insurance: patient.insurance ?? "",
       default_session_value:
         patient.default_session_value != null ? String(patient.default_session_value) : "",
-      emergency_contact: patient.emergency_contact ?? "",
       observations: patient.observations ?? "",
     });
     setModalOpen(true);
@@ -95,12 +97,12 @@ export default function PatientsScreen() {
         email: form.email.trim() || null,
         diagnosis: form.diagnosis.trim() || null,
         treatment_goals: form.treatment_goals.trim() || null,
-        clinical_history: null,
+        clinical_history: form.clinical_history.trim() || null,
+        qp: form.qp.trim() || null,
         insurance: form.insurance.trim() || null,
         default_session_value: form.default_session_value
           ? Number(form.default_session_value.replace(",", "."))
           : null,
-        emergency_contact: form.emergency_contact.trim() || null,
         observations: form.observations.trim() || null,
       };
       if (editingId) {
@@ -285,7 +287,8 @@ export default function PatientsScreen() {
           <FormInput label="Convênio" value={form.insurance} onChangeText={(v) => setForm({ ...form, insurance: v })} />
           <FormInput label="Diagnóstico" value={form.diagnosis} onChangeText={(v) => setForm({ ...form, diagnosis: v })} multiline numberOfLines={2} />
           <FormInput label="Objetivos do tratamento" value={form.treatment_goals} onChangeText={(v) => setForm({ ...form, treatment_goals: v })} multiline numberOfLines={2} />
-          <FormInput label="Contato de emergência" value={form.emergency_contact} onChangeText={(v) => setForm({ ...form, emergency_contact: v })} />
+          <FormInput label="QP - Queixa principal" value={form.qp} onChangeText={(v) => setForm({ ...form, qp: v })} multiline numberOfLines={2} />
+          <FormInput label="HD - Histórico de doenças" value={form.clinical_history} onChangeText={(v) => setForm({ ...form, clinical_history: v })} multiline numberOfLines={2} />
           <FormInput label="Observações" value={form.observations} onChangeText={(v) => setForm({ ...form, observations: v })} multiline numberOfLines={2} />
 
           <PrimaryButton label={saving ? "Salvando..." : "Salvar"} onPress={handleSave} disabled={saving || !form.full_name.trim()} />

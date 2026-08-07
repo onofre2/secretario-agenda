@@ -15,19 +15,19 @@ export async function createPatient(data: NewPatient): Promise<ID> {
   const db = await getDb();
   const result = await db.runAsync(
     `INSERT INTO patients
-      (full_name, diagnosis, treatment_goals, clinical_history, insurance,
-       default_session_value, phone, email, emergency_contact, observations)
+      (full_name, diagnosis, treatment_goals, clinical_history, qp, insurance,
+       default_session_value, phone, email, observations)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       data.full_name,
       data.diagnosis,
       data.treatment_goals,
       data.clinical_history,
+      data.qp,
       data.insurance,
       data.default_session_value,
       data.phone,
       data.email,
-      data.emergency_contact,
       data.observations,
     ]
   );
@@ -44,14 +44,14 @@ export async function updatePatient(
   const m = { ...current, ...data };
   await db.runAsync(
     `UPDATE patients SET
-      full_name = ?, diagnosis = ?, treatment_goals = ?, clinical_history = ?,
+      full_name = ?, diagnosis = ?, treatment_goals = ?, clinical_history = ?, qp = ?,
       insurance = ?, default_session_value = ?, phone = ?, email = ?,
-      emergency_contact = ?, observations = ?, updated_at = datetime('now')
+      observations = ?, updated_at = datetime('now')
      WHERE id = ?`,
     [
-      m.full_name, m.diagnosis, m.treatment_goals, m.clinical_history,
+      m.full_name, m.diagnosis, m.treatment_goals, m.clinical_history, m.qp,
       m.insurance, m.default_session_value, m.phone, m.email,
-      m.emergency_contact, m.observations, id,
+      m.observations, id,
     ]
   );
 }

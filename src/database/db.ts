@@ -101,6 +101,34 @@ async function runMigrations(
     });
     await db.execAsync("PRAGMA foreign_keys = ON;");
   }
+  if (fromVersion < 6) {
+    await db.execAsync("PRAGMA foreign_keys = OFF;");
+    await db.withTransactionAsync(async () => {
+      await db.execAsync(`
+        CREATE TABLE patients_new (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          full_name TEXT NOT NULL,
+          diagnosis TEXT,
+          treatment_goals TEXT,
+          clinical_history TEXT,
+          qp TEXT,
+          insurance TEXT,
+          default_session_value REAL,
+          phone TEXT,
+          email TEXT,
+          observations TEXT,
+          created_at TEXT NOT NULL DEFAULT (datetime('now')),
+          updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+        );
+        INSERT INTO patients_new (id, full_name, diagnosis, treatment_goals, clinical_history, qp, insurance, default_session_value, phone, email, observations, created_at, updated_at)
+        SELECT id, full_name, diagnosis, treatment_goals, clinical_history, NULL, insurance, default_session_value, phone, email, observations, created_at, updated_at
+        FROM patients;
+        DROP TABLE patients;
+        ALTER TABLE patients_new RENAME TO patients;
+      `);
+    });
+    await db.execAsync("PRAGMA foreign_keys = ON;");
+  }
 }
 
 /**

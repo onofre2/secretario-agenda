@@ -37,7 +37,7 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
   const [retroModalOpen, setRetroModalOpen] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [documents, setDocuments] = useState<PatientDocument[]>([]);
-  const [patientInfo, setPatientInfo] = useState<{ diagnosis: string | null; treatment_goals: string | null } | null>(null);
+  const [patientInfo, setPatientInfo] = useState<{ diagnosis: string | null; treatment_goals: string | null; qp: string | null; clinical_history: string | null } | null>(null);
 
   const load = useCallback(async () => {
     if (!patientId) return;
@@ -50,7 +50,7 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
     setAppointments(timeline);
     setNotes(noteList);
     setDocuments(docList);
-    setPatientInfo(patient ? { diagnosis: patient.diagnosis, treatment_goals: patient.treatment_goals } : null);
+    setPatientInfo(patient ? { diagnosis: patient.diagnosis, treatment_goals: patient.treatment_goals, qp: patient.qp, clinical_history: patient.clinical_history } : null);
   }, [patientId]);
 
   useEffect(() => {
@@ -143,8 +143,20 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
           </Pressable>
         </View>
 
-        {patientInfo && (patientInfo.diagnosis || patientInfo.treatment_goals) && (
+        {patientInfo && (patientInfo.diagnosis || patientInfo.treatment_goals || patientInfo.qp || patientInfo.clinical_history) && (
           <View style={styles.infoSection}>
+            {!!patientInfo.qp && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>QP - Queixa principal</Text>
+                <Text style={styles.infoValue}>{patientInfo.qp}</Text>
+              </View>
+            )}
+            {!!patientInfo.clinical_history && (
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>HD - Histórico de doenças</Text>
+                <Text style={styles.infoValue}>{patientInfo.clinical_history}</Text>
+              </View>
+            )}
             {!!patientInfo.diagnosis && (
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Diagnóstico</Text>

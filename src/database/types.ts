@@ -23,11 +23,11 @@ export interface Patient {
   diagnosis: string | null;
   treatment_goals: string | null;
   clinical_history: string | null;
+  qp: string | null;
   insurance: string | null;
   default_session_value: number | null;
   phone: string | null;
   email: string | null;
-  emergency_contact: string | null;
   observations: string | null;
   created_at: string;
   updated_at: string;
