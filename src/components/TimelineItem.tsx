@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { View, Text, TextInput, StyleSheet, Pressable, Alert } from "react-native";
-import { colors, spacing, radius } from "../theme/colors";
+import { spacing, radius } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
 import { formatCurrency } from "../utils/date";
 import { ClinicalNoteWithContext } from "../database/repositories/clinicalNotesRepo";
 import { updateNoteContent } from "../database/repositories/clinicalNotesRepo";
@@ -26,9 +27,51 @@ interface Props {
 }
 
 export default function TimelineItem({ appointment, note, onSaved, onDelete }: Props) {
+  const { colors } = useTheme();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(note?.content ?? "");
   const [saving, setSaving] = useState(false);
+
+  const styles = useMemo(() => StyleSheet.create({
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      padding: spacing.md,
+      marginBottom: spacing.sm,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    header: { flexDirection: "row", justifyContent: "space-between" },
+    date: { color: colors.text, fontSize: 14, fontWeight: "700" },
+    status: { color: colors.textMuted, fontSize: 12 },
+    deleteLink: { color: colors.danger, fontSize: 12, fontWeight: "600" },
+    clinic: { color: colors.textMuted, fontSize: 13, marginTop: 2, marginBottom: spacing.sm },
+    noteBox: {
+      backgroundColor: colors.surfaceLight,
+      borderRadius: radius.sm,
+      padding: spacing.sm,
+    },
+    noteHeader: { flexDirection: "row", justifyContent: "space-between", marginBottom: spacing.xs },
+    noteLabel: { color: colors.warning, fontSize: 12, fontWeight: "700" },
+    editLink: { color: colors.primary, fontSize: 12, fontWeight: "600" },
+    noteContent: { color: colors.text, fontSize: 14, lineHeight: 20 },
+    textArea: {
+      color: colors.text,
+      fontSize: 14,
+      backgroundColor: colors.background,
+      borderRadius: radius.sm,
+      padding: spacing.sm,
+      borderWidth: 1,
+      borderColor: colors.border,
+      textAlignVertical: "top",
+      minHeight: 90,
+    },
+    editActions: { flexDirection: "row", justifyContent: "flex-end", gap: spacing.md, marginTop: spacing.sm },
+    cancelBtn: { padding: spacing.xs },
+    cancelText: { color: colors.textMuted, fontSize: 13 },
+    saveBtn: { padding: spacing.xs },
+    saveText: { color: colors.primary, fontSize: 13, fontWeight: "700" },
+  }), [colors]);
 
   const handleSave = async () => {
     if (!note) return;
@@ -106,44 +149,3 @@ export default function TimelineItem({ appointment, note, onSaved, onDelete }: P
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  header: { flexDirection: "row", justifyContent: "space-between" },
-  date: { color: colors.text, fontSize: 14, fontWeight: "700" },
-  status: { color: colors.textMuted, fontSize: 12 },
-  deleteLink: { color: colors.danger, fontSize: 12, fontWeight: "600" },
-  clinic: { color: colors.textMuted, fontSize: 13, marginTop: 2, marginBottom: spacing.sm },
-  noteBox: {
-    backgroundColor: colors.surfaceLight,
-    borderRadius: radius.sm,
-    padding: spacing.sm,
-  },
-  noteHeader: { flexDirection: "row", justifyContent: "space-between", marginBottom: spacing.xs },
-  noteLabel: { color: colors.warning, fontSize: 12, fontWeight: "700" },
-  editLink: { color: colors.primary, fontSize: 12, fontWeight: "600" },
-  noteContent: { color: colors.text, fontSize: 14, lineHeight: 20 },
-  textArea: {
-    color: colors.text,
-    fontSize: 14,
-    backgroundColor: colors.background,
-    borderRadius: radius.sm,
-    padding: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-    textAlignVertical: "top",
-    minHeight: 90,
-  },
-  editActions: { flexDirection: "row", justifyContent: "flex-end", gap: spacing.md, marginTop: spacing.sm },
-  cancelBtn: { padding: spacing.xs },
-  cancelText: { color: colors.textMuted, fontSize: 13 },
-  saveBtn: { padding: spacing.xs },
-  saveText: { color: colors.primary, fontSize: 13, fontWeight: "700" },
-});
