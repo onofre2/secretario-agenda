@@ -4,44 +4,44 @@ import { getSetting, setSetting, SETTINGS_KEYS } from "./settingsRepo";
 
 const NOTE_BLOCKS = {
   abertura: [
-    (name: string) => `Comparecimento à sessão conforme agendamento de ${name}.`,
-    (name: string) => `Atendimento realizado conforme cronograma para ${name}.`,
-    (name: string) => `Sessão de fisioterapia realizada conforme programação de ${name}.`,
-    (name: string) => `Comparecimento registrado para atendimento de ${name}.`,
-    (name: string) => `Atendimento fisioterapêutico iniciado conforme agendamento de ${name}.`,
-    (name: string) => `Sessão realizada conforme horário previamente programado para ${name}.`,
-    (name: string) => `Comparecimento confirmado para a sessão de fisioterapia de ${name}.`,
-    (name: string) => `Atendimento realizado conforme planejamento assistencial de ${name}.`,
+    (name: string) => `${name} compareceu à sessão dentro do horário agendado.`,
+    (name: string) => `Atendimento iniciado com a presença de ${name}.`,
+    (name: string) => `${name} esteve presente para a sessão programada.`,
+    (name: string) => `Sessão realizada com ${name}, conforme previsto na agenda.`,
+    (name: string) => `${name} compareceu ao atendimento na data e horário combinados.`,
+    (name: string) => `Iniciado o atendimento de ${name}, dentro do cronograma estabelecido.`,
+    (name: string) => `${name} compareceu pontualmente para dar continuidade ao tratamento.`,
+    (name: string) => `Realizada a sessão de ${name}, conforme planejamento assistencial vigente.`,
   ],
   avaliacao: [
-    "Os objetivos terapêuticos foram revisados.",
-    "Foi realizada reavaliação do quadro funcional.",
-    "Houve revisão da evolução clínica.",
-    "As condições apresentadas foram analisadas antes das intervenções.",
-    "Foi realizada análise da resposta ao tratamento até o momento.",
-    "O quadro funcional foi reavaliado antes do início das condutas.",
-    "Foram revisadas as necessidades terapêuticas identificadas.",
-    "Houve monitoramento da evolução apresentada desde a última sessão.",
+    "Antes das condutas, foi feita a revisão do quadro clínico atual.",
+    "Observou-se a evolução do paciente desde o último atendimento.",
+    "Foi verificada a resposta às intervenções anteriores.",
+    "O quadro funcional foi analisado no início do atendimento.",
+    "Identificaram-se as necessidades terapêuticas do momento.",
+    "Houve breve reavaliação dos sintomas apresentados.",
+    "Avaliou-se o progresso alcançado até a presente sessão.",
+    "Levantou-se o estado atual do paciente para direcionar a conduta.",
   ],
   intervencao: [
-    "Foram executadas as condutas previstas no plano terapêutico.",
-    "As intervenções programadas foram realizadas.",
-    "Desenvolveram-se as atividades propostas para a sessão.",
-    "Aplicaram-se os procedimentos planejados.",
-    "As condutas terapêuticas previstas foram desenvolvidas conforme planejamento.",
-    "Foram aplicadas as estratégias definidas para a etapa atual do tratamento.",
-    "Executaram-se os recursos fisioterapêuticos compatíveis com os objetivos propostos.",
-    "O atendimento contemplou as intervenções previstas para a sessão.",
+    "Foram aplicadas técnicas específicas para o quadro apresentado.",
+    "Realizaram-se exercícios terapêuticos direcionados aos objetivos propostos.",
+    "Executou-se o protocolo de tratamento estabelecido.",
+    "Foram conduzidas as atividades previstas para esta etapa.",
+    "Trabalhou-se com os recursos indicados para o caso.",
+    "Desenvolveu-se a sessão com foco nas metas definidas.",
+    "Aplicaram-se manobras e exercícios conforme necessidade identificada.",
+    "Realizou-se o atendimento com as técnicas apropriadas ao momento.",
   ],
   encerramento: [
-    "Mantendo a continuidade do plano terapêutico.",
-    "Dando seguimento ao processo de reabilitação.",
-    "Respeitando os objetivos estabelecidos.",
-    "Mantendo acompanhamento evolutivo conforme planejamento.",
-    "Mantendo seguimento conforme evolução observada.",
-    "Dando continuidade às condutas estabelecidas no plano terapêutico.",
-    "Preservando a progressão do tratamento conforme planejamento.",
-    "Mantendo acompanhamento fisioterapêutico de forma contínua.",
+    "O paciente segue em acompanhamento regular.",
+    "Tratamento será mantido nas próximas sessões.",
+    "Progressão terapêutica dentro do esperado.",
+    "Segue-se com o plano de reabilitação estabelecido.",
+    "Continuidade assegurada até a próxima avaliação.",
+    "Evolução positiva, com manutenção da conduta atual.",
+    "Novo encontro previsto para dar seguimento ao tratamento.",
+    "Plano terapêutico será revisado conforme evolução futura.",
   ],
 };
 
@@ -50,7 +50,13 @@ function pickFromBlock(block: string[]): string {
 }
 
 async function pickNoteTemplate(patientName: string): Promise<string> {
-  const lastCombo = await getSetting(SETTINGS_KEYS.LAST_NOTE_TEMPLATE);
+  const recentRaw = await getSetting(SETTINGS_KEYS.LAST_NOTE_TEMPLATE);
+  let recent: string[] = [];
+  try {
+    recent = recentRaw ? JSON.parse(recentRaw) : [];
+  } catch {
+    recent = recentRaw ? [recentRaw] : [];
+  }
   let combo: string;
   let attempts = 0;
   do {
@@ -60,8 +66,9 @@ async function pickNoteTemplate(patientName: string): Promise<string> {
     const encerramento = pickFromBlock(NOTE_BLOCKS.encerramento);
     combo = `${abertura} ${avaliacao} ${intervencao} ${encerramento}`;
     attempts++;
-  } while (combo === lastCombo && attempts < 5);
-  await setSetting(SETTINGS_KEYS.LAST_NOTE_TEMPLATE, combo);
+  } while (recent.includes(combo) && attempts < 8);
+  const updated = [combo, ...recent].slice(0, 3);
+  await setSetting(SETTINGS_KEYS.LAST_NOTE_TEMPLATE, JSON.stringify(updated));
   return combo;
 }
 
