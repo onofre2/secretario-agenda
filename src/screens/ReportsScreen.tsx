@@ -1,8 +1,9 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useMemo } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, StyleSheet, Pressable, FlatList, ActivityIndicator } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { colors, spacing, radius } from "../theme/colors";
+import { spacing, radius } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
 import { formatCurrency } from "../utils/date";
 import { getRangeFor, PeriodKind } from "../utils/period";
 import {
@@ -32,11 +33,72 @@ const STATUS_LABEL: Record<string, string> = {
 type ReportKind = "financial" | "clinical";
 
 export default function ReportsScreen() {
+  const { colors } = useTheme();
   const [reportKind, setReportKind] = useState<ReportKind>("financial");
   const [period, setPeriod] = useState<PeriodKind>("month");
   const [rows, setRows] = useState<ReportRow[]>([]);
   const [clinicalRows, setClinicalRows] = useState<ClinicalEvolutionRow[]>([]);
   const [exporting, setExporting] = useState<"csv" | "xlsx" | "pdf" | null>(null);
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background, padding: spacing.md },
+    kindRow: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.sm },
+    kindChip: {
+      flex: 1,
+      paddingVertical: spacing.sm,
+      borderRadius: radius.sm,
+      backgroundColor: colors.surfaceLight,
+      alignItems: "center",
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    kindChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+    kindText: { color: colors.textMuted, fontWeight: "600", fontSize: 13 },
+    kindTextActive: { color: "#0F172A" },
+    periodRow: { flexDirection: "row", gap: spacing.sm },
+    periodChip: {
+      flex: 1,
+      paddingVertical: spacing.sm,
+      borderRadius: radius.sm,
+      backgroundColor: colors.surfaceLight,
+      alignItems: "center",
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    periodChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+    periodText: { color: colors.textMuted, fontWeight: "600" },
+    periodTextActive: { color: "#0F172A" },
+    rangeLabel: { color: colors.textMuted, fontSize: 13, marginTop: spacing.sm, marginBottom: spacing.md },
+    exportRow: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.sm },
+    exportButton: { flex: 1, marginTop: 0 },
+    hint: { color: colors.textMuted, fontSize: 12, marginBottom: spacing.md, lineHeight: 16 },
+    empty: { color: colors.textMuted, textAlign: "center", marginTop: spacing.xl },
+    row: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      padding: spacing.sm,
+      marginBottom: spacing.xs,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    rowPatient: { color: colors.text, fontSize: 14, fontWeight: "600" },
+    rowDetail: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
+    rowStatus: { color: colors.textMuted, fontSize: 12 },
+    rowValue: { color: colors.text, fontSize: 13, fontWeight: "700", marginTop: 2 },
+    clinicalCard: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      padding: spacing.md,
+      marginBottom: spacing.sm,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    clinicalHeader: { flexDirection: "row", justifyContent: "space-between" },
+    clinicalClinic: { color: colors.textMuted, fontSize: 12, marginTop: 2, marginBottom: spacing.xs },
+    clinicalContent: { color: colors.text, fontSize: 13, lineHeight: 18 },
+  }), [colors]);
 
   const range = getRangeFor(period);
 
@@ -206,63 +268,3 @@ export default function ReportsScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, padding: spacing.md },
-  kindRow: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.sm },
-  kindChip: {
-    flex: 1,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surfaceLight,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  kindChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  kindText: { color: colors.textMuted, fontWeight: "600", fontSize: 13 },
-  kindTextActive: { color: "#0F172A" },
-  periodRow: { flexDirection: "row", gap: spacing.sm },
-  periodChip: {
-    flex: 1,
-    paddingVertical: spacing.sm,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surfaceLight,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  periodChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  periodText: { color: colors.textMuted, fontWeight: "600" },
-  periodTextActive: { color: "#0F172A" },
-  rangeLabel: { color: colors.textMuted, fontSize: 13, marginTop: spacing.sm, marginBottom: spacing.md },
-  exportRow: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.sm },
-  exportButton: { flex: 1, marginTop: 0 },
-  hint: { color: colors.textMuted, fontSize: 12, marginBottom: spacing.md, lineHeight: 16 },
-  empty: { color: colors.textMuted, textAlign: "center", marginTop: spacing.xl },
-  row: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    padding: spacing.sm,
-    marginBottom: spacing.xs,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  rowPatient: { color: colors.text, fontSize: 14, fontWeight: "600" },
-  rowDetail: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
-  rowStatus: { color: colors.textMuted, fontSize: 12 },
-  rowValue: { color: colors.text, fontSize: 13, fontWeight: "700", marginTop: 2 },
-  clinicalCard: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  clinicalHeader: { flexDirection: "row", justifyContent: "space-between" },
-  clinicalClinic: { color: colors.textMuted, fontSize: 12, marginTop: 2, marginBottom: spacing.xs },
-  clinicalContent: { color: colors.text, fontSize: 13, lineHeight: 18 },
-});
