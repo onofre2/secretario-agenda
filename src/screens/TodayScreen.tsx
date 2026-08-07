@@ -1,8 +1,9 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useMemo } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, StyleSheet, FlatList, RefreshControl, Pressable } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { colors, spacing } from "../theme/colors";
+import { spacing } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
 import { todayISO, formatFriendlyDate, formatCurrency } from "../utils/date";
 import {
   getAppointmentsByDate,
@@ -16,19 +17,46 @@ import { speakTodaySchedule, speakEndOfDaySummary } from "../voice/voiceService"
 import AppointmentCard from "../components/AppointmentCard";
 
 export default function TodayScreen() {
+  const { colors } = useTheme();
   const [appointments, setAppointments] = useState<TodayAppointment[]>([]);
   const [loading, setLoading] = useState(true);
   const date = todayISO();
 
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background, padding: spacing.md },
+    dateLabel: {
+      color: colors.text,
+      fontSize: 22,
+      fontWeight: "700",
+      marginBottom: spacing.xs,
+      textTransform: "capitalize",
+    },
+    summaryRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginBottom: spacing.md,
+    },
+    summaryText: { color: colors.textMuted, fontSize: 14 },
+    summaryRevenue: { color: colors.primary, fontSize: 14, fontWeight: "700" },
+    voiceRow: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.md },
+    voiceButton: {
+      flex: 1,
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      paddingVertical: spacing.sm,
+      alignItems: "center",
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    voiceButtonText: { color: colors.text, fontSize: 13, fontWeight: "600" },
+    empty: { color: colors.textMuted, textAlign: "center", marginTop: spacing.xl },
+  }), [colors]);
+
   const load = useCallback(async () => {
-    // Garante que os compromissos de hoje já foram gerados a partir da agenda
-    // recorrente antes de listar (idempotente, seguro rodar sempre).
     await generateAppointmentsForDate(date);
     const list = await getAppointmentsByDate(date);
     setAppointments(list);
     setLoading(false);
-    // Mantém os lembretes sincronizados com o estado atual (cancela os de
-    // compromissos já marcados, agenda os pendentes).
     scheduleAllPendingForToday().catch((err) => console.error("Erro ao agendar notificações:", err));
     scheduleMorningAgendaNotification().catch((err) => console.error("Erro ao agendar notificacao matinal:", err));
   }, [date]);
@@ -94,33 +122,3 @@ export default function TodayScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background, padding: spacing.md },
-  dateLabel: {
-    color: colors.text,
-    fontSize: 22,
-    fontWeight: "700",
-    marginBottom: spacing.xs,
-    textTransform: "capitalize",
-  },
-  summaryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: spacing.md,
-  },
-  summaryText: { color: colors.textMuted, fontSize: 14 },
-  summaryRevenue: { color: colors.primary, fontSize: 14, fontWeight: "700" },
-  voiceRow: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.md },
-  voiceButton: {
-    flex: 1,
-    backgroundColor: colors.surface,
-    borderRadius: 12,
-    paddingVertical: spacing.sm,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  voiceButtonText: { color: colors.text, fontSize: 13, fontWeight: "600" },
-  empty: { color: colors.textMuted, textAlign: "center", marginTop: spacing.xl },
-});
