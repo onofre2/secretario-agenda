@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useMemo } from "react";
 import { View, Text, Modal, ScrollView, StyleSheet, Pressable } from "react-native";
-import { colors, spacing, radius } from "../theme/colors";
+import { spacing, radius } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
 import FormInput from "./FormInput";
 import PrimaryButton from "./PrimaryButton";
 import SelectField, { SelectOption } from "./SelectField";
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export default function RetroactiveAppointmentModal({ visible, patientId, onClose, onSaved }: Props) {
+  const { colors } = useTheme();
   const [clinics, setClinics] = useState<SelectOption[]>([]);
   const [selectedClinic, setSelectedClinic] = useState<SelectOption | null>(null);
   const [date, setDate] = useState("");
@@ -22,6 +24,27 @@ export default function RetroactiveAppointmentModal({ visible, patientId, onClos
   const [sessionValue, setSessionValue] = useState("");
   const [status, setStatus] = useState<"present" | "absent">("present");
   const [saving, setSaving] = useState(false);
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    title: { color: colors.text, fontSize: 20, fontWeight: "700", marginBottom: spacing.xs },
+    hint: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.md, lineHeight: 18 },
+    label: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.xs },
+    statusRow: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.md },
+    statusChip: {
+      flex: 1,
+      paddingVertical: spacing.md,
+      borderRadius: radius.md,
+      alignItems: "center",
+      backgroundColor: colors.surfaceLight,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    statusChipPresent: { backgroundColor: colors.primary, borderColor: colors.primary },
+    statusChipAbsent: { backgroundColor: colors.danger, borderColor: colors.danger },
+    statusText: { color: colors.textMuted, fontSize: 14, fontWeight: "600" },
+    statusTextActive: { color: "#0F172A" },
+  }), [colors]);
 
   const loadClinics = useCallback(async () => {
     const list = await listClinics();
@@ -152,24 +175,3 @@ export default function RetroactiveAppointmentModal({ visible, patientId, onClos
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  title: { color: colors.text, fontSize: 20, fontWeight: "700", marginBottom: spacing.xs },
-  hint: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.md, lineHeight: 18 },
-  label: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.xs },
-  statusRow: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.md },
-  statusChip: {
-    flex: 1,
-    paddingVertical: spacing.md,
-    borderRadius: radius.md,
-    alignItems: "center",
-    backgroundColor: colors.surfaceLight,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  statusChipPresent: { backgroundColor: colors.primary, borderColor: colors.primary },
-  statusChipAbsent: { backgroundColor: colors.danger, borderColor: colors.danger },
-  statusText: { color: colors.textMuted, fontSize: 14, fontWeight: "600" },
-  statusTextActive: { color: "#0F172A" },
-});
