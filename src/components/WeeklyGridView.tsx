@@ -3,6 +3,7 @@ import { View, Text, ScrollView, StyleSheet, Pressable, Modal } from "react-nati
 import { colors, spacing, radius } from "../theme/colors";
 import { WEEKDAYS } from "../utils/weekdays";
 import { formatCurrency } from "../utils/date";
+import { getClinicColor } from "../utils/clinicColors";
 
 interface ScheduleItem {
   id: number;
@@ -19,16 +20,12 @@ interface Props {
   onReminderPress: (item: ScheduleItem) => void;
 }
 
-const CLINIC_COLORS = ["#22C55E", "#3B82F6", "#F59E0B", "#EC4899", "#A855F7", "#14B8A6", "#EF4444", "#84CC16"];
-
 function buildClinicColorMap(schedules: ScheduleItem[]): Map<string, string> {
   const map = new Map<string, string>();
-  let i = 0;
   for (const s of schedules) {
     const name = s.clinic_name ?? "?";
     if (!map.has(name)) {
-      map.set(name, CLINIC_COLORS[i % CLINIC_COLORS.length]);
-      i++;
+      map.set(name, getClinicColor(name));
     }
   }
   return map;

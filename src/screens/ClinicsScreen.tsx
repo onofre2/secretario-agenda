@@ -23,7 +23,7 @@ import { getClinicalEvolutionByClinic } from "../database/repositories/reportsRe
 import { exportClinicalEvolutionAsPdf } from "../reports/exportClinicalPdf";
 import { Clinic, Patient } from "../database/types";
 
-const CLINIC_COLORS = ["#22C55E", "#3B82F6", "#F59E0B", "#EC4899", "#A855F7", "#14B8A6", "#EF4444", "#84CC16"];
+import { getClinicColor } from "../utils/clinicColors";
 
 const emptyForm = { name: "", address: "", phone: "", payment_info: "", notes: "" };
 
@@ -57,7 +57,7 @@ export default function ClinicsScreen() {
     setClinicStats(
       clinicList.map((c, i) => ({
         clinicName: c.name,
-        clinicColor: CLINIC_COLORS[i % CLINIC_COLORS.length],
+        clinicColor: getClinicColor(c.name),
         monthCount: monthMap.get(c.name) ?? 0,
         dayCount: dayMap.get(c.name) ?? 0,
         present: attMap.get(c.name)?.present ?? 0,

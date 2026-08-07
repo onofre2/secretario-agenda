@@ -11,7 +11,7 @@ const STATUS_LABEL: Record<string, string> = {
   pending: "Pendente",
 };
 
-const CLINIC_COLORS = ["#22C55E", "#3B82F6", "#F59E0B", "#EC4899", "#A855F7", "#14B8A6", "#EF4444", "#84CC16"];
+import { getClinicColor } from "../utils/clinicColors";
 
 function escapeHtml(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -38,12 +38,10 @@ function buildHtml(rows: ReportRow[], title: string, extra: { goal: number | nul
   const goalPct = extra.goal ? Math.min((totalRevenue / extra.goal) * 100, 100) : null;
 
   const grouped = groupByClinic(rows);
-  let colorIndex = 0;
 
   const sectionsHtml = Array.from(grouped.entries())
     .map(([clinicName, clinicRows]) => {
-      const color = CLINIC_COLORS[colorIndex % CLINIC_COLORS.length];
-      colorIndex++;
+      const color = getClinicColor(clinicName);
       const clinicRevenue = clinicRows
         .filter((r) => r.status === "present")
         .reduce((sum, r) => sum + r.session_value, 0);

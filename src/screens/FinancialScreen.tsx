@@ -20,7 +20,7 @@ import FinancialDetailModal from "../components/FinancialDetailModal";
 import MonthlyGoalCard from "../components/MonthlyGoalCard";
 import MonthlyBreakdownCard from "../components/MonthlyBreakdownCard";
 
-const CLINIC_COLORS = ["#22C55E", "#3B82F6", "#F59E0B", "#EC4899", "#A855F7", "#14B8A6", "#EF4444", "#84CC16"];
+import { getClinicColor } from "../utils/clinicColors";
 
 const PERIODS: { key: PeriodKind; label: string }[] = [
   { key: "day", label: "Diário" },
@@ -162,7 +162,7 @@ export default function FinancialScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Receita por clínica</Text>
         <SimpleBarChart
-          data={byClinic.map((c, i) => ({ label: c.clinic_name, value: c.total, color: CLINIC_COLORS[i % CLINIC_COLORS.length] }))}
+          data={byClinic.map((c, i) => ({ label: c.clinic_name, value: c.total, color: getClinicColor(c.clinic_name) }))}
           emptyMessage="Nenhuma receita registrada neste período."
         />
       </View>

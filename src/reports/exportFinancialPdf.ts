@@ -4,7 +4,7 @@ import { FinancialSummary, RevenueTrendPoint, MonthlyRevenuePoint, getMonthlyRev
 import { getSignatureImageBase64 } from "../utils/signatureImport";
 import { getTherapistInfo, buildTherapistFooterHtml } from "./therapistInfo";
 
-const CLINIC_COLORS = ["#22C55E", "#3B82F6", "#F59E0B", "#EC4899", "#A855F7", "#14B8A6", "#EF4444", "#84CC16"];
+import { getClinicColor } from "../utils/clinicColors";
 const MONTH_NAMES = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
 function formatBRL(value: number): string {
@@ -20,7 +20,7 @@ function buildClinicBarsHtml(byClinic: { clinic_name: string; total: number }[])
   const max = Math.max(...byClinic.map((c) => c.total), 1);
   return byClinic
     .map((c, i) => {
-      const color = CLINIC_COLORS[i % CLINIC_COLORS.length];
+      const color = getClinicColor(c.clinic_name);
       const pct = Math.round((c.total / max) * 100);
       return `
         <div class="bar-row">
