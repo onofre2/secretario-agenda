@@ -1,6 +1,7 @@
 import { getDb } from "../db";
 import { Appointment, ID } from "../types";
 import { getSetting, setSetting, SETTINGS_KEYS } from "./settingsRepo";
+import * as Notifications from "expo-notifications";
 
 const NOTE_BLOCKS = {
   abertura: [
@@ -139,6 +140,7 @@ export async function markPresent(appointmentId: ID): Promise<void> {
        VALUES (?, ?, ?, 1)`,
       [appointmentId, appt.patient_id, draft]
     );
+    await db.runAsync("UPDATE patients SET consecutive_absences = 0 WHERE id = ?", [appt.patient_id]);
   });
 }
 
@@ -174,6 +176,21 @@ export async function markAbsent(appointmentId: ID): Promise<void> {
        VALUES (?, ?, ?, ?, ?, 'loss')`,
       [appointmentId, appt.patient_id, appt.clinic_id, appt.date, appt.session_value]
     );
+    await db.runAsync("UPDATE patients SET consecutive_absences = consecutive_absences + 1 WHERE id = ?", [appt.patient_id]);
+    const patientRow = await db.getFirstAsync<{ consecutive_absences: number; full_name: string }>(
+      "SELECT consecutive_absences, full_name FROM patients WHERE id = ?",
+      [appt.patient_id]
+    );
+    if (patientRow && patientRow.consecutive_absences > 0 && patientRow.consecutive_absences % 2 === 0) {
+      await Notifications.scheduleNotificationAsync({
+        content: {
+          title: "Alerta de faltas",
+          body: `${patientRow.full_name} faltou ${patientRow.consecutive_absences} vezes seguidas. Considere confirmar os próximos horários.`,
+          sound: "default",
+        },
+        trigger: null,
+      });
+    }
   });
 }
 

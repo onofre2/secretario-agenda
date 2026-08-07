@@ -129,6 +129,9 @@ async function runMigrations(
     });
     await db.execAsync("PRAGMA foreign_keys = ON;");
   }
+  if (fromVersion < 7) {
+    await db.execAsync("ALTER TABLE patients ADD COLUMN consecutive_absences INTEGER NOT NULL DEFAULT 0;");
+  }
 }
 
 /**

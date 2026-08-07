@@ -31,6 +31,7 @@ export interface Patient {
   observations: string | null;
   created_at: string;
   updated_at: string;
+  consecutive_absences: number;
 }
 
 // Agendamento recorrente semanal (o "molde" que gera Appointments)
@@ -113,7 +114,7 @@ export interface Backup {
 
 // DTOs usados ao criar registros (sem campos gerados pelo banco)
 export type NewClinic = Omit<Clinic, "id" | "created_at" | "updated_at">;
-export type NewPatient = Omit<Patient, "id" | "created_at" | "updated_at">;
+export type NewPatient = Omit<Patient, "id" | "created_at" | "updated_at" | "consecutive_absences">;
 export type NewSchedule = Omit<Schedule, "id" | "created_at" | "updated_at" | "reminder"> & { reminder?: string | null };
 export type NewAppointment = Omit<Appointment, "id" | "created_at" | "updated_at">;
 
