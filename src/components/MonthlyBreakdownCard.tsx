@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { View, Text, TextInput, Pressable, StyleSheet } from "react-native";
-import { colors, spacing, radius } from "../theme/colors";
+import { spacing, radius } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
 import { formatCurrency } from "../utils/date";
 import { getSetting, setSetting, SETTINGS_KEYS } from "../database/repositories/settingsRepo";
 
@@ -9,9 +10,29 @@ interface Props {
 }
 
 export default function MonthlyBreakdownCard({ monthRevenue }: Props) {
+  const { colors } = useTheme();
   const [percent, setPercent] = useState<number | null>(null);
   const [editing, setEditing] = useState(false);
   const [inputValue, setInputValue] = useState("");
+
+  const styles = useMemo(() => StyleSheet.create({
+    wrapper: { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.border, marginBottom: spacing.md },
+    title: { color: colors.text, fontSize: 18, fontWeight: "700" },
+    subtitle: { color: colors.textMuted, fontSize: 12, marginTop: 4 },
+    headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+    editLink: { color: colors.primary, fontSize: 13, fontWeight: "600" },
+    inputRow: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm, alignItems: "center" },
+    input: { flex: 1, backgroundColor: colors.surfaceLight, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border, color: colors.text, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
+    percentSign: { color: colors.textMuted, fontSize: 16, fontWeight: "600" },
+    saveBtn: { backgroundColor: colors.primary, borderRadius: radius.sm, paddingHorizontal: spacing.md, justifyContent: "center" },
+    saveBtnText: { color: "#0F172A", fontWeight: "700" },
+    totalValue: { color: colors.primary, fontSize: 28, fontWeight: "700", marginTop: spacing.xs, marginBottom: spacing.md },
+    breakdownRow: { flexDirection: "row", gap: spacing.md },
+    breakdownCol: { flex: 1 },
+    breakdownLabel: { color: colors.textMuted, fontSize: 12 },
+    breakdownValueNet: { color: colors.primary, fontSize: 18, fontWeight: "700", marginTop: 4 },
+    breakdownValueInvest: { color: colors.warning, fontSize: 18, fontWeight: "700", marginTop: 4 },
+  }), [colors]);
 
   useEffect(() => {
     (async () => {
@@ -79,22 +100,3 @@ export default function MonthlyBreakdownCard({ monthRevenue }: Props) {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  wrapper: { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.border, marginBottom: spacing.md },
-  title: { color: colors.text, fontSize: 18, fontWeight: "700" },
-  subtitle: { color: colors.textMuted, fontSize: 12, marginTop: 4 },
-  headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  editLink: { color: colors.primary, fontSize: 13, fontWeight: "600" },
-  inputRow: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm, alignItems: "center" },
-  input: { flex: 1, backgroundColor: colors.surfaceLight, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border, color: colors.text, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
-  percentSign: { color: colors.textMuted, fontSize: 16, fontWeight: "600" },
-  saveBtn: { backgroundColor: colors.primary, borderRadius: radius.sm, paddingHorizontal: spacing.md, justifyContent: "center" },
-  saveBtnText: { color: "#0F172A", fontWeight: "700" },
-  totalValue: { color: colors.primary, fontSize: 28, fontWeight: "700", marginTop: spacing.xs, marginBottom: spacing.md },
-  breakdownRow: { flexDirection: "row", gap: spacing.md },
-  breakdownCol: { flex: 1 },
-  breakdownLabel: { color: colors.textMuted, fontSize: 12 },
-  breakdownValueNet: { color: colors.primary, fontSize: 18, fontWeight: "700", marginTop: 4 },
-  breakdownValueInvest: { color: colors.warning, fontSize: 18, fontWeight: "700", marginTop: 4 },
-});
