@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, StyleSheet } from "react-native";
-import { colors, spacing } from "../theme/colors";
+import { spacing } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
 
 interface Props {
   title: string;
@@ -9,6 +10,21 @@ interface Props {
 }
 
 export function PlaceholderScreen({ title, description }: Props) {
+  const { colors } = useTheme();
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+      alignItems: "center",
+      justifyContent: "center",
+      padding: spacing.lg,
+    },
+    title: { color: colors.text, fontSize: 24, fontWeight: "700", marginBottom: spacing.sm },
+    description: { color: colors.textMuted, fontSize: 14, textAlign: "center", marginBottom: spacing.md },
+    soon: { color: colors.warning, fontSize: 14 },
+  }), [colors]);
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <Text style={styles.title}>{title}</Text>
@@ -17,16 +33,3 @@ export function PlaceholderScreen({ title, description }: Props) {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.background,
-    alignItems: "center",
-    justifyContent: "center",
-    padding: spacing.lg,
-  },
-  title: { color: colors.text, fontSize: 24, fontWeight: "700", marginBottom: spacing.sm },
-  description: { color: colors.textMuted, fontSize: 14, textAlign: "center", marginBottom: spacing.md },
-  soon: { color: colors.warning, fontSize: 14 },
-});
