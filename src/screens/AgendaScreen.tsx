@@ -1,8 +1,9 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useMemo } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, FlatList, Modal, StyleSheet, Pressable, ScrollView, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { colors, spacing, radius } from "../theme/colors";
+import { spacing, radius } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
 import FormInput from "../components/FormInput";
 import PrimaryButton from "../components/PrimaryButton";
 import FloatingAddButton from "../components/FloatingAddButton";
@@ -30,6 +31,7 @@ interface ScheduleWithNames extends Schedule {
 }
 
 export default function AgendaScreen() {
+  const { colors } = useTheme();
   const [schedules, setSchedules] = useState<ScheduleWithNames[]>([]);
   const [patients, setPatients] = useState<SelectOption[]>([]);
   const [patientDetails, setPatientDetails] = useState<Patient[]>([]);
@@ -47,6 +49,38 @@ export default function AgendaScreen() {
   const [weekday, setWeekday] = useState<Weekday>(1);
   const [time, setTime] = useState("");
   const [sessionValue, setSessionValue] = useState("");
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    viewToggleRow: { flexDirection: "row", gap: spacing.sm, paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.xs },
+    viewToggleChip: { flex: 1, paddingVertical: spacing.sm, borderRadius: radius.sm, backgroundColor: colors.surfaceLight, alignItems: "center", borderWidth: 1, borderColor: colors.border },
+    viewToggleChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+    viewToggleText: { color: colors.textMuted, fontWeight: "600" },
+    viewToggleTextActive: { color: "#0F172A" },
+    card: { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.border },
+    cardHeader: { flexDirection: "row", justifyContent: "space-between" },
+    reminderTag: { alignSelf: "flex-start", marginBottom: spacing.xs },
+    reminderTagText: { color: colors.textMuted, fontSize: 11, fontWeight: "600" },
+    reminderTagTextActive: { color: colors.danger },
+    reminderOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", padding: spacing.lg },
+    reminderModalBox: { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.border },
+    reminderModalTitle: { color: colors.text, fontSize: 17, fontWeight: "700", marginBottom: spacing.md },
+    cardDay: { color: colors.primary, fontSize: 14, fontWeight: "700" },
+    cardTime: { color: colors.text, fontSize: 14, fontWeight: "700" },
+    cardTitle: { color: colors.text, fontSize: 17, fontWeight: "600", marginTop: spacing.xs },
+    cardSubtitle: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
+    actionsRow: { flexDirection: "row", gap: spacing.md, marginTop: spacing.sm },
+    actionLink: { color: colors.textMuted, fontSize: 13, fontWeight: "600" },
+    empty: { color: colors.textMuted, textAlign: "center", marginTop: spacing.xl },
+    modalContainer: { flex: 1, backgroundColor: colors.background },
+    modalTitle: { color: colors.text, fontSize: 20, fontWeight: "700", marginBottom: spacing.md },
+    label: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.xs },
+    weekdayRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs, marginBottom: spacing.md },
+    weekdayChip: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.sm, backgroundColor: colors.surfaceLight, borderWidth: 1, borderColor: colors.border },
+    weekdayChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+    weekdayText: { color: colors.textMuted, fontSize: 13, fontWeight: "600" },
+    weekdayTextActive: { color: "#0F172A" },
+  }), [colors]);
 
   const load = useCallback(async () => {
     const [scheduleList, patientList, clinicList] = await Promise.all([
@@ -340,35 +374,3 @@ export default function AgendaScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  viewToggleRow: { flexDirection: "row", gap: spacing.sm, paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.xs },
-  viewToggleChip: { flex: 1, paddingVertical: spacing.sm, borderRadius: radius.sm, backgroundColor: colors.surfaceLight, alignItems: "center", borderWidth: 1, borderColor: colors.border },
-  viewToggleChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  viewToggleText: { color: colors.textMuted, fontWeight: "600" },
-  viewToggleTextActive: { color: "#0F172A" },
-  card: { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.border },
-  cardHeader: { flexDirection: "row", justifyContent: "space-between" },
-  reminderTag: { alignSelf: "flex-start", marginBottom: spacing.xs },
-  reminderTagText: { color: colors.textMuted, fontSize: 11, fontWeight: "600" },
-  reminderTagTextActive: { color: colors.danger },
-  reminderOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", padding: spacing.lg },
-  reminderModalBox: { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.border },
-  reminderModalTitle: { color: colors.text, fontSize: 17, fontWeight: "700", marginBottom: spacing.md },
-  cardDay: { color: colors.primary, fontSize: 14, fontWeight: "700" },
-  cardTime: { color: colors.text, fontSize: 14, fontWeight: "700" },
-  cardTitle: { color: colors.text, fontSize: 17, fontWeight: "600", marginTop: spacing.xs },
-  cardSubtitle: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
-  actionsRow: { flexDirection: "row", gap: spacing.md, marginTop: spacing.sm },
-  actionLink: { color: colors.textMuted, fontSize: 13, fontWeight: "600" },
-  empty: { color: colors.textMuted, textAlign: "center", marginTop: spacing.xl },
-  modalContainer: { flex: 1, backgroundColor: colors.background },
-  modalTitle: { color: colors.text, fontSize: 20, fontWeight: "700", marginBottom: spacing.md },
-  label: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.xs },
-  weekdayRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs, marginBottom: spacing.md },
-  weekdayChip: { paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.sm, backgroundColor: colors.surfaceLight, borderWidth: 1, borderColor: colors.border },
-  weekdayChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  weekdayText: { color: colors.textMuted, fontSize: 13, fontWeight: "600" },
-  weekdayTextActive: { color: "#0F172A" },
-});
