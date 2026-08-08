@@ -18,7 +18,7 @@ import {
   deletePatient,
 } from "../database/repositories/patientsRepo";
 import { listClinics } from "../database/repositories/clinicsRepo";
-import { Patient, Clinic } from "../database/types";
+import { Patient, Clinic, NoteProfile } from "../database/types";
 
 const emptyForm = {
   full_name: "",
@@ -31,6 +31,7 @@ const emptyForm = {
   insurance: "",
   default_session_value: "",
   observations: "",
+  note_profile: "default" as NoteProfile,
 };
 
 export default function PatientsScreen() {
@@ -102,6 +103,12 @@ export default function PatientsScreen() {
     empty: { color: colors.textMuted, textAlign: "center", marginTop: spacing.xl },
     modalContainer: { flex: 1, backgroundColor: colors.background },
     modalTitle: { color: colors.text, fontSize: 20, fontWeight: "700", marginBottom: spacing.md },
+    profileLabel: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.xs, marginTop: spacing.xs },
+    profileRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.xs, marginBottom: spacing.md },
+    profileChip: { paddingHorizontal: spacing.sm, paddingVertical: spacing.xs, borderRadius: radius.sm, backgroundColor: colors.surfaceLight, borderWidth: 1, borderColor: colors.border },
+    profileChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+    profileText: { color: colors.textMuted, fontSize: 12, fontWeight: "600" },
+    profileTextActive: { color: "#0F172A" },
   }), [colors]);
 
   const load = useCallback(async (clinicId: number | "all") => {
@@ -140,6 +147,7 @@ export default function PatientsScreen() {
       default_session_value:
         patient.default_session_value != null ? String(patient.default_session_value) : "",
       observations: patient.observations ?? "",
+      note_profile: patient.note_profile,
     });
     setModalOpen(true);
   };
@@ -161,6 +169,7 @@ export default function PatientsScreen() {
           ? Number(form.default_session_value.replace(",", "."))
           : null,
         observations: form.observations.trim() || null,
+        note_profile: form.note_profile,
       };
       if (editingId) {
         await updatePatient(editingId, data);
@@ -346,6 +355,26 @@ export default function PatientsScreen() {
           <FormInput label="Objetivos do tratamento" value={form.treatment_goals} onChangeText={(v) => setForm({ ...form, treatment_goals: v })} multiline numberOfLines={2} />
           <FormInput label="QP - Queixa principal" value={form.qp} onChangeText={(v) => setForm({ ...form, qp: v })} multiline numberOfLines={2} />
           <FormInput label="HD - Histórico de doenças" value={form.clinical_history} onChangeText={(v) => setForm({ ...form, clinical_history: v })} multiline numberOfLines={2} />
+
+          <Text style={styles.profileLabel}>Modelo de evolução clínica</Text>
+          <View style={styles.profileRow}>
+            {[
+              { key: "default", label: "🔵 Padrão" },
+              { key: "neuro", label: "🟢 Neurodesenvolvimento" },
+              { key: "ortho", label: "🟠 Ortopedia/Traumato" },
+              { key: "elderly", label: "🟣 Idoso/Funcional" },
+            ].map((p) => (
+              <Pressable
+                key={p.key}
+                onPress={() => setForm({ ...form, note_profile: p.key as NoteProfile })}
+                style={[styles.profileChip, form.note_profile === p.key && styles.profileChipActive]}
+              >
+                <Text style={[styles.profileText, form.note_profile === p.key && styles.profileTextActive]}>
+                  {p.label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
           <FormInput label="Observações" value={form.observations} onChangeText={(v) => setForm({ ...form, observations: v })} multiline numberOfLines={2} />
 
           <PrimaryButton label={saving ? "Salvando..." : "Salvar"} onPress={handleSave} disabled={saving || !form.full_name.trim()} />

@@ -17,6 +17,8 @@ export interface Clinic {
   updated_at: string;
 }
 
+export type NoteProfile = "default" | "neuro" | "ortho" | "elderly";
+
 export interface Patient {
   id: ID;
   full_name: string;
@@ -32,6 +34,7 @@ export interface Patient {
   created_at: string;
   updated_at: string;
   consecutive_absences: number;
+  note_profile: NoteProfile;
 }
 
 // Agendamento recorrente semanal (o "molde" que gera Appointments)

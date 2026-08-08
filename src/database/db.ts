@@ -132,6 +132,9 @@ async function runMigrations(
   if (fromVersion < 7) {
     await db.execAsync("ALTER TABLE patients ADD COLUMN consecutive_absences INTEGER NOT NULL DEFAULT 0;");
   }
+  if (fromVersion < 8) {
+    await db.execAsync("ALTER TABLE patients ADD COLUMN note_profile TEXT NOT NULL DEFAULT 'default';");
+  }
 }
 
 /**

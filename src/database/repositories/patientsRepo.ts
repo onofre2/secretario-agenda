@@ -16,8 +16,8 @@ export async function createPatient(data: NewPatient): Promise<ID> {
   const result = await db.runAsync(
     `INSERT INTO patients
       (full_name, diagnosis, treatment_goals, clinical_history, qp, insurance,
-       default_session_value, phone, email, observations)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       default_session_value, phone, email, observations, note_profile)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       data.full_name,
       data.diagnosis,
@@ -29,6 +29,7 @@ export async function createPatient(data: NewPatient): Promise<ID> {
       data.phone,
       data.email,
       data.observations,
+      data.note_profile,
     ]
   );
   return result.lastInsertRowId;
@@ -46,12 +47,12 @@ export async function updatePatient(
     `UPDATE patients SET
       full_name = ?, diagnosis = ?, treatment_goals = ?, clinical_history = ?, qp = ?,
       insurance = ?, default_session_value = ?, phone = ?, email = ?,
-      observations = ?, updated_at = datetime('now')
+      observations = ?, note_profile = ?, updated_at = datetime('now')
      WHERE id = ?`,
     [
       m.full_name, m.diagnosis, m.treatment_goals, m.clinical_history, m.qp,
       m.insurance, m.default_session_value, m.phone, m.email,
-      m.observations, id,
+      m.observations, m.note_profile, id,
     ]
   );
 }
