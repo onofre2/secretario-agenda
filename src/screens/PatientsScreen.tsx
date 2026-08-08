@@ -1,10 +1,11 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useMemo } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { FontAwesome } from "@expo/vector-icons";
 import { abrirWhatsApp } from "../utils/whatsapp";
 import { View, Text, FlatList, Modal, StyleSheet, Pressable, ScrollView, TextInput, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { colors, spacing, radius } from "../theme/colors";
+import { spacing, radius } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
 import FormInput from "../components/FormInput";
 import PrimaryButton from "../components/PrimaryButton";
 import FloatingAddButton from "../components/FloatingAddButton";
@@ -33,6 +34,7 @@ const emptyForm = {
 };
 
 export default function PatientsScreen() {
+  const { colors } = useTheme();
   const [patients, setPatients] = useState<Patient[]>([]);
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [selectedClinicId, setSelectedClinicId] = useState<number | "all">("all");
@@ -46,6 +48,61 @@ export default function PatientsScreen() {
   const [broadcastIndex, setBroadcastIndex] = useState(0);
   const [broadcastModalOpen, setBroadcastModalOpen] = useState(false);
   const [broadcastMessage, setBroadcastMessage] = useState("");
+
+  const styles = useMemo(() => StyleSheet.create({
+    searchInput: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.sm,
+      borderWidth: 1,
+      borderColor: colors.border,
+      color: colors.text,
+      fontSize: 13,
+      height: 34,
+      textAlignVertical: "center",
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 0,
+      marginHorizontal: spacing.md,
+      marginTop: 4,
+    },
+    broadcastBtn: { backgroundColor: colors.surfaceLight, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border, marginHorizontal: spacing.md, marginTop: spacing.xs, paddingVertical: 6, alignItems: "center" },
+    broadcastBtnText: { color: colors.primary, fontSize: 13, fontWeight: "600" },
+    broadcastOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", padding: spacing.lg },
+    broadcastModalBox: { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.border },
+    broadcastInfo: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.sm },
+    broadcastBanner: { position: "absolute", bottom: 90, left: spacing.md, right: spacing.md, backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.primary, padding: spacing.md },
+    broadcastBannerText: { color: colors.text, fontSize: 13, fontWeight: "600", marginBottom: spacing.sm },
+    broadcastBannerActions: { flexDirection: "row", justifyContent: "space-between" },
+    broadcastBannerNext: { color: colors.primary, fontSize: 14, fontWeight: "700" },
+    broadcastBannerCancel: { color: colors.danger, fontSize: 14, fontWeight: "600" },
+    container: { flex: 1, backgroundColor: colors.background },
+    tabsBar: { maxHeight: 48, borderBottomWidth: 1, borderBottomColor: colors.border },
+    tabsBarContent: { paddingHorizontal: spacing.md, alignItems: "center", gap: spacing.sm },
+    tab: {
+      paddingHorizontal: spacing.sm,
+      paddingVertical: 6,
+      borderRadius: radius.sm,
+    },
+    tabActive: { backgroundColor: colors.primary },
+    tabText: { color: colors.textMuted, fontSize: 13, fontWeight: "600" },
+    tabTextActive: { color: "#FFFFFF" },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      padding: spacing.md,
+      marginBottom: spacing.sm,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    cardTitle: { color: colors.text, fontSize: 17, fontWeight: "600" },
+    cardHeaderRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: spacing.sm },
+    whatsappBtn: { backgroundColor: "#25D366", width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
+    cardSubtitle: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
+    historyLink: { marginTop: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
+    historyLinkText: { color: colors.primary, fontSize: 13, fontWeight: "600" },
+    empty: { color: colors.textMuted, textAlign: "center", marginTop: spacing.xl },
+    modalContainer: { flex: 1, backgroundColor: colors.background },
+    modalTitle: { color: colors.text, fontSize: 20, fontWeight: "700", marginBottom: spacing.md },
+  }), [colors]);
 
   const load = useCallback(async (clinicId: number | "all") => {
     const clinicList = await listClinics();
@@ -299,58 +356,3 @@ export default function PatientsScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  searchInput: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-    color: colors.text,
-    fontSize: 13,
-    height: 34,
-    textAlignVertical: "center",
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 0,
-    marginHorizontal: spacing.md,
-    marginTop: 4,
-  },
-  broadcastBtn: { backgroundColor: colors.surfaceLight, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border, marginHorizontal: spacing.md, marginTop: spacing.xs, paddingVertical: 6, alignItems: "center" },
-  broadcastBtnText: { color: colors.primary, fontSize: 13, fontWeight: "600" },
-  broadcastOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", padding: spacing.lg },
-  broadcastModalBox: { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.lg, borderWidth: 1, borderColor: colors.border },
-  broadcastInfo: { color: colors.textMuted, fontSize: 13, marginBottom: spacing.sm },
-  broadcastBanner: { position: "absolute", bottom: 90, left: spacing.md, right: spacing.md, backgroundColor: colors.surface, borderRadius: radius.md, borderWidth: 1, borderColor: colors.primary, padding: spacing.md },
-  broadcastBannerText: { color: colors.text, fontSize: 13, fontWeight: "600", marginBottom: spacing.sm },
-  broadcastBannerActions: { flexDirection: "row", justifyContent: "space-between" },
-  broadcastBannerNext: { color: colors.primary, fontSize: 14, fontWeight: "700" },
-  broadcastBannerCancel: { color: colors.danger, fontSize: 14, fontWeight: "600" },
-  container: { flex: 1, backgroundColor: colors.background },
-  tabsBar: { maxHeight: 48, borderBottomWidth: 1, borderBottomColor: colors.border },
-  tabsBarContent: { paddingHorizontal: spacing.md, alignItems: "center", gap: spacing.sm },
-  tab: {
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 6,
-    borderRadius: radius.sm,
-  },
-  tabActive: { backgroundColor: colors.primary },
-  tabText: { color: colors.textMuted, fontSize: 13, fontWeight: "600" },
-  tabTextActive: { color: "#FFFFFF" },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  cardTitle: { color: colors.text, fontSize: 17, fontWeight: "600" },
-  cardHeaderRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: spacing.sm },
-  whatsappBtn: { backgroundColor: "#25D366", width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
-  cardSubtitle: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
-  historyLink: { marginTop: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
-  historyLinkText: { color: colors.primary, fontSize: 13, fontWeight: "600" },
-  empty: { color: colors.textMuted, textAlign: "center", marginTop: spacing.xl },
-  modalContainer: { flex: 1, backgroundColor: colors.background },
-  modalTitle: { color: colors.text, fontSize: 20, fontWeight: "700", marginBottom: spacing.md },
-});
