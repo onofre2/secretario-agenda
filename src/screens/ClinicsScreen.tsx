@@ -1,8 +1,9 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useMemo } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, FlatList, Modal, StyleSheet, Pressable, ScrollView, ActivityIndicator, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { colors, spacing, radius } from "../theme/colors";
+import { spacing, radius } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
 import FormInput from "../components/FormInput";
 import PrimaryButton from "../components/PrimaryButton";
 import FloatingAddButton from "../components/FloatingAddButton";
@@ -22,12 +23,12 @@ import { listPatientsByClinic } from "../database/repositories/patientsRepo";
 import { getClinicalEvolutionByClinic } from "../database/repositories/reportsRepo";
 import { exportClinicalEvolutionAsPdf } from "../reports/exportClinicalPdf";
 import { Clinic, Patient } from "../database/types";
-
 import { getClinicColor } from "../utils/clinicColors";
 
 const emptyForm = { name: "", address: "", phone: "", payment_info: "", notes: "" };
 
 export default function ClinicsScreen() {
+  const { colors } = useTheme();
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -40,6 +41,50 @@ export default function ClinicsScreen() {
   const [loadingPatients, setLoadingPatients] = useState(false);
   const [exportingClinicId, setExportingClinicId] = useState<number | null>(null);
   const [clinicStats, setClinicStats] = useState<ClinicStatsRow[]>([]);
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: radius.md,
+      padding: spacing.md,
+      marginBottom: spacing.sm,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    cardTitle: { color: colors.text, fontSize: 17, fontWeight: "600" },
+    cardSubtitle: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
+    cardActions: {
+      flexDirection: "row",
+      gap: spacing.sm,
+      marginTop: spacing.sm,
+      paddingTop: spacing.sm,
+      borderTopWidth: 1,
+      borderTopColor: colors.border,
+    },
+    cardActionBtn: {
+      flex: 1,
+      paddingVertical: spacing.xs,
+      borderRadius: radius.sm,
+      backgroundColor: colors.surfaceLight,
+      alignItems: "center",
+    },
+    cardActionText: { color: colors.primary, fontSize: 13, fontWeight: "600" },
+    empty: { color: colors.textMuted, textAlign: "center", marginTop: spacing.xl },
+    modalContainer: { flex: 1, backgroundColor: colors.background },
+    modalTitle: { color: colors.text, fontSize: 20, fontWeight: "700", marginBottom: spacing.md },
+    patientsModalHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: spacing.md,
+      paddingTop: spacing.md,
+    },
+    closeText: { color: colors.primary, fontSize: 16, fontWeight: "600" },
+    dangerWarning: { color: colors.danger, fontSize: 12, lineHeight: 17, backgroundColor: "rgba(239,68,68,0.1)", borderRadius: radius.sm, borderWidth: 1, borderColor: colors.danger, padding: spacing.sm, marginTop: spacing.md },
+    footerSection: { marginTop: spacing.lg, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },
+    footerTitle: { color: colors.text, fontSize: 16, fontWeight: "700", marginBottom: spacing.sm },
+  }), [colors]);
 
   const load = useCallback(async () => {
     const clinicList = await listClinics();
@@ -254,47 +299,3 @@ export default function ClinicsScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  card: {
-    backgroundColor: colors.surface,
-    borderRadius: radius.md,
-    padding: spacing.md,
-    marginBottom: spacing.sm,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  cardTitle: { color: colors.text, fontSize: 17, fontWeight: "600" },
-  cardSubtitle: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
-  cardActions: {
-    flexDirection: "row",
-    gap: spacing.sm,
-    marginTop: spacing.sm,
-    paddingTop: spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-  },
-  cardActionBtn: {
-    flex: 1,
-    paddingVertical: spacing.xs,
-    borderRadius: radius.sm,
-    backgroundColor: colors.surfaceLight,
-    alignItems: "center",
-  },
-  cardActionText: { color: colors.primary, fontSize: 13, fontWeight: "600" },
-  empty: { color: colors.textMuted, textAlign: "center", marginTop: spacing.xl },
-  modalContainer: { flex: 1, backgroundColor: colors.background },
-  modalTitle: { color: colors.text, fontSize: 20, fontWeight: "700", marginBottom: spacing.md },
-  patientsModalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: spacing.md,
-    paddingTop: spacing.md,
-  },
-  closeText: { color: colors.primary, fontSize: 16, fontWeight: "600" },
-  dangerWarning: { color: colors.danger, fontSize: 12, lineHeight: 17, backgroundColor: "rgba(239,68,68,0.1)", borderRadius: radius.sm, borderWidth: 1, borderColor: colors.danger, padding: spacing.sm, marginTop: spacing.md },
-  footerSection: { marginTop: spacing.lg, paddingTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border },
-  footerTitle: { color: colors.text, fontSize: 16, fontWeight: "700", marginBottom: spacing.sm },
-});
