@@ -16,6 +16,7 @@ export async function listNotesByPatient(patientId: ID): Promise<ClinicalNoteWit
      JOIN appointments a ON a.id = n.appointment_id
      JOIN clinics c ON c.id = a.clinic_id
      WHERE n.patient_id = ?
+         AND n.id = (SELECT MAX(n2.id) FROM clinical_notes n2 WHERE n2.appointment_id = n.appointment_id)
      ORDER BY a.date DESC, a.time DESC`,
     [patientId]
   );
