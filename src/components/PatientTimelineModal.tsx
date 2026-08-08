@@ -1,6 +1,7 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, useMemo } from "react";
 import { View, Text, Modal, FlatList, StyleSheet, Pressable, ActivityIndicator, Alert, Image } from "react-native";
-import { colors, spacing } from "../theme/colors";
+import { spacing } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
 import { getPatientTimeline, getPatient } from "../database/repositories/patientsRepo";
 import { deleteAppointment } from "../database/repositories/appointmentsRepo";
 import { listNotesByPatient, ClinicalNoteWithContext } from "../database/repositories/clinicalNotesRepo";
@@ -32,12 +33,35 @@ interface Props {
 }
 
 export default function PatientTimelineModal({ visible, patientId, patientName, patientPhone, onClose }: Props) {
+  const { colors } = useTheme();
   const [appointments, setAppointments] = useState<AppointmentRow[]>([]);
   const [notes, setNotes] = useState<ClinicalNoteWithContext[]>([]);
   const [retroModalOpen, setRetroModalOpen] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [documents, setDocuments] = useState<PatientDocument[]>([]);
   const [patientInfo, setPatientInfo] = useState<{ diagnosis: string | null; treatment_goals: string | null; qp: string | null; clinical_history: string | null } | null>(null);
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border },
+    title: { color: colors.text, fontSize: 20, fontWeight: "700" },
+    closeLink: { color: colors.primary, fontSize: 15, fontWeight: "600" },
+    actionBar: { paddingHorizontal: spacing.md, paddingTop: spacing.md },
+    empty: { color: colors.textMuted, textAlign: "center", marginTop: spacing.xl },
+    docsSection: { marginTop: spacing.sm, paddingHorizontal: spacing.md },
+    docsTitle: { color: colors.text, fontSize: 15, fontWeight: "700", marginBottom: spacing.sm },
+    docRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm, backgroundColor: colors.surface, borderRadius: 10, padding: spacing.sm, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.border },
+    docThumb: { width: 40, height: 40, borderRadius: 6, backgroundColor: colors.surfaceLight },
+    docIcon: { width: 40, height: 40, borderRadius: 6, backgroundColor: colors.surfaceLight, alignItems: "center", justifyContent: "center" },
+    docIconText: { color: colors.danger, fontSize: 10, fontWeight: "700" },
+    docName: { color: colors.text, fontSize: 13, fontWeight: "600" },
+    docDate: { color: colors.textMuted, fontSize: 11, marginTop: 2 },
+    docDelete: { color: colors.danger, fontSize: 12, fontWeight: "600" },
+    infoSection: { paddingHorizontal: spacing.md, paddingTop: spacing.md, gap: spacing.sm },
+    infoRow: { backgroundColor: colors.surface, borderRadius: 10, padding: spacing.sm, borderWidth: 1, borderColor: colors.border },
+    infoLabel: { color: colors.primary, fontSize: 12, fontWeight: "700", marginBottom: 2 },
+    infoValue: { color: colors.text, fontSize: 14, lineHeight: 19 },
+  }), [colors]);
 
   const load = useCallback(async () => {
     if (!patientId) return;
@@ -252,25 +276,3 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
     </Modal>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border },
-  title: { color: colors.text, fontSize: 20, fontWeight: "700" },
-  closeLink: { color: colors.primary, fontSize: 15, fontWeight: "600" },
-  actionBar: { paddingHorizontal: spacing.md, paddingTop: spacing.md },
-  empty: { color: colors.textMuted, textAlign: "center", marginTop: spacing.xl },
-  docsSection: { marginTop: spacing.sm, paddingHorizontal: spacing.md },
-  docsTitle: { color: colors.text, fontSize: 15, fontWeight: "700", marginBottom: spacing.sm },
-  docRow: { flexDirection: "row", alignItems: "center", gap: spacing.sm, backgroundColor: colors.surface, borderRadius: 10, padding: spacing.sm, marginBottom: spacing.sm, borderWidth: 1, borderColor: colors.border },
-  docThumb: { width: 40, height: 40, borderRadius: 6, backgroundColor: colors.surfaceLight },
-  docIcon: { width: 40, height: 40, borderRadius: 6, backgroundColor: colors.surfaceLight, alignItems: "center", justifyContent: "center" },
-  docIconText: { color: colors.danger, fontSize: 10, fontWeight: "700" },
-  docName: { color: colors.text, fontSize: 13, fontWeight: "600" },
-  docDate: { color: colors.textMuted, fontSize: 11, marginTop: 2 },
-  docDelete: { color: colors.danger, fontSize: 12, fontWeight: "600" },
-  infoSection: { paddingHorizontal: spacing.md, paddingTop: spacing.md, gap: spacing.sm },
-  infoRow: { backgroundColor: colors.surface, borderRadius: 10, padding: spacing.sm, borderWidth: 1, borderColor: colors.border },
-  infoLabel: { color: colors.primary, fontSize: 12, fontWeight: "700", marginBottom: 2 },
-  infoValue: { color: colors.text, fontSize: 14, lineHeight: 19 },
-});
