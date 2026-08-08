@@ -1,8 +1,9 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useMemo } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, StyleSheet, Pressable, ScrollView, RefreshControl, ActivityIndicator } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
-import { colors, spacing, radius } from "../theme/colors";
+import { spacing, radius } from "../theme/colors";
+import { useTheme } from "../context/ThemeContext";
 import { formatCurrency, todayISO } from "../utils/date";
 import { getRangeFor, PeriodKind } from "../utils/period";
 import {
@@ -19,7 +20,6 @@ import PrimaryButton from "../components/PrimaryButton";
 import FinancialDetailModal from "../components/FinancialDetailModal";
 import MonthlyGoalCard from "../components/MonthlyGoalCard";
 import MonthlyBreakdownCard from "../components/MonthlyBreakdownCard";
-
 import { getClinicColor } from "../utils/clinicColors";
 
 const PERIODS: { key: PeriodKind; label: string }[] = [
@@ -31,6 +31,7 @@ const PERIODS: { key: PeriodKind; label: string }[] = [
 type CardKind = "revenue" | "loss" | "appointments" | "attendance" | null;
 
 export default function FinancialScreen() {
+  const { colors } = useTheme();
   const [period, setPeriod] = useState<PeriodKind>("week");
   const [summary, setSummary] = useState<FinancialSummary | null>(null);
   const [byClinic, setByClinic] = useState<{ clinic_name: string; total: number }[]>([]);
@@ -42,6 +43,22 @@ export default function FinancialScreen() {
   const [loading, setLoading] = useState(true);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [activeCard, setActiveCard] = useState<CardKind>(null);
+
+  const styles = useMemo(() => StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    periodRow: { flexDirection: "row", gap: spacing.sm },
+    periodChip: { flex: 1, paddingVertical: spacing.sm, borderRadius: radius.sm, backgroundColor: colors.surfaceLight, alignItems: "center", borderWidth: 1, borderColor: colors.border },
+    periodChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+    periodText: { color: colors.textMuted, fontWeight: "600" },
+    periodTextActive: { color: "#0F172A" },
+    rangeLabel: { color: colors.textMuted, fontSize: 13, marginTop: spacing.sm, marginBottom: spacing.md, textTransform: "capitalize" },
+    cardsGrid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
+    card: { width: "47%", backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
+    cardLabel: { color: colors.textMuted, fontSize: 12, marginBottom: spacing.xs },
+    cardValue: { fontSize: 20, fontWeight: "700" },
+    section: { marginTop: spacing.lg, backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
+    sectionTitle: { color: colors.text, fontSize: 16, fontWeight: "700", marginBottom: spacing.xs },
+  }), [colors]);
 
   const load = useCallback(async () => {
     const range = getRangeFor(period);
@@ -152,10 +169,10 @@ export default function FinancialScreen() {
       <Text style={styles.rangeLabel}>{range.label}</Text>
 
       <View style={styles.cardsGrid}>
-        <SummaryCard label="Receita" value={formatCurrency(summary?.revenue ?? 0)} color={colors.primary} onPress={() => setActiveCard("revenue")} />
-        <SummaryCard label="Perda por faltas" value={formatCurrency(summary?.loss ?? 0)} color={colors.danger} onPress={() => setActiveCard("loss")} />
-        <SummaryCard label="Atendimentos" value={String(summary?.appointmentsCount ?? 0)} color={colors.text} onPress={() => setActiveCard("appointments")} />
-        <SummaryCard label="Comparecimento" value={`${attendanceRate}%`} color={colors.warning} onPress={() => setActiveCard("attendance")} />
+        <SummaryCard label="Receita" value={formatCurrency(summary?.revenue ?? 0)} color={colors.primary} onPress={() => setActiveCard("revenue")} styles={styles} />
+        <SummaryCard label="Perda por faltas" value={formatCurrency(summary?.loss ?? 0)} color={colors.danger} onPress={() => setActiveCard("loss")} styles={styles} />
+        <SummaryCard label="Atendimentos" value={String(summary?.appointmentsCount ?? 0)} color={colors.text} onPress={() => setActiveCard("appointments")} styles={styles} />
+        <SummaryCard label="Comparecimento" value={`${attendanceRate}%`} color={colors.warning} onPress={() => setActiveCard("attendance")} styles={styles} />
       </View>
 
 
@@ -186,7 +203,7 @@ export default function FinancialScreen() {
   );
 }
 
-function SummaryCard({ label, value, color, onPress }: { label: string; value: string; color: string; onPress?: () => void }) {
+function SummaryCard({ label, value, color, onPress, styles }: { label: string; value: string; color: string; onPress?: () => void; styles: ReturnType<typeof StyleSheet.create> }) {
   return (
     <Pressable style={styles.card} onPress={onPress}>
       <Text style={styles.cardLabel}>{label}</Text>
@@ -194,19 +211,3 @@ function SummaryCard({ label, value, color, onPress }: { label: string; value: s
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.background },
-  periodRow: { flexDirection: "row", gap: spacing.sm },
-  periodChip: { flex: 1, paddingVertical: spacing.sm, borderRadius: radius.sm, backgroundColor: colors.surfaceLight, alignItems: "center", borderWidth: 1, borderColor: colors.border },
-  periodChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
-  periodText: { color: colors.textMuted, fontWeight: "600" },
-  periodTextActive: { color: "#0F172A" },
-  rangeLabel: { color: colors.textMuted, fontSize: 13, marginTop: spacing.sm, marginBottom: spacing.md, textTransform: "capitalize" },
-  cardsGrid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
-  card: { width: "47%", backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
-  cardLabel: { color: colors.textMuted, fontSize: 12, marginBottom: spacing.xs },
-  cardValue: { fontSize: 20, fontWeight: "700" },
-  section: { marginTop: spacing.lg, backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md, borderWidth: 1, borderColor: colors.border },
-  sectionTitle: { color: colors.text, fontSize: 16, fontWeight: "700", marginBottom: spacing.xs },
-});
