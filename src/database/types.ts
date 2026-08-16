@@ -15,6 +15,7 @@ export interface Clinic {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  logo_path: string | null;
 }
 
 export type NoteProfile = "default" | "neuro" | "ortho" | "elderly";

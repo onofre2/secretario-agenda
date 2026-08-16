@@ -8,7 +8,7 @@ function escapeHtml(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function buildHtml(rows: ClinicalEvolutionRow[], title: string, signatureBase64: string | null, therapistFooter: string, diagnosis?: string | null, treatmentGoals?: string | null): string {
+function buildHtml(rows: ClinicalEvolutionRow[], title: string, signatureBase64: string | null, therapistFooter: string, diagnosis?: string | null, treatmentGoals?: string | null, logoBase64?: string | null): string {
   const clinicNames = Array.from(new Set(rows.map((r) => r.clinic_name))).join(", ");
   const entriesHtml = rows
     .map(
@@ -40,6 +40,7 @@ function buildHtml(rows: ClinicalEvolutionRow[], title: string, signatureBase64:
         </style>
       </head>
       <body>
+        ${logoBase64 ? `<img src="${logoBase64}" style="max-height:60px; max-width:180px; margin-bottom:8px;" />` : ""}
         <h1>${clinicNames || "Evolução Clínica"}</h1>
         <div class="summary">Evolução Clínica — ${escapeHtml(title)}</div>
         <div class="summary">Total de registros: ${rows.length}</div>
@@ -57,12 +58,13 @@ export async function exportClinicalEvolutionAsPdf(
   rows: ClinicalEvolutionRow[],
   title: string,
   diagnosis?: string | null,
-  treatmentGoals?: string | null
+  treatmentGoals?: string | null,
+  logoBase64?: string | null
 ): Promise<void> {
   const signatureBase64 = await getSignatureImageBase64();
   const therapist = await getTherapistInfo();
   const therapistFooter = buildTherapistFooterHtml(therapist);
-  const html = buildHtml(rows, title, signatureBase64, therapistFooter, diagnosis, treatmentGoals);
+  const html = buildHtml(rows, title, signatureBase64, therapistFooter, diagnosis, treatmentGoals, logoBase64);
   const { uri } = await Print.printToFileAsync({ html });
 
   if (await Sharing.isAvailableAsync()) {

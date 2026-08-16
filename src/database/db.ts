@@ -135,6 +135,9 @@ async function runMigrations(
   if (fromVersion < 8) {
     await db.execAsync("ALTER TABLE patients ADD COLUMN note_profile TEXT NOT NULL DEFAULT 'default';");
   }
+  if (fromVersion < 9) {
+    await db.execAsync("ALTER TABLE clinics ADD COLUMN logo_path TEXT;");
+  }
 }
 
 /**

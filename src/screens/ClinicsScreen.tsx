@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useMemo } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Text, FlatList, Modal, StyleSheet, Pressable, ScrollView, ActivityIndicator, Alert } from "react-native";
+import { View, Text, Image, FlatList, Modal, StyleSheet, Pressable, ScrollView, ActivityIndicator, Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { spacing, radius } from "../theme/colors";
 import { useTheme } from "../context/ThemeContext";
@@ -19,6 +19,7 @@ import {
   updateClinic,
   deleteClinic,
 } from "../database/repositories/clinicsRepo";
+import { pickClinicLogo, getClinicLogoBase64 } from "../utils/clinicLogoImport";
 import { listPatientsByClinic } from "../database/repositories/patientsRepo";
 import { getClinicalEvolutionByClinic, getReportRowsByClinic } from "../database/repositories/reportsRepo";
 import { exportClinicalEvolutionAsPdf } from "../reports/exportClinicalPdf";
@@ -26,7 +27,7 @@ import { exportClinicAttendancePdf } from "../reports/exportClinicAttendancePdf"
 import { Clinic, Patient } from "../database/types";
 import { getClinicColor } from "../utils/clinicColors";
 
-const emptyForm = { name: "", address: "", phone: "", payment_info: "", notes: "" };
+const emptyForm = { name: "", address: "", phone: "", payment_info: "", notes: "", logo_path: null as string | null };
 
 export default function ClinicsScreen() {
   const { colors } = useTheme();
@@ -127,6 +128,7 @@ export default function ClinicsScreen() {
       address: clinic.address ?? "",
       phone: clinic.phone ?? "",
       payment_info: clinic.payment_info ?? "",
+      logo_path: clinic.logo_path,
       notes: clinic.notes ?? "",
     });
     setModalOpen(true);
@@ -142,6 +144,7 @@ export default function ClinicsScreen() {
         phone: form.phone.trim() || null,
         payment_info: form.payment_info.trim() || null,
         notes: form.notes.trim() || null,
+        logo_path: form.logo_path,
       };
       if (editingId) {
         await updateClinic(editingId, data);
@@ -152,6 +155,13 @@ export default function ClinicsScreen() {
       await load();
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handlePickLogo = async (clinicId: number) => {
+    const path = await pickClinicLogo(clinicId);
+    if (path) {
+      setForm((f) => ({ ...f, logo_path: path }));
     }
   };
 
@@ -189,7 +199,8 @@ export default function ClinicsScreen() {
     setExportingClinicId(clinic.id);
     try {
       const rows = await getClinicalEvolutionByClinic(clinic.id);
-      await exportClinicalEvolutionAsPdf(rows, clinic.name);
+      const logoBase64 = await getClinicLogoBase64(clinic.logo_path);
+      await exportClinicalEvolutionAsPdf(rows, clinic.name, null, null, logoBase64);
     } finally {
       setExportingClinicId(null);
     }
@@ -262,6 +273,15 @@ export default function ClinicsScreen() {
         <ScrollView style={styles.modalContainer} contentContainerStyle={{ padding: spacing.md }}>
           <Text style={styles.modalTitle}>{editingId ? "Editar clínica" : "Nova clínica"}</Text>
           <FormInput label="Nome" required value={form.name} onChangeText={(v) => setForm({ ...form, name: v })} />
+          {editingId && (
+            <View style={{ marginBottom: 16 }}>
+              <Text style={{ color: colors.textMuted, fontSize: 13, marginBottom: 4 }}>Logo da clínica</Text>
+              {form.logo_path && (
+                <Image source={{ uri: form.logo_path }} style={{ width: 80, height: 80, borderRadius: 8, marginBottom: 8 }} resizeMode="contain" />
+              )}
+              <PrimaryButton label={form.logo_path ? "Trocar logo" : "Adicionar logo"} variant="outline" onPress={() => handlePickLogo(editingId)} />
+            </View>
+          )}
           <FormInput label="Endereço" value={form.address} onChangeText={(v) => setForm({ ...form, address: v })} />
           <FormInput label="Telefone" value={form.phone} onChangeText={(v) => setForm({ ...form, phone: v })} keyboardType="phone-pad" />
           <FormInput label="Informações de pagamento" value={form.payment_info} onChangeText={(v) => setForm({ ...form, payment_info: v })} />
