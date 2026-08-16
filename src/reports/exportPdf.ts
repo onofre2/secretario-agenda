@@ -45,6 +45,9 @@ function buildHtml(rows: ReportRow[], title: string, extra: { goal: number | nul
       const clinicRevenue = clinicRows
         .filter((r) => r.status === "present")
         .reduce((sum, r) => sum + r.session_value, 0);
+      const clinicLoss = clinicRows
+        .filter((r) => r.status === "absent")
+        .reduce((sum, r) => sum + r.session_value, 0);
 
       const rowsHtml = clinicRows
         .map(
@@ -64,6 +67,7 @@ function buildHtml(rows: ReportRow[], title: string, extra: { goal: number | nul
           <div class="clinic-header" style="border-left: 5px solid ${color};">
             <span class="clinic-name">${escapeHtml(clinicName)}</span>
             <span class="clinic-total">Ganho na clínica: ${formatCurrency(clinicRevenue)}</span>
+            <span class="clinic-loss" style="color: #DC2626; margin-left: 12px;">Perda por faltas: ${formatCurrency(clinicLoss)}</span>
           </div>
           <table>
             <thead>
