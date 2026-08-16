@@ -43,6 +43,27 @@ export async function importPhotoDocument(patientId: number): Promise<boolean> {
   return true;
 }
 
+export async function importGalleryPhotoDocument(patientId: number): Promise<boolean> {
+  const libraryPerm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (!libraryPerm.granted) return false;
+
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    quality: 0.7,
+  });
+  if (result.canceled || !result.assets?.[0]) return false;
+
+  const asset = result.assets[0];
+  await ensureDocsDir();
+  const ext = asset.uri.split(".").pop() ?? "jpg";
+  const fileName = `doc_${patientId}_${Date.now()}.${ext}`;
+  const destPath = DOCS_DIR + fileName;
+  await FileSystem.copyAsync({ from: asset.uri, to: destPath });
+
+  await createPatientDocument(patientId, destPath, "photo", fileName);
+  return true;
+}
+
 export async function importPdfDocument(patientId: number): Promise<boolean> {
   const result = await DocumentPicker.getDocumentAsync({
     type: "application/pdf",

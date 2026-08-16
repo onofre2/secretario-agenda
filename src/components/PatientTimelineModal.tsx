@@ -12,7 +12,7 @@ import TimelineItem from "./TimelineItem";
 import PrimaryButton from "./PrimaryButton";
 import RetroactiveAppointmentModal from "./RetroactiveAppointmentModal";
 import { listDocumentsByPatient, deletePatientDocument } from "../database/repositories/patientDocumentsRepo";
-import { importPhotoDocument, importPdfDocument } from "../utils/documentImport";
+import { importPhotoDocument, importPdfDocument, importGalleryPhotoDocument } from "../utils/documentImport";
 import { PatientDocument } from "../database/types";
 
 interface AppointmentRow {
@@ -132,6 +132,16 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
     }
   };
 
+  const handleImportGallery = async () => {
+    if (!patientId) return;
+    try {
+      const ok = await importGalleryPhotoDocument(patientId);
+      if (ok) await load();
+    } catch (err) {
+      console.error("Erro ao importar da galeria:", err);
+    }
+  };
+
   const handleImportPdf = async () => {
     if (!patientId) return;
     try {
@@ -146,6 +156,7 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
     Alert.alert("Importar documento", "Escolha uma opcao", [
       { text: "Cancelar", style: "cancel" },
       { text: "Tirar foto", onPress: handleImportPhoto },
+      { text: "Escolher da galeria", onPress: handleImportGallery },
       { text: "Importar PDF", onPress: handleImportPdf },
     ]);
   };
