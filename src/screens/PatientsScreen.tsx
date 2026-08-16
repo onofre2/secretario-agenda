@@ -98,8 +98,9 @@ export default function PatientsScreen() {
     cardHeaderRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: spacing.sm },
     whatsappBtn: { backgroundColor: "#25D366", width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
     cardSubtitle: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
-    historyLink: { marginTop: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
-    historyLinkText: { color: colors.primary, fontSize: 13, fontWeight: "600" },
+    editLabel: { color: colors.primary, fontSize: 12, fontWeight: "600", marginTop: 4 },
+    historyLink: { marginTop: spacing.sm, backgroundColor: colors.primary, borderRadius: radius.sm, paddingVertical: spacing.sm, alignItems: "center" },
+    historyLinkText: { color: "#0F172A", fontSize: 13, fontWeight: "700" },
     empty: { color: colors.textMuted, textAlign: "center", marginTop: spacing.xl },
     modalContainer: { flex: 1, backgroundColor: colors.background },
     modalTitle: { color: colors.text, fontSize: 20, fontWeight: "700", marginBottom: spacing.md },
@@ -277,6 +278,7 @@ export default function PatientsScreen() {
                 <Text style={styles.cardTitle}>{item.full_name}</Text>
                 {!!item.phone && <Text style={styles.cardSubtitle}>{item.phone}</Text>}
                 {!!item.diagnosis && <Text style={styles.cardSubtitle}>{item.diagnosis}</Text>}
+                <Text style={styles.editLabel}>Editar</Text>
               </Pressable>
               <Pressable
                 style={styles.whatsappBtn}
@@ -290,7 +292,7 @@ export default function PatientsScreen() {
               </Pressable>
             </View>
             <Pressable onPress={() => setTimelinePatient(item)} style={styles.historyLink}>
-              <Text style={styles.historyLinkText}>Histórico do paciente →</Text>
+              <Text style={styles.historyLinkText}>Histórico do paciente</Text>
             </Pressable>
           </View>
         )}
