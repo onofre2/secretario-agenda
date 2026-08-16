@@ -69,6 +69,11 @@ export default function WeeklyGridView({ schedules, onReminderPress }: Props) {
     })()
   ).sort((a, b) => b[1] - a[1]);
   const maxHours = Math.max(1, ...clinicHours.map(([, h]) => h));
+  const clinicAppointmentCounts = new Map<string, number>();
+  for (const s of schedules) {
+    const name = s.clinic_name ?? "?";
+    clinicAppointmentCounts.set(name, (clinicAppointmentCounts.get(name) ?? 0) + 1);
+  }
 
   const dayRevenue = WEEKDAYS.map((day) => ({
     label: day.short,
@@ -106,7 +111,7 @@ export default function WeeklyGridView({ schedules, onReminderPress }: Props) {
     hoursLabel: { color: colors.textMuted, fontSize: 12, width: 110 },
     hoursBarTrack: { flex: 1, height: 8, borderRadius: 4, backgroundColor: colors.surfaceLight, overflow: "hidden" },
     hoursBarFill: { height: 8, borderRadius: 4 },
-    hoursValue: { color: colors.text, fontSize: 12, fontWeight: "600", width: 30, textAlign: "right" },
+    hoursValue: { color: colors.text, fontSize: 12, fontWeight: "600", width: 90, textAlign: "right" },
     dayStatsSection: { paddingHorizontal: spacing.md, paddingTop: spacing.xs, paddingBottom: spacing.xl },
     dayStatsRow: { flexDirection: "row", gap: spacing.sm, marginTop: spacing.sm },
     dayStatCard: { flex: 1, backgroundColor: colors.surface, borderRadius: radius.sm, padding: spacing.sm, borderWidth: 1, borderColor: colors.border },
@@ -205,7 +210,7 @@ export default function WeeklyGridView({ schedules, onReminderPress }: Props) {
                 ]}
               />
             </View>
-            <Text style={styles.hoursValue}>{hours}h</Text>
+            <Text style={styles.hoursValue}>{hours}h · {clinicAppointmentCounts.get(name) ?? 0} atend.</Text>
           </View>
         ))}
       </View>
