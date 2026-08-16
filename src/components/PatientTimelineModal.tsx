@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useState, useMemo } from "react";
+import * as Sharing from "expo-sharing";
 import { View, Text, Modal, FlatList, StyleSheet, Pressable, ActivityIndicator, Alert, Image } from "react-native";
 import { spacing } from "../theme/colors";
 import { useTheme } from "../context/ThemeContext";
@@ -39,6 +40,7 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
   const [retroModalOpen, setRetroModalOpen] = useState(false);
   const [exportingPdf, setExportingPdf] = useState(false);
   const [documents, setDocuments] = useState<PatientDocument[]>([]);
+  const [previewDoc, setPreviewDoc] = useState<PatientDocument | null>(null);
   const [patientInfo, setPatientInfo] = useState<{ diagnosis: string | null; treatment_goals: string | null; qp: string | null; clinical_history: string | null } | null>(null);
 
   const styles = useMemo(() => StyleSheet.create({
@@ -61,6 +63,10 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
     infoRow: { backgroundColor: colors.surface, borderRadius: 10, padding: spacing.sm, borderWidth: 1, borderColor: colors.border },
     infoLabel: { color: colors.primary, fontSize: 12, fontWeight: "700", marginBottom: 2 },
     infoValue: { color: colors.text, fontSize: 14, lineHeight: 19 },
+    previewOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.9)", justifyContent: "center", alignItems: "center" },
+    previewImage: { width: "100%", height: "80%" },
+    previewCloseBtn: { marginTop: spacing.lg, paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, backgroundColor: colors.surface, borderRadius: 8 },
+    previewCloseText: { color: colors.text, fontSize: 15, fontWeight: "600" },
   }), [colors]);
 
   const load = useCallback(async () => {
@@ -161,6 +167,20 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
     ]);
   };
 
+  const handleOpenDocument = async (doc: PatientDocument) => {
+    if (doc.file_type === "photo") {
+      setPreviewDoc(doc);
+    } else {
+      try {
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(doc.file_path, { mimeType: "application/pdf" });
+        }
+      } catch (err) {
+        console.error("Erro ao abrir documento:", err);
+      }
+    }
+  };
+
   const handleDeleteDocument = (id: number) => {
     Alert.alert("Excluir documento", "Essa acao nao pode ser desfeita.", [
       { text: "Cancelar", style: "cancel" },
@@ -243,7 +263,7 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
             <View style={styles.docsSection}>
               <Text style={styles.docsTitle}>Documentos e exames</Text>
               {documents.map((doc) => (
-                <View key={doc.id} style={styles.docRow}>
+                <Pressable key={doc.id} style={styles.docRow} onPress={() => handleOpenDocument(doc)}>
                   {doc.file_type === "photo" ? (
                     <Image source={{ uri: doc.file_path }} style={styles.docThumb} />
                   ) : (
@@ -256,7 +276,7 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
                   <Pressable onPress={() => handleDeleteDocument(doc.id)}>
                     <Text style={styles.docDelete}>Excluir</Text>
                   </Pressable>
-                </View>
+                </Pressable>
               ))}
             </View>
           )}
@@ -284,6 +304,17 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
         onClose={() => setRetroModalOpen(false)}
         onSaved={load}
       />
+
+      <Modal visible={!!previewDoc} transparent animationType="fade" onRequestClose={() => setPreviewDoc(null)}>
+        <Pressable style={styles.previewOverlay} onPress={() => setPreviewDoc(null)}>
+          {previewDoc && (
+            <Image source={{ uri: previewDoc.file_path }} style={styles.previewImage} resizeMode="contain" />
+          )}
+          <Pressable style={styles.previewCloseBtn} onPress={() => setPreviewDoc(null)}>
+            <Text style={styles.previewCloseText}>Fechar</Text>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </Modal>
   );
 }
