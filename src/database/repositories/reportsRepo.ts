@@ -23,6 +23,20 @@ export async function getReportRows(startDate: string, endDate: string): Promise
   );
 }
 
+export async function getReportRowsByClinic(clinicId: number, startDate: string, endDate: string): Promise<ReportRow[]> {
+  const db = await getDb();
+  return db.getAllAsync<ReportRow>(
+    `SELECT a.date, a.time, p.full_name as patient_name, c.name as clinic_name,
+            a.status, a.session_value
+     FROM appointments a
+     JOIN patients p ON p.id = a.patient_id
+     JOIN clinics c ON c.id = a.clinic_id
+     WHERE a.clinic_id = ? AND a.date BETWEEN ? AND ? AND a.status != 'cancelled'
+     ORDER BY a.date ASC, a.time ASC`,
+    [clinicId, startDate, endDate]
+  );
+}
+
 export interface ClinicalEvolutionRow {
   date: string;
   time: string;

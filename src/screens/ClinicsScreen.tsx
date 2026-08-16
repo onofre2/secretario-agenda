@@ -20,8 +20,9 @@ import {
   deleteClinic,
 } from "../database/repositories/clinicsRepo";
 import { listPatientsByClinic } from "../database/repositories/patientsRepo";
-import { getClinicalEvolutionByClinic } from "../database/repositories/reportsRepo";
+import { getClinicalEvolutionByClinic, getReportRowsByClinic } from "../database/repositories/reportsRepo";
 import { exportClinicalEvolutionAsPdf } from "../reports/exportClinicalPdf";
+import { exportClinicAttendancePdf } from "../reports/exportClinicAttendancePdf";
 import { Clinic, Patient } from "../database/types";
 import { getClinicColor } from "../utils/clinicColors";
 
@@ -194,6 +195,17 @@ export default function ClinicsScreen() {
     }
   };
 
+  const handleExportAttendancePdf = async (clinic: Clinic) => {
+    setExportingClinicId(clinic.id);
+    try {
+      const monthRange = getRangeFor("month");
+      const rows = await getReportRowsByClinic(clinic.id, monthRange.start, monthRange.end);
+      await exportClinicAttendancePdf(rows, clinic.name, monthRange.label);
+    } finally {
+      setExportingClinicId(null);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
       <FlatList
@@ -229,6 +241,15 @@ export default function ClinicsScreen() {
               >
                 <Text style={styles.cardActionText}>
                   {exportingClinicId === item.id ? "Gerando PDF..." : "Exportar evolução"}
+                </Text>
+              </Pressable>
+              <Pressable
+                style={styles.cardActionBtn}
+                onPress={() => handleExportAttendancePdf(item)}
+                disabled={exportingClinicId === item.id}
+              >
+                <Text style={styles.cardActionText}>
+                  {exportingClinicId === item.id ? "Gerando PDF..." : "Exportar presença"}
                 </Text>
               </Pressable>
             </View>
