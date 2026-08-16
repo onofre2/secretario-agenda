@@ -53,7 +53,11 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
         };
         return (
           <View key={route.key} style={styles.tabItem} onTouchEnd={onPress}>
-            <Text style={{ fontSize: 18, opacity: isFocused ? 1 : 0.6 }}>{TAB_ICONS[route.name]}</Text>
+            {route.name === "Hoje" ? (
+              <Text style={{ fontSize: 16, fontWeight: "700", opacity: isFocused ? 1 : 0.6, color: isFocused ? colors.primary : colors.textMuted }}>{new Date().getDate()}</Text>
+            ) : (
+              <Text style={{ fontSize: 18, opacity: isFocused ? 1 : 0.6 }}>{TAB_ICONS[route.name]}</Text>
+            )}
             <Text style={[styles.tabLabel, { color: isFocused ? colors.primary : colors.textMuted }]}>
               {route.name}
             </Text>
