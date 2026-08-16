@@ -49,6 +49,7 @@ export default function SettingsScreen() {
     },
     leadValue: { color: colors.text, fontSize: 16 },
     signaturePreview: { width: "100%", height: 80, marginVertical: spacing.sm, backgroundColor: colors.surfaceLight, borderRadius: radius.sm },
+    warningText: { color: colors.danger, fontSize: 13, lineHeight: 19 },
   }), [colors]);
 
   const load = useCallback(async () => {
@@ -229,6 +230,18 @@ export default function SettingsScreen() {
           {signaturePath && (
             <PrimaryButton label="Remover assinatura" onPress={handleRemoveSignature} variant="outline" />
           )}
+        </Section>
+
+        <Section title="Aviso importante" styles={styles}>
+          <Text style={styles.warningText}>
+            [IMPORTANTE]{"\n\n"}
+            Final do mês — "imprima" o relatório individual (evolução) de cada paciente.{"\n\n"}
+            (Para validação){"\n"}
+            No campo da assinatura, coloque a data em que você está imprimindo e assinando a folha (ex.: Juiz de Fora, 31 de agosto de 2026).{"\n\n"}
+            "Carimbe" (se o carimbo já não estiver impresso pelo app) e assine à caneta.{"\n\n"}
+            Arquive a folha na pasta física do paciente na clínica.{"\n\n"}
+            "Ou pelo gov.com.br assine virtualmente CADA documento e salve no dispositivo."
+          </Text>
         </Section>
     </ScrollView>
     </SafeAreaView>
