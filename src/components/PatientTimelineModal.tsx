@@ -103,7 +103,7 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
           content: n.content,
           is_draft: n.is_draft,
         }));
-      await exportClinicalEvolutionAsPdf(rows, patientName);
+      await exportClinicalEvolutionAsPdf(rows, patientName, patientInfo?.diagnosis, patientInfo?.treatment_goals);
     } catch (err) {
       console.error("Erro ao exportar evolucao do paciente:", err);
     } finally {

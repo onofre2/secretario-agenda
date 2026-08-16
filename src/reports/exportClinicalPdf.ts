@@ -8,7 +8,7 @@ function escapeHtml(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function buildHtml(rows: ClinicalEvolutionRow[], title: string, signatureBase64: string | null, therapistFooter: string): string {
+function buildHtml(rows: ClinicalEvolutionRow[], title: string, signatureBase64: string | null, therapistFooter: string, diagnosis?: string | null, treatmentGoals?: string | null): string {
   const clinicNames = Array.from(new Set(rows.map((r) => r.clinic_name))).join(", ");
   const entriesHtml = rows
     .map(
@@ -36,12 +36,15 @@ function buildHtml(rows: ClinicalEvolutionRow[], title: string, signatureBase64:
           .patient { font-weight: bold; font-size: 14px; }
           .meta { font-size: 11px; color: #64748B; }
           .content { font-size: 13px; line-height: 1.5; margin: 0; }
+          .clinicalInfo { font-size: 13px; margin-bottom: 8px; color: #334155; }
         </style>
       </head>
       <body>
         <h1>${clinicNames || "Evolução Clínica"}</h1>
         <div class="summary">Evolução Clínica — ${escapeHtml(title)}</div>
         <div class="summary">Total de registros: ${rows.length}</div>
+        ${diagnosis ? `<div class="clinicalInfo"><strong>Diagnóstico:</strong> ${escapeHtml(diagnosis)}</div>` : ""}
+        ${treatmentGoals ? `<div class="clinicalInfo"><strong>Objetivos e tratamento:</strong> ${escapeHtml(treatmentGoals)}</div>` : ""}
         ${entriesHtml || "<p>Nenhuma evolução registrada neste período.</p>"}
           ${signatureBase64 ? `<div style="margin-top:40px; text-align:center;"><img src="${signatureBase64}" style="max-width:200px; max-height:80px;" /><div style="border-top:1px solid #334155; width:220px; margin:4px auto 0;"></div><div style="font-size:11px; color:#64748B; margin-top:4px;">Assinatura</div></div>` : ""}
           ${therapistFooter}
@@ -52,12 +55,14 @@ function buildHtml(rows: ClinicalEvolutionRow[], title: string, signatureBase64:
 
 export async function exportClinicalEvolutionAsPdf(
   rows: ClinicalEvolutionRow[],
-  title: string
+  title: string,
+  diagnosis?: string | null,
+  treatmentGoals?: string | null
 ): Promise<void> {
   const signatureBase64 = await getSignatureImageBase64();
   const therapist = await getTherapistInfo();
   const therapistFooter = buildTherapistFooterHtml(therapist);
-  const html = buildHtml(rows, title, signatureBase64, therapistFooter);
+  const html = buildHtml(rows, title, signatureBase64, therapistFooter, diagnosis, treatmentGoals);
   const { uri } = await Print.printToFileAsync({ html });
 
   if (await Sharing.isAvailableAsync()) {
