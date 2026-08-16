@@ -8,7 +8,7 @@ function escapeHtml(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function buildHtml(rows: ClinicalEvolutionRow[], title: string, signatureBase64: string | null, therapistFooter: string, diagnosis?: string | null, treatmentGoals?: string | null, logoBase64?: string | null): string {
+function buildHtml(rows: ClinicalEvolutionRow[], title: string, signatureBase64: string | null, therapistFooter: string, diagnosis?: string | null, treatmentGoals?: string | null, logoBase64?: string | null, examImages?: string[]): string {
   const clinicNames = Array.from(new Set(rows.map((r) => r.clinic_name))).join(", ");
   const entriesHtml = rows
     .map(
@@ -47,6 +47,7 @@ function buildHtml(rows: ClinicalEvolutionRow[], title: string, signatureBase64:
         ${diagnosis ? `<div class="clinicalInfo"><strong>Diagnóstico:</strong> ${escapeHtml(diagnosis)}</div>` : ""}
         ${treatmentGoals ? `<div class="clinicalInfo"><strong>Objetivos e tratamento:</strong> ${escapeHtml(treatmentGoals)}</div>` : ""}
         ${entriesHtml || "<p>Nenhuma evolução registrada neste período.</p>"}
+        ${examImages && examImages.length > 0 ? `<div style="margin-top:24px;"><h2 style="font-size:15px;">Exames e documentos</h2>${examImages.map((img) => `<img src="${img}" style="max-width:100%; max-height:400px; margin-bottom:12px; display:block;" />`).join("")}</div>` : ""}
           ${signatureBase64 ? `<div style="margin-top:40px; text-align:center;"><img src="${signatureBase64}" style="max-width:200px; max-height:80px;" /><div style="border-top:1px solid #334155; width:220px; margin:4px auto 0;"></div><div style="font-size:11px; color:#64748B; margin-top:4px;">Assinatura</div></div>` : ""}
           ${therapistFooter}
       </body>
@@ -59,12 +60,13 @@ export async function exportClinicalEvolutionAsPdf(
   title: string,
   diagnosis?: string | null,
   treatmentGoals?: string | null,
-  logoBase64?: string | null
+  logoBase64?: string | null,
+  examImages?: string[]
 ): Promise<void> {
   const signatureBase64 = await getSignatureImageBase64();
   const therapist = await getTherapistInfo();
   const therapistFooter = buildTherapistFooterHtml(therapist);
-  const html = buildHtml(rows, title, signatureBase64, therapistFooter, diagnosis, treatmentGoals, logoBase64);
+  const html = buildHtml(rows, title, signatureBase64, therapistFooter, diagnosis, treatmentGoals, logoBase64, examImages);
   const { uri } = await Print.printToFileAsync({ html });
 
   if (await Sharing.isAvailableAsync()) {

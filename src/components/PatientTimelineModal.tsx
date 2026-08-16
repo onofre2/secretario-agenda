@@ -13,6 +13,7 @@ import TimelineItem from "./TimelineItem";
 import PrimaryButton from "./PrimaryButton";
 import RetroactiveAppointmentModal from "./RetroactiveAppointmentModal";
 import { listDocumentsByPatient, deletePatientDocument } from "../database/repositories/patientDocumentsRepo";
+import { getImageBase64 } from "../utils/clinicLogoImport";
 import { importPhotoDocument, importPdfDocument, importGalleryPhotoDocument } from "../utils/documentImport";
 import { PatientDocument } from "../database/types";
 
@@ -109,7 +110,9 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
           content: n.content,
           is_draft: n.is_draft,
         }));
-      await exportClinicalEvolutionAsPdf(rows, patientName, patientInfo?.diagnosis, patientInfo?.treatment_goals);
+      const photoDocs = documents.filter((d) => d.file_type === "photo");
+      const examImages = (await Promise.all(photoDocs.map((d) => getImageBase64(d.file_path)))).filter((img): img is string => img !== null);
+      await exportClinicalEvolutionAsPdf(rows, patientName, patientInfo?.diagnosis, patientInfo?.treatment_goals, null, examImages);
     } catch (err) {
       console.error("Erro ao exportar evolucao do paciente:", err);
     } finally {

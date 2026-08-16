@@ -42,3 +42,12 @@ export async function getClinicLogoBase64(logoPath: string | null): Promise<stri
   });
   return `data:image/jpeg;base64,${base64}`;
 }
+
+export async function getImageBase64(imagePath: string): Promise<string | null> {
+  const info = await FileSystem.getInfoAsync(imagePath);
+  if (!info.exists) return null;
+  const base64 = await FileSystem.readAsStringAsync(imagePath, {
+    encoding: FileSystem.EncodingType.Base64,
+  });
+  return `data:image/jpeg;base64,${base64}`;
+}
