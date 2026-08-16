@@ -118,6 +118,9 @@ export default function WeeklyGridView({ schedules, onReminderPress }: Props) {
     dayStatLabel: { color: colors.textMuted, fontSize: 11 },
     dayStatDay: { color: colors.text, fontSize: 15, fontWeight: "700", marginTop: 2 },
     dayStatValue: { fontSize: 13, fontWeight: "700", marginTop: 2 },
+    dayListRow: { flexDirection: "row", justifyContent: "space-between", paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: colors.border },
+    dayListLabel: { color: colors.textMuted, fontSize: 13 },
+    dayListValue: { color: colors.text, fontSize: 13, fontWeight: "600" },
     modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", alignItems: "center", padding: spacing.lg },
     modalContent: { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.md, width: "100%", maxWidth: 340, borderWidth: 1, borderColor: colors.border },
     modalTitle: { color: colors.text, fontSize: 15, fontWeight: "700", marginBottom: spacing.sm },
@@ -230,6 +233,18 @@ export default function WeeklyGridView({ schedules, onReminderPress }: Props) {
                 <Text style={[styles.dayStatValue, { color: colors.danger }]}>{formatCurrency(worstDay.value)}</Text>
               </View>
             </View>
+          </View>
+        )}
+
+        {dayRevenue.length > 0 && (
+          <View style={styles.dayStatsSection}>
+            <Text style={styles.hoursTitle}>Receita por dia da semana</Text>
+            {dayRevenue.map((d) => (
+              <View key={d.label} style={styles.dayListRow}>
+                <Text style={styles.dayListLabel}>{d.label}</Text>
+                <Text style={styles.dayListValue}>{formatCurrency(d.value)}</Text>
+              </View>
+            ))}
           </View>
         )}
 
