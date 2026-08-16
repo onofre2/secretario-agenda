@@ -22,7 +22,7 @@ import {
 import { pickClinicLogo, getClinicLogoBase64 } from "../utils/clinicLogoImport";
 import { listPatientsByClinic } from "../database/repositories/patientsRepo";
 import { getClinicalEvolutionByClinic, getReportRowsByClinic } from "../database/repositories/reportsRepo";
-import { exportClinicalEvolutionAsPdf } from "../reports/exportClinicalPdf";
+import { exportClinicalEvolutionAsPdf, exportClinicPatientsEvolutionAsPdf } from "../reports/exportClinicalPdf";
 import { exportClinicAttendancePdf } from "../reports/exportClinicAttendancePdf";
 import { Clinic, Patient } from "../database/types";
 import { getClinicColor } from "../utils/clinicColors";
@@ -200,7 +200,7 @@ export default function ClinicsScreen() {
     try {
       const rows = await getClinicalEvolutionByClinic(clinic.id);
       const logoBase64 = await getClinicLogoBase64(clinic.logo_path);
-      await exportClinicalEvolutionAsPdf(rows, clinic.name, null, null, logoBase64);
+      await exportClinicPatientsEvolutionAsPdf(rows, clinic.name, logoBase64);
     } finally {
       setExportingClinicId(null);
     }

@@ -76,3 +76,71 @@ export async function exportClinicalEvolutionAsPdf(
     });
   }
 }
+
+function buildClinicByPatientHtml(rows: ClinicalEvolutionRow[], clinicName: string, logoBase64: string | null, therapistFooter: string): string {
+  const byPatient = new Map<string, ClinicalEvolutionRow[]>();
+  for (const r of rows) {
+    if (!byPatient.has(r.patient_name)) byPatient.set(r.patient_name, []);
+    byPatient.get(r.patient_name)!.push(r);
+  }
+
+  const pagesHtml = Array.from(byPatient.entries())
+    .map(([patientName, patientRows], idx) => {
+      const entriesHtml = patientRows
+        .map(
+          (r) => `
+          <div class="entry">
+            <div class="entry-header">
+              <span class="meta">${r.date} · ${r.time}</span>
+            </div>
+            <p class="content">${escapeHtml(r.content)}</p>
+          </div>`
+        )
+        .join("");
+      return `
+        <div class="patient-page" style="${idx > 0 ? "page-break-before: always;" : ""}">
+          ${logoBase64 ? `<img src="${logoBase64}" style="max-height:60px; max-width:180px; margin-bottom:8px;" />` : ""}
+          <h1>${escapeHtml(clinicName)}</h1>
+          <h2 style="font-size:16px; margin:4px 0 12px;">${escapeHtml(patientName)}</h2>
+          ${entriesHtml}
+        </div>`;
+    })
+    .join("");
+
+  return `
+    <html>
+      <head>
+        <meta charset="utf-8" />
+        <style>
+          body { font-family: Helvetica, Arial, sans-serif; color: #0F172A; padding: 24px; }
+          h1 { font-size: 20px; margin-bottom: 4px; }
+          .entry { margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #E2E8F0; }
+          .meta { font-size: 11px; color: #64748B; }
+          .content { font-size: 13px; line-height: 1.5; margin: 0; }
+        </style>
+      </head>
+      <body>
+        ${pagesHtml}
+        ${therapistFooter}
+      </body>
+    </html>
+  `;
+}
+
+export async function exportClinicPatientsEvolutionAsPdf(
+  rows: ClinicalEvolutionRow[],
+  clinicName: string,
+  logoBase64: string | null
+): Promise<void> {
+  const therapist = await getTherapistInfo();
+  const therapistFooter = buildTherapistFooterHtml(therapist);
+  const html = buildClinicByPatientHtml(rows, clinicName, logoBase64, therapistFooter);
+  const { uri } = await Print.printToFileAsync({ html });
+
+  if (await Sharing.isAvailableAsync()) {
+    await Sharing.shareAsync(uri, {
+      mimeType: "application/pdf",
+      dialogTitle: "Exportar evolução por paciente (PDF)",
+    });
+  }
+}
