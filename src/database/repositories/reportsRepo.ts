@@ -66,6 +66,7 @@ export async function getClinicalEvolutionRows(
      JOIN patients p ON p.id = n.patient_id
      JOIN clinics c ON c.id = a.clinic_id
      WHERE a.date BETWEEN ? AND ?
+       AND n.id = (SELECT MAX(n2.id) FROM clinical_notes n2 WHERE n2.appointment_id = n.appointment_id)
      ORDER BY a.date ASC, a.time ASC`,
     [startDate, endDate]
   );
@@ -91,6 +92,7 @@ export async function getClinicalEvolutionByClinic(
      JOIN patients p ON p.id = n.patient_id
      JOIN clinics c ON c.id = a.clinic_id
      WHERE a.clinic_id = ?
+       AND n.id = (SELECT MAX(n2.id) FROM clinical_notes n2 WHERE n2.appointment_id = n.appointment_id)
      ORDER BY p.full_name ASC, a.date ASC, a.time ASC`,
     [clinicId]
   );
