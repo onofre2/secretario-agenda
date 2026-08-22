@@ -50,6 +50,9 @@ export default function SettingsScreen() {
     leadValue: { color: colors.text, fontSize: 16 },
     signaturePreview: { width: "100%", height: 80, marginVertical: spacing.sm, backgroundColor: colors.surfaceLight, borderRadius: radius.sm },
     warningText: { color: colors.danger, fontSize: 13, lineHeight: 19 },
+    creditFooter: { alignItems: "center", marginTop: spacing.lg, marginBottom: spacing.xl, opacity: 0.7 },
+    creditAvatar: { width: 36, height: 36, borderRadius: 18, marginBottom: 4 },
+    creditText: { color: colors.textMuted, fontSize: 12, fontWeight: "600" },
   }), [colors]);
 
   const load = useCallback(async () => {
@@ -243,6 +246,11 @@ export default function SettingsScreen() {
             "Ou pelo gov.com.br assine virtualmente CADA documento e salve no dispositivo."
           </Text>
         </Section>
+
+        <View style={styles.creditFooter}>
+          <Image source={require("../../assets/fisionofre.webp")} style={styles.creditAvatar} />
+          <Text style={styles.creditText}>@fisionofre</Text>
+        </View>
     </ScrollView>
     </SafeAreaView>
   );
