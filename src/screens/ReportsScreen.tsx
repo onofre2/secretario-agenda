@@ -1,6 +1,6 @@
 import React, { useCallback, useState, useMemo } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Text, StyleSheet, Pressable, FlatList, ActivityIndicator } from "react-native";
+import { View, Text, StyleSheet, Pressable, FlatList, ActivityIndicator, Modal } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { spacing, radius } from "../theme/colors";
 import { useTheme } from "../context/ThemeContext";
@@ -72,6 +72,10 @@ export default function ReportsScreen() {
     exportRow: { flexDirection: "row", gap: spacing.sm, marginBottom: spacing.sm },
     exportButton: { flex: 1, marginTop: 0 },
     hint: { color: colors.textMuted, fontSize: 12, marginBottom: spacing.md, lineHeight: 16 },
+    loadingOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", alignItems: "center" },
+    loadingBox: { backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.lg, alignItems: "center", maxWidth: "80%" },
+    loadingText: { color: colors.text, fontSize: 16, fontWeight: "700", marginTop: spacing.sm },
+    loadingSubtext: { color: colors.textMuted, fontSize: 13, textAlign: "center", marginTop: spacing.xs, lineHeight: 18 },
     empty: { color: colors.textMuted, textAlign: "center", marginTop: spacing.xl },
     row: {
       flexDirection: "row",
@@ -265,6 +269,17 @@ export default function ReportsScreen() {
           />
         </>
       )}
+      <Modal visible={exporting !== null} transparent animationType="fade">
+        <View style={styles.loadingOverlay}>
+          <View style={styles.loadingBox}>
+            <ActivityIndicator color={colors.primary} size="large" />
+            <Text style={styles.loadingText}>Gerando arquivo...</Text>
+            <Text style={styles.loadingSubtext}>
+              Isso pode levar alguns segundos em relatórios grandes.{"\n"}Não feche o app.
+            </Text>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
