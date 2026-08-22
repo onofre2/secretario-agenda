@@ -1,5 +1,6 @@
 import { getDb } from "../db";
 import { Schedule, NewSchedule, ID } from "../types";
+import { todayISO } from "../../utils/date";
 
 export async function listSchedules(activeOnly = true): Promise<Schedule[]> {
   const db = await getDb();
@@ -25,6 +26,12 @@ export async function pauseSchedule(id: ID, active: boolean): Promise<void> {
     "UPDATE schedules SET active = ?, updated_at = datetime('now') WHERE id = ?",
     [active ? 1 : 0, id]
   );
+  if (!active) {
+    await db.runAsync(
+      "UPDATE appointments SET status = 'cancelled', updated_at = datetime('now') WHERE schedule_id = ? AND status = 'pending' AND date >= ?",
+      [id, todayISO()]
+    );
+  }
 }
 
 export async function duplicateSchedule(id: ID): Promise<ID> {
@@ -46,6 +53,10 @@ export async function duplicateSchedule(id: ID): Promise<ID> {
 
 export async function deleteSchedule(id: ID): Promise<void> {
   const db = await getDb();
+  await db.runAsync(
+    "UPDATE appointments SET status = 'cancelled', updated_at = datetime('now') WHERE schedule_id = ? AND status = 'pending' AND date >= ?",
+    [id, todayISO()]
+  );
   await db.runAsync("DELETE FROM schedules WHERE id = ?", [id]);
 }
 
