@@ -99,7 +99,6 @@ function buildClinicByPatientHtml(rows: ClinicalEvolutionRow[], clinicName: stri
         .join("");
       return `
         <div class="patient-page" style="${idx > 0 ? "page-break-before: always;" : ""}">
-          ${logoBase64 ? `<img src="${logoBase64}" style="max-height:60px; max-width:180px; margin-bottom:8px;" />` : ""}
           <h1>${escapeHtml(clinicName)}</h1>
           <h2 style="font-size:16px; margin:4px 0 12px;">${escapeHtml(patientName)}</h2>
           ${entriesHtml}
@@ -120,6 +119,7 @@ function buildClinicByPatientHtml(rows: ClinicalEvolutionRow[], clinicName: stri
         </style>
       </head>
       <body>
+        ${logoBase64 ? `<img src="${logoBase64}" style="max-height:60px; max-width:180px; margin-bottom:12px;" />` : ""}
         ${pagesHtml}
         ${therapistFooter}
       </body>

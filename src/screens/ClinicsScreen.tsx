@@ -337,6 +337,19 @@ export default function ClinicsScreen() {
         patientPhone={timelinePatient?.phone ?? null}
         onClose={() => setTimelinePatient(null)}
       />
+
+      <Modal visible={exportingClinicId !== null} transparent animationType="fade">
+        <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.6)", justifyContent: "center", alignItems: "center" }}>
+          <View style={{ backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.lg, alignItems: "center", maxWidth: "80%" }}>
+            <ActivityIndicator color={colors.primary} size="large" />
+            <Text style={{ color: colors.text, fontSize: 16, fontWeight: "700", marginTop: spacing.sm }}>Gerando PDF...</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 13, textAlign: "center", marginTop: spacing.xs, lineHeight: 18 }}>
+              Isso pode levar alguns segundos em clínicas com muitos atendimentos.{"\n"}Não feche o app.
+            </Text>
+          </View>
+        </View>
+      </Modal>
+
     </SafeAreaView>
   );
 }
