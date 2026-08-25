@@ -5,6 +5,7 @@ import { useTheme } from "../context/ThemeContext";
 import { WEEKDAYS } from "../utils/weekdays";
 import { formatCurrency } from "../utils/date";
 import { getClinicColor } from "../utils/clinicColors";
+import { exportWeeklyMapPdf } from "../reports/exportWeeklyMapPdf";
 
 interface ScheduleItem {
   id: number;
@@ -83,6 +84,10 @@ export default function WeeklyGridView({ schedules, onReminderPress }: Props) {
   const bestDay = dayRevenue.length > 0 ? dayRevenue.reduce((a, b) => (b.value > a.value ? b : a)) : null;
   const worstDay = dayRevenue.length > 0 ? dayRevenue.reduce((a, b) => (b.value < a.value ? b : a)) : null;
 
+  const handleExportMap = async () => {
+    await exportWeeklyMapPdf(schedules, clinicHours, dayRevenue);
+  };
+
   const styles = useMemo(() => StyleSheet.create({
     legendRow: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm, paddingHorizontal: spacing.md, paddingBottom: spacing.sm },
     legendItem: { flexDirection: "row", alignItems: "center", gap: 4, maxWidth: 140 },
@@ -107,6 +112,8 @@ export default function WeeklyGridView({ schedules, onReminderPress }: Props) {
     groupCardHint: { color: colors.primary, fontSize: 10, marginTop: 4, fontWeight: "600" },
     hoursSection: { paddingHorizontal: spacing.md, paddingTop: spacing.md, paddingBottom: spacing.xl },
     hoursTitle: { color: colors.text, fontSize: 14, fontWeight: "700", marginBottom: spacing.sm },
+    exportMapBtn: { marginHorizontal: spacing.md, marginTop: spacing.sm, backgroundColor: colors.primary, borderRadius: radius.md, paddingVertical: spacing.sm, alignItems: "center" },
+    exportMapBtnText: { color: "#0F172A", fontSize: 14, fontWeight: "700" },
     hoursRow: { flexDirection: "row", alignItems: "center", marginBottom: spacing.xs, gap: spacing.sm },
     hoursLabel: { color: colors.textMuted, fontSize: 12, width: 110 },
     hoursBarTrack: { flex: 1, height: 8, borderRadius: 4, backgroundColor: colors.surfaceLight, overflow: "hidden" },
@@ -199,6 +206,10 @@ export default function WeeklyGridView({ schedules, onReminderPress }: Props) {
           );
         })}
       </ScrollView>
+
+      <Pressable style={styles.exportMapBtn} onPress={handleExportMap}>
+        <Text style={styles.exportMapBtnText}>📄 Exportar mapa da agenda (PDF)</Text>
+      </Pressable>
 
       <View style={styles.hoursSection}>
         <Text style={styles.hoursTitle}>Horas por clínica (semana)</Text>
