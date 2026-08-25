@@ -79,6 +79,22 @@ function buildHtml(rows: ReportRow[], title: string, extra: { goal: number | nul
     })
     .join("");
 
+  const cardsHtml = Array.from(grouped.entries())
+    .map(([clinicName, clinicRows]) => {
+      const color = getClinicColor(clinicName);
+      const revenue = clinicRows.filter((r) => r.status === "present").reduce((sum, r) => sum + r.session_value, 0);
+      const present = clinicRows.filter((r) => r.status === "present").length;
+      const absent = clinicRows.filter((r) => r.status === "absent").length;
+      const rate = present + absent > 0 ? Math.round((present / (present + absent)) * 100) : 0;
+      return `
+        <div style="flex:1; min-width:150px; background:#F8FAFC; border-radius:10px; padding:12px; border-left: 5px solid ${color};">
+          <div style="font-size:13px; font-weight:700; margin-bottom:6px;">${escapeHtml(clinicName)}</div>
+          <div style="font-size:18px; font-weight:700; color:${color};">${formatCurrency(revenue)}</div>
+          <div style="font-size:11px; color:#64748B; margin-top:4px;">${present} atend. · ${rate}% comparecimento</div>
+        </div>`;
+    })
+    .join("");
+
   return `
     <html>
       <head>
@@ -92,6 +108,9 @@ function buildHtml(rows: ReportRow[], title: string, extra: { goal: number | nul
       <body>
         <h1>${escapeHtml(title)}</h1>
         <div class="subtitle">Gerado em ${new Date().toLocaleDateString("pt-BR")}</div>
+        <div style="display:flex; flex-wrap:wrap; gap:10px; margin-bottom:20px;">
+          ${cardsHtml}
+        </div>
         ${sectionsHtml}
         <div class="summary">
           <div class="summary-row"><span>Total recebido</span><span>${formatCurrency(totalRevenue)}</span></div>
