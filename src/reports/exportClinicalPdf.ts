@@ -8,7 +8,7 @@ function escapeHtml(text: string): string {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function buildHtml(rows: ClinicalEvolutionRow[], title: string, signatureBase64: string | null, therapistFooter: string, diagnosis?: string | null, treatmentGoals?: string | null, logoBase64?: string | null, examImages?: string[]): string {
+function buildHtml(rows: ClinicalEvolutionRow[], title: string, signatureBase64: string | null, therapistFooter: string, diagnosis?: string | null, treatmentGoals?: string | null, logoBase64?: string | null, examImages?: string[], qp?: string | null): string {
   const clinicNames = Array.from(new Set(rows.map((r) => r.clinic_name))).join(", ");
   const entriesHtml = rows
     .map(
@@ -44,6 +44,7 @@ function buildHtml(rows: ClinicalEvolutionRow[], title: string, signatureBase64:
         <h1>${clinicNames || "Evolução Clínica"}</h1>
         <div class="summary">Evolução Clínica — ${escapeHtml(title)}</div>
         <div class="summary">Total de registros: ${rows.length}</div>
+        ${qp ? `<div class="clinicalInfo"><strong>QP - Queixa principal:</strong> ${escapeHtml(qp)}</div>` : ""}
         ${diagnosis ? `<div class="clinicalInfo"><strong>Diagnóstico:</strong> ${escapeHtml(diagnosis)}</div>` : ""}
         ${treatmentGoals ? `<div class="clinicalInfo"><strong>Objetivos e tratamento:</strong> ${escapeHtml(treatmentGoals)}</div>` : ""}
         ${entriesHtml || "<p>Nenhuma evolução registrada neste período.</p>"}
@@ -61,12 +62,13 @@ export async function exportClinicalEvolutionAsPdf(
   diagnosis?: string | null,
   treatmentGoals?: string | null,
   logoBase64?: string | null,
-  examImages?: string[]
+  examImages?: string[],
+  qp?: string | null
 ): Promise<void> {
   const signatureBase64 = await getSignatureImageBase64();
   const therapist = await getTherapistInfo();
   const therapistFooter = buildTherapistFooterHtml(therapist);
-  const html = buildHtml(rows, title, signatureBase64, therapistFooter, diagnosis, treatmentGoals, logoBase64, examImages);
+  const html = buildHtml(rows, title, signatureBase64, therapistFooter, diagnosis, treatmentGoals, logoBase64, examImages, qp);
   const { uri } = await Print.printToFileAsync({ html });
 
   if (await Sharing.isAvailableAsync()) {

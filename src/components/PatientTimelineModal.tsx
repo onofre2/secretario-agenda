@@ -112,7 +112,7 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
         }));
       const photoDocs = documents.filter((d) => d.file_type === "photo");
       const examImages = (await Promise.all(photoDocs.map((d) => getImageBase64(d.file_path)))).filter((img): img is string => img !== null);
-      await exportClinicalEvolutionAsPdf(rows, patientName, patientInfo?.diagnosis, patientInfo?.treatment_goals, null, examImages);
+      await exportClinicalEvolutionAsPdf(rows, patientName, patientInfo?.diagnosis, patientInfo?.treatment_goals, null, examImages, patientInfo?.qp);
     } catch (err) {
       console.error("Erro ao exportar evolucao do paciente:", err);
     } finally {
