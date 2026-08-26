@@ -201,92 +201,94 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
           </Pressable>
         </View>
 
-        {patientInfo && (patientInfo.diagnosis || patientInfo.treatment_goals || patientInfo.qp || patientInfo.clinical_history) && (
-          <View style={styles.infoSection}>
-            {!!patientInfo.qp && (
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>QP - Queixa principal</Text>
-                <Text style={styles.infoValue}>{patientInfo.qp}</Text>
-              </View>
-            )}
-            {!!patientInfo.clinical_history && (
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>HD - Histórico de doenças</Text>
-                <Text style={styles.infoValue}>{patientInfo.clinical_history}</Text>
-              </View>
-            )}
-            {!!patientInfo.diagnosis && (
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Diagnóstico</Text>
-                <Text style={styles.infoValue}>{patientInfo.diagnosis}</Text>
-              </View>
-            )}
-            {!!patientInfo.treatment_goals && (
-              <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>Objetivos e tratamento</Text>
-                <Text style={styles.infoValue}>{patientInfo.treatment_goals}</Text>
-              </View>
-            )}
-          </View>
-        )}
-
-        <View style={styles.actionBar}>
-          <PrimaryButton
-            label="+ Atendimento retroativo"
-            variant="outline"
-            onPress={() => setRetroModalOpen(true)}
-            style={{ marginTop: 0 }}
-          />
-          <PrimaryButton
-            label={exportingPdf ? "Gerando PDF..." : "Exportar evolucao completa (PDF)"}
-            variant="outline"
-            onPress={handleExportPdf}
-            disabled={notes.length === 0 || exportingPdf}
-            style={{ marginTop: spacing.sm }}
-          />
-          {!!patientPhone && (
-            <PrimaryButton
-              label="Enviar lembrete WhatsApp"
-              variant="outline"
-              onPress={handleSendWhatsApp}
-              disabled={appointments.length === 0}
-              style={{ marginTop: spacing.sm }}
-            />
-          )}
-            <PrimaryButton
-              label="Importar documentos e exames"
-              variant="outline"
-              onPress={handleImportDocument}
-              style={{ marginTop: spacing.sm }}
-            />
-          {exportingPdf && <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.sm }} />}
-        </View>
-
-          {documents.length > 0 && (
-            <View style={styles.docsSection}>
-              <Text style={styles.docsTitle}>Documentos e exames</Text>
-              {documents.map((doc) => (
-                <Pressable key={doc.id} style={styles.docRow} onPress={() => handleOpenDocument(doc)}>
-                  {doc.file_type === "photo" ? (
-                    <Image source={{ uri: doc.file_path }} style={styles.docThumb} />
-                  ) : (
-                    <View style={styles.docIcon}><Text style={styles.docIconText}>PDF</Text></View>
-                  )}
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.docName} numberOfLines={1}>{doc.original_name ?? doc.file_path}</Text>
-                    <Text style={styles.docDate}>{doc.created_at}</Text>
-                  </View>
-                  <Pressable onPress={() => handleDeleteDocument(doc.id)}>
-                    <Text style={styles.docDelete}>Excluir</Text>
-                  </Pressable>
-                </Pressable>
-              ))}
-            </View>
-          )}
         <FlatList
           data={appointments}
           keyExtractor={(item) => String(item.id)}
           contentContainerStyle={{ padding: spacing.md }}
+          ListHeaderComponent={
+            <>
+          {patientInfo && (patientInfo.diagnosis || patientInfo.treatment_goals || patientInfo.qp || patientInfo.clinical_history) && (
+            <View style={styles.infoSection}>
+              {!!patientInfo.qp && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>QP - Queixa principal</Text>
+                  <Text style={styles.infoValue}>{patientInfo.qp}</Text>
+                </View>
+              )}
+              {!!patientInfo.clinical_history && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>HD - Histórico de doenças</Text>
+                  <Text style={styles.infoValue}>{patientInfo.clinical_history}</Text>
+                </View>
+              )}
+              {!!patientInfo.diagnosis && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Diagnóstico</Text>
+                  <Text style={styles.infoValue}>{patientInfo.diagnosis}</Text>
+                </View>
+              )}
+              {!!patientInfo.treatment_goals && (
+                <View style={styles.infoRow}>
+                  <Text style={styles.infoLabel}>Objetivos e tratamento</Text>
+                  <Text style={styles.infoValue}>{patientInfo.treatment_goals}</Text>
+                </View>
+              )}
+            </View>
+          )}
+          <View style={styles.actionBar}>
+            <PrimaryButton
+              label="+ Atendimento retroativo"
+              variant="outline"
+              onPress={() => setRetroModalOpen(true)}
+              style={{ marginTop: 0 }}
+            />
+            <PrimaryButton
+              label={exportingPdf ? "Gerando PDF..." : "Exportar evolucao completa (PDF)"}
+              variant="outline"
+              onPress={handleExportPdf}
+              disabled={notes.length === 0 || exportingPdf}
+              style={{ marginTop: spacing.sm }}
+            />
+            {!!patientPhone && (
+              <PrimaryButton
+                label="Enviar lembrete WhatsApp"
+                variant="outline"
+                onPress={handleSendWhatsApp}
+                disabled={appointments.length === 0}
+                style={{ marginTop: spacing.sm }}
+              />
+            )}
+              <PrimaryButton
+                label="Importar documentos e exames"
+                variant="outline"
+                onPress={handleImportDocument}
+                style={{ marginTop: spacing.sm }}
+              />
+            {exportingPdf && <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.sm }} />}
+          </View>
+            {documents.length > 0 && (
+              <View style={styles.docsSection}>
+                <Text style={styles.docsTitle}>Documentos e exames</Text>
+                {documents.map((doc) => (
+                  <Pressable key={doc.id} style={styles.docRow} onPress={() => handleOpenDocument(doc)}>
+                    {doc.file_type === "photo" ? (
+                      <Image source={{ uri: doc.file_path }} style={styles.docThumb} />
+                    ) : (
+                      <View style={styles.docIcon}><Text style={styles.docIconText}>PDF</Text></View>
+                    )}
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.docName} numberOfLines={1}>{doc.original_name ?? doc.file_path}</Text>
+                      <Text style={styles.docDate}>{doc.created_at}</Text>
+                    </View>
+                    <Pressable onPress={() => handleDeleteDocument(doc.id)}>
+                      <Text style={styles.docDelete}>Excluir</Text>
+                    </Pressable>
+                  </Pressable>
+                ))}
+              </View>
+            )}
+            </>
+          }
           ListEmptyComponent={
             <Text style={styles.empty}>Nenhum atendimento registrado ainda.</Text>
           }
@@ -295,7 +297,7 @@ export default function PatientTimelineModal({ visible, patientId, patientName, 
               appointment={item}
               note={noteByAppointment.get(item.id) ?? null}
               onSaved={load}
-                onDelete={handleDeleteAppointment}
+              onDelete={handleDeleteAppointment}
             />
           )}
         />
