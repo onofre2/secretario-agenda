@@ -36,6 +36,11 @@ export default function MonthlyGoalCard({ monthRevenue, todayRevenue, weekRevenu
     hint: { color: colors.textMuted, fontSize: 12, marginTop: spacing.sm },
     hintDone: { color: colors.primary, fontSize: 13, fontWeight: "600", marginTop: spacing.sm },
     metaValueHit: { color: colors.primary },
+    hintChip: { marginTop: spacing.sm, borderRadius: radius.sm, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
+    hintChipUrgent: { backgroundColor: "rgba(220,38,38,0.12)" },
+    hintChipCalm: { backgroundColor: "rgba(22,163,74,0.12)" },
+    hintChipTextUrgent: { color: "#DC2626", fontSize: 13, fontWeight: "600" },
+    hintChipTextCalm: { color: "#16A34A", fontSize: 13, fontWeight: "600" },
   }), [colors]);
 
   useEffect(() => {
@@ -60,6 +65,9 @@ export default function MonthlyGoalCard({ monthRevenue, todayRevenue, weekRevenu
   const remainingDays = Math.max(daysInMonth - now.getDate() + 1, 1);
   const remainingAmount = goal ? Math.max(goal - monthRevenue, 0) : 0;
   const perDayNeeded = remainingAmount / remainingDays;
+  const daysElapsed = Math.max(now.getDate(), 1);
+  const currentPace = monthRevenue / daysElapsed;
+  const isUrgent = perDayNeeded > currentPace;
   const progressPct = goal ? Math.min((monthRevenue / goal) * 100, 100) : 0;
   const dailyHit = dailyGoal > 0 && todayRevenue >= dailyGoal;
   const weeklyHit = weeklyGoal > 0 && weekRevenue >= weeklyGoal;
@@ -113,9 +121,9 @@ export default function MonthlyGoalCard({ monthRevenue, todayRevenue, weekRevenu
       </View>
 
       {remainingAmount > 0 ? (
-        <Text style={styles.hint}>
-          Faltam {formatCurrency(remainingAmount)} — cerca de {formatCurrency(perDayNeeded)}/dia nos próximos {remainingDays} dias.
-        </Text>
+        <View style={[styles.hintChip, isUrgent ? styles.hintChipUrgent : styles.hintChipCalm]}>
+          <Text style={isUrgent ? styles.hintChipTextUrgent : styles.hintChipTextCalm}>Faltam {formatCurrency(remainingAmount)} — cerca de {formatCurrency(perDayNeeded)}/dia nos próximos {remainingDays} dias.</Text>
+        </View>
       ) : (
         <Text style={styles.hintDone}>Meta batida! 🎉</Text>
       )}
