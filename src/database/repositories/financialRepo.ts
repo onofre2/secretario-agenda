@@ -141,3 +141,46 @@ export async function getAppointmentsCountByClinic(startDate: string, endDate: s
     [startDate, endDate]
   );
 }
+
+export interface MonthlyClinicRevenue {
+  month: string; // "YYYY-MM"
+  clinic_name: string;
+  revenue: number;
+}
+
+/** Receita agrupada por mês e clínica, últimos 12 meses. */
+export async function getMonthlyRevenueByClinic(): Promise<MonthlyClinicRevenue[]> {
+  const db = await getDb();
+  return db.getAllAsync<MonthlyClinicRevenue>(
+    `SELECT substr(f.date, 1, 7) as month, c.name as clinic_name, SUM(f.amount) as revenue
+     FROM financial_records f
+     JOIN clinics c ON c.id = f.clinic_id
+     WHERE f.type = 'revenue' AND f.date >= date('now', '-12 months', 'start of month')
+     GROUP BY month, c.id
+     ORDER BY month ASC, c.name ASC`
+  );
+}
+
+export interface MonthlyClinicAttendance {
+  month: string; // "YYYY-MM"
+  clinic_name: string;
+  present: number;
+  absent: number;
+  appointments: number;
+}
+
+/** Presenca/falta/total de atendimentos agrupados por mes e clinica, ultimos 12 meses. */
+export async function getMonthlyAttendanceByClinic(): Promise<MonthlyClinicAttendance[]> {
+  const db = await getDb();
+  return db.getAllAsync<MonthlyClinicAttendance>(
+    `SELECT substr(a.date, 1, 7) as month, c.name as clinic_name,
+            SUM(CASE WHEN a.status = 'present' THEN 1 ELSE 0 END) as present,
+            SUM(CASE WHEN a.status = 'absent' THEN 1 ELSE 0 END) as absent,
+            COUNT(*) as appointments
+     FROM appointments a
+     JOIN clinics c ON c.id = a.clinic_id
+     WHERE a.status != 'cancelled' AND a.date >= date('now', '-12 months', 'start of month')
+     GROUP BY month, c.id
+     ORDER BY month ASC, c.name ASC`
+  );
+}
