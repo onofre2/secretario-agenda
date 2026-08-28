@@ -5,7 +5,12 @@ import { useFocusEffect } from "@react-navigation/native";
 import { spacing, radius } from "../theme/colors";
 import { useTheme } from "../context/ThemeContext";
 import { formatCurrency } from "../utils/date";
-import { getMonthlyRevenueLast12Months, MonthlyRevenuePoint } from "../database/repositories/financialRepo";
+import {
+  getMonthlyRevenueLast12Months,
+  MonthlyRevenuePoint,
+  getMonthlyRevenueByClinic,
+  MonthlyClinicRevenue,
+} from "../database/repositories/financialRepo";
 import SimpleBarChart from "../components/SimpleBarChart";
 import { calculateMonthOverMonth, calculateProjection, MonthComparison } from "../utils/balanceCalc";
 
@@ -17,15 +22,44 @@ function formatMonthLabel(month: string): string {
   return `${abbr}/${String(year).slice(2)}`;
 }
 
+function formatMonthShort(month: string): string {
+  const [, m] = month.split("-").map(Number);
+  return MONTH_ABBR[(m ?? 1) - 1] ?? month;
+}
+
 const CONFIDENCE_LABEL: Record<string, string> = {
   baixa: "Confiabilidade baixa",
   moderada: "Confiabilidade moderada",
   alta: "Confiabilidade alta",
 };
 
+interface ClinicMonthlyRow {
+  clinicName: string;
+  values: { month: string; revenue: number }[];
+}
+
+function buildClinicTable(rows: MonthlyClinicRevenue[], monthsToShow = 4): ClinicMonthlyRow[] {
+  const clinicMap = new Map<string, Map<string, number>>();
+  const monthsSet = new Set<string>();
+
+  for (const r of rows) {
+    monthsSet.add(r.month);
+    if (!clinicMap.has(r.clinic_name)) clinicMap.set(r.clinic_name, new Map());
+    clinicMap.get(r.clinic_name)!.set(r.month, r.revenue);
+  }
+
+  const months = Array.from(monthsSet).sort().slice(-monthsToShow);
+
+  return Array.from(clinicMap.entries()).map(([clinicName, byMonth]) => ({
+    clinicName,
+    values: months.map((month) => ({ month, revenue: byMonth.get(month) ?? 0 })),
+  }));
+}
+
 export default function BalanceScreen() {
   const { colors } = useTheme();
   const [revenueByMonth, setRevenueByMonth] = useState<MonthlyRevenuePoint[]>([]);
+  const [clinicRows, setClinicRows] = useState<MonthlyClinicRevenue[]>([]);
   const [loading, setLoading] = useState(true);
 
   const styles = useMemo(() => StyleSheet.create({
@@ -43,13 +77,23 @@ export default function BalanceScreen() {
     projValue: { color: colors.primary, fontSize: 26, fontWeight: "700", marginTop: spacing.xs },
     projRange: { color: colors.textMuted, fontSize: 13, marginTop: spacing.xs },
     projConfidence: { color: colors.textMuted, fontSize: 12, marginTop: spacing.sm, fontStyle: "italic" },
+    clinicBlock: { marginBottom: spacing.md, paddingBottom: spacing.md, borderBottomWidth: 1, borderBottomColor: colors.border },
+    clinicName: { color: colors.text, fontSize: 14, fontWeight: "700", marginBottom: spacing.xs },
+    clinicMonthsRow: { flexDirection: "row", gap: spacing.sm },
+    clinicMonthCol: { flex: 1, alignItems: "center", backgroundColor: colors.surfaceLight, borderRadius: radius.sm, paddingVertical: spacing.xs },
+    clinicMonthLabel: { color: colors.textMuted, fontSize: 11 },
+    clinicMonthValue: { color: colors.text, fontSize: 12, fontWeight: "600", marginTop: 2 },
   }), [colors]);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const revenue = await getMonthlyRevenueLast12Months();
+      const [revenue, byClinic] = await Promise.all([
+        getMonthlyRevenueLast12Months(),
+        getMonthlyRevenueByClinic(),
+      ]);
       setRevenueByMonth(revenue);
+      setClinicRows(byClinic);
     } finally {
       setLoading(false);
     }
@@ -66,6 +110,8 @@ export default function BalanceScreen() {
   const momSeries = revenueByMonth.map((p) => ({ month: p.month, value: p.revenue }));
   const momComparisons: MonthComparison[] = calculateMonthOverMonth(momSeries).slice(-6).reverse();
   const projection = calculateProjection(momSeries);
+
+  const clinicTable = buildClinicTable(clinicRows);
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -117,6 +163,27 @@ export default function BalanceScreen() {
                   </Text>
                   <Text style={styles.projConfidence}>{CONFIDENCE_LABEL[projection.confidence]}</Text>
                 </>
+              )}
+            </View>
+
+            <View style={styles.sectionCard}>
+              <Text style={styles.sectionTitle}>Comparativo por clínica</Text>
+              {clinicTable.length === 0 ? (
+                <Text style={styles.momValue}>Ainda não há dados suficientes.</Text>
+              ) : (
+                clinicTable.map((row) => (
+                  <View key={row.clinicName} style={styles.clinicBlock}>
+                    <Text style={styles.clinicName}>{row.clinicName}</Text>
+                    <View style={styles.clinicMonthsRow}>
+                      {row.values.map((v) => (
+                        <View key={v.month} style={styles.clinicMonthCol}>
+                          <Text style={styles.clinicMonthLabel}>{formatMonthShort(v.month)}</Text>
+                          <Text style={styles.clinicMonthValue}>{formatCurrency(v.revenue)}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                ))
               )}
             </View>
           </>
