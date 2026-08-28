@@ -11,6 +11,7 @@ import ClinicsScreen from "../screens/ClinicsScreen";
 import FinancialScreen from "../screens/FinancialScreen";
 import ReportsScreen from "../screens/ReportsScreen";
 import SettingsScreen from "../screens/SettingsScreen";
+import BalanceScreen from "../screens/BalanceScreen";
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -33,6 +34,7 @@ const TAB_ICONS: Record<string, string> = {
   Clínicas: "🏥",
   Financeiro: "💰",
   Relatórios: "📊",
+  Balanço: "📈",
   Config: "⚙️",
 };
 
@@ -84,6 +86,7 @@ export default function RootNavigator() {
         <Tab.Screen name="Clínicas" component={ClinicsScreen} />
         <Tab.Screen name="Financeiro" component={FinancialScreen} />
         <Tab.Screen name="Relatórios" component={ReportsScreen} />
+        <Tab.Screen name="Balanço" component={BalanceScreen} />
         <Tab.Screen name="Config" component={SettingsScreen} />
       </Tab.Navigator>
     </NavigationContainer>
