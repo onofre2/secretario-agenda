@@ -10,6 +10,8 @@ import {
   MonthlyRevenuePoint,
   getMonthlyRevenueByClinic,
   MonthlyClinicRevenue,
+  getMonthlyAttendanceByClinic,
+  MonthlyClinicAttendance,
 } from "../database/repositories/financialRepo";
 import SimpleBarChart from "../components/SimpleBarChart";
 import { calculateMonthOverMonth, calculateProjection, MonthComparison } from "../utils/balanceCalc";
@@ -56,10 +58,35 @@ function buildClinicTable(rows: MonthlyClinicRevenue[], monthsToShow = 4): Clini
   }));
 }
 
+interface MonthlyAttendanceRate {
+  month: string;
+  present: number;
+  absent: number;
+  rate: number; // 0-100
+}
+
+function buildAttendanceByMonth(rows: MonthlyClinicAttendance[], monthsToShow = 6): MonthlyAttendanceRate[] {
+  const byMonth = new Map<string, { present: number; absent: number }>();
+  for (const r of rows) {
+    if (!byMonth.has(r.month)) byMonth.set(r.month, { present: 0, absent: 0 });
+    const entry = byMonth.get(r.month)!;
+    entry.present += r.present;
+    entry.absent += r.absent;
+  }
+  const months = Array.from(byMonth.keys()).sort().slice(-monthsToShow);
+  return months.map((month) => {
+    const { present, absent } = byMonth.get(month)!;
+    const total = present + absent;
+    const rate = total > 0 ? (present / total) * 100 : 0;
+    return { month, present, absent, rate };
+  });
+}
+
 export default function BalanceScreen() {
   const { colors } = useTheme();
   const [revenueByMonth, setRevenueByMonth] = useState<MonthlyRevenuePoint[]>([]);
   const [clinicRows, setClinicRows] = useState<MonthlyClinicRevenue[]>([]);
+  const [attendanceRows, setAttendanceRows] = useState<MonthlyClinicAttendance[]>([]);
   const [loading, setLoading] = useState(true);
 
   const styles = useMemo(() => StyleSheet.create({
@@ -83,17 +110,24 @@ export default function BalanceScreen() {
     clinicMonthCol: { flex: 1, alignItems: "center", backgroundColor: colors.surfaceLight, borderRadius: radius.sm, paddingVertical: spacing.xs },
     clinicMonthLabel: { color: colors.textMuted, fontSize: 11 },
     clinicMonthValue: { color: colors.text, fontSize: 12, fontWeight: "600", marginTop: 2 },
+    attendanceRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: spacing.sm, borderBottomWidth: 1, borderBottomColor: colors.border },
+    attendanceMonth: { color: colors.text, fontSize: 14, fontWeight: "600" },
+    attendanceCount: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
+    attendanceRateHigh: { color: "#16A34A", fontSize: 16, fontWeight: "700" },
+    attendanceRateLow: { color: "#DC2626", fontSize: 16, fontWeight: "700" },
   }), [colors]);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [revenue, byClinic] = await Promise.all([
+      const [revenue, byClinic, byAttendance] = await Promise.all([
         getMonthlyRevenueLast12Months(),
         getMonthlyRevenueByClinic(),
+        getMonthlyAttendanceByClinic(),
       ]);
       setRevenueByMonth(revenue);
       setClinicRows(byClinic);
+      setAttendanceRows(byAttendance);
     } finally {
       setLoading(false);
     }
@@ -112,6 +146,7 @@ export default function BalanceScreen() {
   const projection = calculateProjection(momSeries);
 
   const clinicTable = buildClinicTable(clinicRows);
+  const attendanceByMonth = buildAttendanceByMonth(attendanceRows).reverse();
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -182,6 +217,25 @@ export default function BalanceScreen() {
                         </View>
                       ))}
                     </View>
+                  </View>
+                ))
+              )}
+            </View>
+
+            <View style={styles.sectionCard}>
+              <Text style={styles.sectionTitle}>Taxa de comparecimento mensal</Text>
+              {attendanceByMonth.length === 0 ? (
+                <Text style={styles.momValue}>Ainda não há dados suficientes.</Text>
+              ) : (
+                attendanceByMonth.map((a) => (
+                  <View key={a.month} style={styles.attendanceRow}>
+                    <View>
+                      <Text style={styles.attendanceMonth}>{formatMonthLabel(a.month)}</Text>
+                      <Text style={styles.attendanceCount}>{a.present} presenças · {a.absent} faltas</Text>
+                    </View>
+                    <Text style={a.rate >= 70 ? styles.attendanceRateHigh : styles.attendanceRateLow}>
+                      {Math.round(a.rate)}%
+                    </Text>
                   </View>
                 ))
               )}
