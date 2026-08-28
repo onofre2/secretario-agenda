@@ -32,4 +32,6 @@ export const SETTINGS_KEYS = {
   THERAPIST_NAME: "therapist_name",
   THERAPIST_PROFESSION: "therapist_profession",
   THERAPIST_REGISTRATION: "therapist_registration",
+  YEAR_END_BACKUP_NOTIFICATION_ID: "year_end_backup_notification_id",
+  YEAR_END_BACKUP_YEAR: "year_end_backup_year",
 } as const;

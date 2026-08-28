@@ -185,3 +185,58 @@ export async function scheduleMorningAgendaNotification(): Promise<void> {
   await setSetting(SETTINGS_KEYS.MORNING_NOTIFICATION_ID, identifier);
   await setSetting(SETTINGS_KEYS.MORNING_NOTIFICATION_TRIGGER, triggerDate.toISOString());
 }
+
+/** Cancela a notificação de backup de fim de ano previamente agendada, se houver. */
+export async function cancelYearEndBackupNotification(): Promise<void> {
+  const identifier = await getSetting(SETTINGS_KEYS.YEAR_END_BACKUP_NOTIFICATION_ID);
+  if (identifier) {
+    await Notifications.cancelScheduledNotificationAsync(identifier);
+    await setSetting(SETTINGS_KEYS.YEAR_END_BACKUP_NOTIFICATION_ID, "");
+  }
+}
+
+/**
+ * Agenda o lembrete anual de backup do Balanço, disparado em 20 de dezembro.
+ * Idempotente: só agenda uma vez por ano (controlado por YEAR_END_BACKUP_YEAR).
+ * Não apaga nenhum dado — apenas lembra o usuário de exportar o PDF antes da virada.
+ * Chamado no boot do app, mesmo padrão dos outros lembretes.
+ */
+export async function scheduleYearEndBackupNotification(): Promise<void> {
+  const enabled = await getSetting(SETTINGS_KEYS.NOTIFICATIONS_ENABLED);
+  if (enabled === "0") {
+    await cancelYearEndBackupNotification();
+    return;
+  }
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const triggerDate = new Date(year, 11, 20, 9, 0, 0); // 20 de dezembro, 09:00
+
+  if (triggerDate.getTime() <= Date.now()) {
+    // já passou 20/dez deste ano — nada a agendar agora, será reavaliado no próximo boot do ano seguinte.
+    return;
+  }
+
+  const alreadyScheduledYear = await getSetting(SETTINGS_KEYS.YEAR_END_BACKUP_YEAR);
+  if (alreadyScheduledYear === String(year)) {
+    return;
+  }
+
+  await cancelYearEndBackupNotification();
+
+  const identifier = await Notifications.scheduleNotificationAsync({
+    content: {
+      title: "Fim de ano chegando — faça o backup do Balanço",
+      body: "Exporte o PDF do Balanço antes da virada do ano. Seus dados não são apagados, mas é bom manter um registro salvo.",
+      data: { yearEndBackup: true },
+      sound: "default",
+    },
+    trigger: {
+      date: triggerDate,
+      channelId: "appointments",
+    },
+  });
+
+  await setSetting(SETTINGS_KEYS.YEAR_END_BACKUP_NOTIFICATION_ID, identifier);
+  await setSetting(SETTINGS_KEYS.YEAR_END_BACKUP_YEAR, String(year));
+}
