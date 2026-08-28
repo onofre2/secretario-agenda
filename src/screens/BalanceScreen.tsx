@@ -15,6 +15,8 @@ import {
 } from "../database/repositories/financialRepo";
 import SimpleBarChart from "../components/SimpleBarChart";
 import { calculateMonthOverMonth, calculateProjection, MonthComparison } from "../utils/balanceCalc";
+import { exportBalanceAsPdf } from "../reports/exportBalancePdf";
+import PrimaryButton from "../components/PrimaryButton";
 
 const MONTH_ABBR = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
@@ -88,6 +90,7 @@ export default function BalanceScreen() {
   const [clinicRows, setClinicRows] = useState<MonthlyClinicRevenue[]>([]);
   const [attendanceRows, setAttendanceRows] = useState<MonthlyClinicAttendance[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exportingPdf, setExportingPdf] = useState(false);
 
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
@@ -139,6 +142,17 @@ export default function BalanceScreen() {
     }, [load])
   );
 
+  const handleExportPdf = async () => {
+    setExportingPdf(true);
+    try {
+      await exportBalanceAsPdf();
+    } catch (err) {
+      console.error("Erro ao exportar balanco:", err);
+    } finally {
+      setExportingPdf(false);
+    }
+  };
+
   const chartData = revenueByMonth.map((p) => ({ label: formatMonthLabel(p.month), value: p.revenue }));
 
   const momSeries = revenueByMonth.map((p) => ({ month: p.month, value: p.revenue }));
@@ -152,6 +166,13 @@ export default function BalanceScreen() {
     <SafeAreaView style={styles.container} edges={["top"]}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Balanço</Text>
+
+        <PrimaryButton
+          label={exportingPdf ? "Gerando PDF..." : "📄 Exportar Balanço (PDF)"}
+          onPress={handleExportPdf}
+          disabled={exportingPdf || loading}
+        />
+        {exportingPdf && <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.sm }} />}
 
         {loading ? (
           <ActivityIndicator color={colors.primary} />
