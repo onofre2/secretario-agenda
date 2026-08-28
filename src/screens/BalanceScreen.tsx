@@ -7,7 +7,7 @@ import { useTheme } from "../context/ThemeContext";
 import { formatCurrency } from "../utils/date";
 import { getMonthlyRevenueLast12Months, MonthlyRevenuePoint } from "../database/repositories/financialRepo";
 import SimpleBarChart from "../components/SimpleBarChart";
-import { calculateMonthOverMonth, MonthComparison } from "../utils/balanceCalc";
+import { calculateMonthOverMonth, calculateProjection, MonthComparison } from "../utils/balanceCalc";
 
 const MONTH_ABBR = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
 
@@ -16,6 +16,12 @@ function formatMonthLabel(month: string): string {
   const abbr = MONTH_ABBR[(m ?? 1) - 1] ?? month;
   return `${abbr}/${String(year).slice(2)}`;
 }
+
+const CONFIDENCE_LABEL: Record<string, string> = {
+  baixa: "Confiabilidade baixa",
+  moderada: "Confiabilidade moderada",
+  alta: "Confiabilidade alta",
+};
 
 export default function BalanceScreen() {
   const { colors } = useTheme();
@@ -34,6 +40,9 @@ export default function BalanceScreen() {
     momChangeUp: { color: "#16A34A", fontSize: 14, fontWeight: "700" },
     momChangeDown: { color: "#DC2626", fontSize: 14, fontWeight: "700" },
     momChangeNeutral: { color: colors.textMuted, fontSize: 14, fontWeight: "700" },
+    projValue: { color: colors.primary, fontSize: 26, fontWeight: "700", marginTop: spacing.xs },
+    projRange: { color: colors.textMuted, fontSize: 13, marginTop: spacing.xs },
+    projConfidence: { color: colors.textMuted, fontSize: 12, marginTop: spacing.sm, fontStyle: "italic" },
   }), [colors]);
 
   const load = useCallback(async () => {
@@ -56,6 +65,7 @@ export default function BalanceScreen() {
 
   const momSeries = revenueByMonth.map((p) => ({ month: p.month, value: p.revenue }));
   const momComparisons: MonthComparison[] = calculateMonthOverMonth(momSeries).slice(-6).reverse();
+  const projection = calculateProjection(momSeries);
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -91,6 +101,22 @@ export default function BalanceScreen() {
                     )}
                   </View>
                 ))
+              )}
+            </View>
+
+            <View style={styles.sectionCard}>
+              <Text style={styles.sectionTitle}>Projeção do próximo mês</Text>
+              {projection === null ? (
+                <Text style={styles.momValue}>É preciso de pelo menos 2 meses de histórico para projetar.</Text>
+              ) : (
+                <>
+                  <Text style={styles.momMonth}>{formatMonthLabel(projection.nextMonth)}</Text>
+                  <Text style={styles.projValue}>{formatCurrency(projection.estimate)}</Text>
+                  <Text style={styles.projRange}>
+                    Faixa estimada: {formatCurrency(projection.low)} – {formatCurrency(projection.high)}
+                  </Text>
+                  <Text style={styles.projConfidence}>{CONFIDENCE_LABEL[projection.confidence]}</Text>
+                </>
               )}
             </View>
           </>
