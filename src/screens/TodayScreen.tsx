@@ -12,7 +12,7 @@ import {
   TodayAppointment,
 } from "../database/repositories/appointmentsRepo";
 import { generateAppointmentsForDate } from "../database/repositories/schedulesRepo";
-import { scheduleAllPendingForToday, scheduleMorningAgendaNotification, scheduleYearEndBackupNotification } from "../notifications/scheduler";
+import { scheduleAllPendingForToday, scheduleMorningAgendaNotification, scheduleYearEndBackupNotification, cleanupOrphanedNotificationsOnce, scheduleMonthlyBackupNotification } from "../notifications/scheduler";
 import { speakTodaySchedule, speakEndOfDaySummary } from "../voice/voiceService";
 import AppointmentCard from "../components/AppointmentCard";
 
@@ -57,7 +57,9 @@ export default function TodayScreen() {
     const list = await getAppointmentsByDate(date);
     setAppointments(list);
     setLoading(false);
+    await cleanupOrphanedNotificationsOnce();
     scheduleAllPendingForToday().catch((err) => console.error("Erro ao agendar notificações:", err));
+    scheduleMonthlyBackupNotification().catch((err) => console.error("Erro ao agendar notificacao mensal de backup:", err));
     scheduleMorningAgendaNotification().catch((err) => console.error("Erro ao agendar notificacao matinal:", err));
     scheduleYearEndBackupNotification().catch((err) => console.error("Erro ao agendar notificacao de backup anual:", err));
   }, [date]);

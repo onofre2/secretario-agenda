@@ -5,6 +5,7 @@ import {
   upsertNotificationLog,
   getNotificationLog,
   deleteNotificationLog,
+  clearAllNotificationLogs,
 } from "../database/repositories/notificationsRepo";
 import { todayISO } from "../utils/date";
 import { getSetting, setSetting, SETTINGS_KEYS } from "../database/repositories/settingsRepo";
@@ -239,4 +240,83 @@ export async function scheduleYearEndBackupNotification(): Promise<void> {
 
   await setSetting(SETTINGS_KEYS.YEAR_END_BACKUP_NOTIFICATION_ID, identifier);
   await setSetting(SETTINGS_KEYS.YEAR_END_BACKUP_YEAR, String(year));
+}
+
+/**
+ * Limpeza única de notificações órfãs: cancela TODAS as notificações agendadas no sistema
+ * e limpa o log local, para remover lembretes antigos de versões anteriores do app que
+ * ficaram presos no sistema (ex: lembrete de backup repetindo todo dia). Roda só uma vez;
+ * depois disso, o boot normal já reagenda tudo que deveria existir (compromissos, manhã, etc).
+ */
+export async function cleanupOrphanedNotificationsOnce(): Promise<void> {
+  const alreadyDone = await getSetting(SETTINGS_KEYS.ORPHAN_NOTIFICATIONS_CLEANED);
+  if (alreadyDone === "1") return;
+
+  try {
+    await Notifications.cancelAllScheduledNotificationsAsync();
+  } catch (err) {
+    console.error("Erro ao cancelar notificacoes orfas:", err);
+  }
+  await clearAllNotificationLogs();
+  await setSetting(SETTINGS_KEYS.MORNING_NOTIFICATION_ID, "");
+  await setSetting(SETTINGS_KEYS.YEAR_END_BACKUP_NOTIFICATION_ID, "");
+  await setSetting(SETTINGS_KEYS.YEAR_END_BACKUP_YEAR, "");
+  await setSetting(SETTINGS_KEYS.MONTHLY_BACKUP_NOTIFICATION_ID, "");
+  await setSetting(SETTINGS_KEYS.MONTHLY_BACKUP_MONTH, "");
+  await setSetting(SETTINGS_KEYS.ORPHAN_NOTIFICATIONS_CLEANED, "1");
+}
+
+/** Cancela a notificação mensal de backup previamente agendada, se houver. */
+export async function cancelMonthlyBackupNotification(): Promise<void> {
+  const identifier = await getSetting(SETTINGS_KEYS.MONTHLY_BACKUP_NOTIFICATION_ID);
+  if (identifier) {
+    await Notifications.cancelScheduledNotificationAsync(identifier);
+    await setSetting(SETTINGS_KEYS.MONTHLY_BACKUP_NOTIFICATION_ID, "");
+  }
+}
+
+/**
+ * Agenda o lembrete mensal de backup, disparado uma única vez, sempre no dia 28 de cada mês
+ * (dia 28 é usado propositalmente por ser válido em todos os meses, incluindo fevereiro).
+ * Idempotente: só agenda uma vez por mês (controlado por MONTHLY_BACKUP_MONTH, formato "YYYY-MM").
+ */
+export async function scheduleMonthlyBackupNotification(): Promise<void> {
+  const enabled = await getSetting(SETTINGS_KEYS.NOTIFICATIONS_ENABLED);
+  if (enabled === "0") {
+    await cancelMonthlyBackupNotification();
+    return;
+  }
+
+  const now = new Date();
+  const currentMonthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+  let triggerDate = new Date(now.getFullYear(), now.getMonth(), 28, 9, 0, 0);
+  if (triggerDate.getTime() <= Date.now()) {
+    // Dia 28 deste mês já passou — agenda para o dia 28 do próximo mês.
+    triggerDate = new Date(now.getFullYear(), now.getMonth() + 1, 28, 9, 0, 0);
+  }
+  const targetMonthKey = `${triggerDate.getFullYear()}-${String(triggerDate.getMonth() + 1).padStart(2, "0")}`;
+
+  const alreadyScheduledMonth = await getSetting(SETTINGS_KEYS.MONTHLY_BACKUP_MONTH);
+  if (alreadyScheduledMonth === targetMonthKey) {
+    return;
+  }
+
+  await cancelMonthlyBackupNotification();
+
+  const identifier = await Notifications.scheduleNotificationAsync({
+    content: {
+      title: "Backup mensal",
+      body: "Hoje é dia 28 — aproveite para fazer o backup do app.",
+      data: { monthlyBackup: true },
+      sound: "default",
+    },
+    trigger: {
+      date: triggerDate,
+      channelId: "appointments",
+    },
+  });
+
+  await setSetting(SETTINGS_KEYS.MONTHLY_BACKUP_NOTIFICATION_ID, identifier);
+  await setSetting(SETTINGS_KEYS.MONTHLY_BACKUP_MONTH, targetMonthKey);
 }

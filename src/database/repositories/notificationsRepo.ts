@@ -40,3 +40,9 @@ export async function deleteNotificationLog(appointmentId: ID): Promise<void> {
   const db = await getDb();
   await db.runAsync("DELETE FROM notification_log WHERE appointment_id = ?", [appointmentId]);
 }
+
+/** Remove todos os registros de notificação — usado apenas em limpezas únicas de migração. */
+export async function clearAllNotificationLogs(): Promise<void> {
+  const db = await getDb();
+  await db.runAsync("DELETE FROM notification_log");
+}
