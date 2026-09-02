@@ -13,6 +13,7 @@ import PatientTimelineModal from "../components/PatientTimelineModal";
 import {
   listPatients,
   listPatientsByClinic,
+  getPatientIdsWithActiveSchedule,
   createPatient,
   updatePatient,
   deletePatient,
@@ -37,6 +38,7 @@ const emptyForm = {
 export default function PatientsScreen() {
   const { colors } = useTheme();
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [activePatientIds, setActivePatientIds] = useState<Set<number>>(new Set());
   const [clinics, setClinics] = useState<Clinic[]>([]);
   const [selectedClinicId, setSelectedClinicId] = useState<number | "all">("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -94,6 +96,8 @@ export default function PatientsScreen() {
       borderWidth: 1,
       borderColor: colors.border,
     },
+    cardInactive: { backgroundColor: colors.surfaceLight, opacity: 0.75, borderColor: colors.textMuted },
+    inactiveLabel: { color: colors.textMuted, fontSize: 11, fontWeight: "700", marginTop: 2 },
     cardTitle: { color: colors.text, fontSize: 17, fontWeight: "600" },
     cardHeaderRow: { flexDirection: "row", alignItems: "flex-start", justifyContent: "space-between", gap: spacing.sm },
     whatsappBtn: { backgroundColor: "#25D366", width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
@@ -114,6 +118,7 @@ export default function PatientsScreen() {
 
   const load = useCallback(async (clinicId: number | "all") => {
     const clinicList = await listClinics();
+    setActivePatientIds(await getPatientIdsWithActiveSchedule());
     setClinics(clinicList);
     if (clinicId === "all") {
       setPatients(await listPatients());
@@ -272,12 +277,13 @@ export default function PatientsScreen() {
           <Text style={styles.empty}>Nenhum paciente encontrado nesta clínica.</Text>
         }
         renderItem={({ item }) => (
-          <View style={styles.card}>
+          <View style={[styles.card, !activePatientIds.has(item.id) && styles.cardInactive]}>
             <View style={styles.cardHeaderRow}>
               <Pressable style={{ flex: 1 }} onPress={() => openEdit(item)}>
                 <Text style={styles.cardTitle}>{item.full_name}</Text>
                 {!!item.phone && <Text style={styles.cardSubtitle}>{item.phone}</Text>}
                 {!!item.diagnosis && <Text style={styles.cardSubtitle}>{item.diagnosis}</Text>}
+                {!activePatientIds.has(item.id) && <Text style={styles.inactiveLabel}>Sem agenda ativa</Text>}
                 <Text style={styles.editLabel}>Editar</Text>
               </Pressable>
               <Pressable

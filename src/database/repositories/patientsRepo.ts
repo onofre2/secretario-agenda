@@ -89,3 +89,12 @@ export async function listPatientsByClinic(clinicId: ID): Promise<Patient[]> {
     [clinicId, clinicId]
   );
 }
+
+/** Retorna o conjunto de IDs de pacientes que têm ao menos um agendamento ativo (active = 1). */
+export async function getPatientIdsWithActiveSchedule(): Promise<Set<number>> {
+  const db = await getDb();
+  const rows = await db.getAllAsync<{ patient_id: number }>(
+    "SELECT DISTINCT patient_id FROM schedules WHERE active = 1"
+  );
+  return new Set(rows.map((r) => r.patient_id));
+}
