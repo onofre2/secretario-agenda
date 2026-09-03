@@ -247,6 +247,7 @@ export default function SettingsScreen() {
         <Section title="Aviso importante" styles={styles}>
           <Text style={styles.warningText}>
             [IMPORTANTE]{"\n\n"}
+            Toda evolução clínica é individual e deve ser editada antes de imprimir.{"\n\n"}
             Final do mês — "imprima" o relatório individual (evolução) de cada paciente.{"\n\n"}
             (Para validação){"\n"}
             No campo da assinatura, coloque a data em que você está imprimindo e assinando a folha (ex.: Juiz de Fora, 31 de agosto de 2026).{"\n\n"}
@@ -257,8 +258,8 @@ export default function SettingsScreen() {
         </Section>
 
         <View style={styles.creditFooter}>
-          <Image source={require("../../assets/fisionofre.webp")} style={styles.creditAvatar} />
-          <Text style={styles.creditText}>@fisionofre</Text>
+          <Image source={require("../../assets/fisionofre_novo.png")} style={styles.creditAvatar} />
+          <Text style={styles.creditText}>Desenvolvido por @fisionofre</Text>
         </View>
     </ScrollView>
     </SafeAreaView>
