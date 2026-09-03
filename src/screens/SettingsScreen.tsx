@@ -11,7 +11,7 @@ import { pickSignatureImage, removeSignatureImage } from "../utils/signatureImpo
 import { exportBackup, restoreBackup, markBackupDone } from "../backup/backupService";
 import { DEFAULT_LEAD_MINUTES } from "../notifications/config";
 import * as Notifications from "expo-notifications";
-import { scheduleAllPendingForToday, scheduleMorningAgendaNotification } from "../notifications/scheduler";
+import { scheduleAllPendingForToday, scheduleMorningAgendaNotification, scheduleMonthlyBackupNotification, scheduleYearEndBackupNotification } from "../notifications/scheduler";
 
 export default function SettingsScreen() {
   const { colors, isDark, toggleTheme } = useTheme();
@@ -84,9 +84,18 @@ export default function SettingsScreen() {
     await setSetting(SETTINGS_KEYS.NOTIFICATIONS_ENABLED, value ? "1" : "0");
     if (!value) {
       await Notifications.cancelAllScheduledNotificationsAsync();
+      // Limpa os controles de idempotencia para que, ao reativar, tudo seja reagendado do zero.
+      await setSetting(SETTINGS_KEYS.MORNING_NOTIFICATION_ID, "");
+      await setSetting(SETTINGS_KEYS.MORNING_NOTIFICATION_TRIGGER, "");
+      await setSetting(SETTINGS_KEYS.MONTHLY_BACKUP_NOTIFICATION_ID, "");
+      await setSetting(SETTINGS_KEYS.MONTHLY_BACKUP_MONTH, "");
+      await setSetting(SETTINGS_KEYS.YEAR_END_BACKUP_NOTIFICATION_ID, "");
+      await setSetting(SETTINGS_KEYS.YEAR_END_BACKUP_YEAR, "");
     } else {
       await scheduleAllPendingForToday();
       await scheduleMorningAgendaNotification();
+      await scheduleMonthlyBackupNotification();
+      await scheduleYearEndBackupNotification();
     }
   };
 
