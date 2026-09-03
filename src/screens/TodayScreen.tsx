@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useMemo } from "react";
+import React, { useCallback, useState, useMemo, useEffect } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { View, Text, StyleSheet, FlatList, RefreshControl, Pressable } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
@@ -57,12 +57,23 @@ export default function TodayScreen() {
     const list = await getAppointmentsByDate(date);
     setAppointments(list);
     setLoading(false);
-    await cleanupOrphanedNotificationsOnce();
     scheduleAllPendingForToday().catch((err) => console.error("Erro ao agendar notificações:", err));
-    scheduleMonthlyBackupNotification().catch((err) => console.error("Erro ao agendar notificacao mensal de backup:", err));
     scheduleMorningAgendaNotification().catch((err) => console.error("Erro ao agendar notificacao matinal:", err));
     scheduleYearEndBackupNotification().catch((err) => console.error("Erro ao agendar notificacao de backup anual:", err));
   }, [date]);
+
+  // Roda uma unica vez na montagem: limpeza de notificacoes orfas e agendamento
+  // do lembrete mensal de backup (dia 28). Fora do load para nao repetir a cada foco da tela.
+  useEffect(() => {
+    (async () => {
+      try {
+        await cleanupOrphanedNotificationsOnce();
+        await scheduleMonthlyBackupNotification();
+      } catch (err) {
+        console.error("Erro na configuracao inicial de notificacoes:", err);
+      }
+    })();
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
