@@ -31,9 +31,9 @@ export async function updateClinic(
   const merged = { ...current, ...data };
   await db.runAsync(
     `UPDATE clinics
-     SET name = ?, address = ?, phone = ?, payment_info = ?, notes = ?, updated_at = datetime('now')
+     SET name = ?, address = ?, phone = ?, payment_info = ?, notes = ?, logo_path = ?, updated_at = datetime('now')
      WHERE id = ?`,
-    [merged.name, merged.address, merged.phone, merged.payment_info, merged.notes, id]
+    [merged.name, merged.address, merged.phone, merged.payment_info, merged.notes, merged.logo_path ?? null, id]
   );
 }
 
