@@ -20,18 +20,24 @@ export async function createSchedule(data: NewSchedule): Promise<ID> {
   return result.lastInsertRowId;
 }
 
-export async function pauseSchedule(id: ID, active: boolean): Promise<void> {
+export async function pauseSchedule(id: ID, active: boolean): Promise<ID[]> {
   const db = await getDb();
   await db.runAsync(
     "UPDATE schedules SET active = ?, updated_at = datetime('now') WHERE id = ?",
     [active ? 1 : 0, id]
   );
   if (!active) {
+    const affected = await db.getAllAsync<{ id: number }>(
+      "SELECT id FROM appointments WHERE schedule_id = ? AND status = 'pending' AND date >= ?",
+      [id, todayISO()]
+    );
     await db.runAsync(
       "UPDATE appointments SET status = 'cancelled', updated_at = datetime('now') WHERE schedule_id = ? AND status = 'pending' AND date >= ?",
       [id, todayISO()]
     );
+    return affected.map((a) => a.id);
   }
+  return [];
 }
 
 export async function duplicateSchedule(id: ID): Promise<ID> {
@@ -51,13 +57,18 @@ export async function duplicateSchedule(id: ID): Promise<ID> {
   });
 }
 
-export async function deleteSchedule(id: ID): Promise<void> {
+export async function deleteSchedule(id: ID): Promise<ID[]> {
   const db = await getDb();
+  const affected = await db.getAllAsync<{ id: number }>(
+    "SELECT id FROM appointments WHERE schedule_id = ? AND status = 'pending' AND date >= ?",
+    [id, todayISO()]
+  );
   await db.runAsync(
     "UPDATE appointments SET status = 'cancelled', updated_at = datetime('now') WHERE schedule_id = ? AND status = 'pending' AND date >= ?",
     [id, todayISO()]
   );
   await db.runAsync("DELETE FROM schedules WHERE id = ?", [id]);
+  return affected.map((a) => a.id);
 }
 
 /**

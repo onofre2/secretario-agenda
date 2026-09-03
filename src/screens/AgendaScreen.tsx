@@ -22,6 +22,7 @@ import {
 import { listPatients } from "../database/repositories/patientsRepo";
 import { listClinics } from "../database/repositories/clinicsRepo";
 import { Schedule, Weekday, Patient } from "../database/types";
+import { cancelForAppointment } from "../notifications/scheduler";
 import WeeklyGridView from "../components/WeeklyGridView";
 import PatientTimelineModal from "../components/PatientTimelineModal";
 
@@ -173,7 +174,10 @@ export default function AgendaScreen() {
   };
 
   const handlePause = async (s: ScheduleWithNames) => {
-    await pauseSchedule(s.id, false);
+    const cancelledIds = await pauseSchedule(s.id, false);
+    for (const appointmentId of cancelledIds) {
+      await cancelForAppointment(appointmentId);
+    }
     await load();
   };
 
@@ -192,7 +196,10 @@ export default function AgendaScreen() {
           text: "Excluir",
           style: "destructive",
           onPress: async () => {
-            await deleteSchedule(s.id);
+            const cancelledIds = await deleteSchedule(s.id);
+            for (const appointmentId of cancelledIds) {
+              await cancelForAppointment(appointmentId);
+            }
             await load();
           },
         },
