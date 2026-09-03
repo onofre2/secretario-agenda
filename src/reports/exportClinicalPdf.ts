@@ -101,8 +101,13 @@ function buildClinicByPatientHtml(rows: ClinicalEvolutionRow[], clinicName: stri
         .join("");
       return `
         <div class="patient-page" style="${idx > 0 ? "page-break-before: always;" : ""}">
-          <h1>${escapeHtml(clinicName)}</h1>
-          <h2 style="font-size:16px; margin:4px 0 12px;">${escapeHtml(patientName)}</h2>
+          <div class="page-header">
+            <div class="page-header-text">
+              <h1>${escapeHtml(clinicName)}</h1>
+              <h2 style="font-size:16px; margin:4px 0 12px;">${escapeHtml(patientName)}</h2>
+            </div>
+            ${logoBase64 ? `<img class="page-logo" src="${logoBase64}" />` : ""}
+          </div>
           ${entriesHtml}
         </div>`;
     })
@@ -118,10 +123,12 @@ function buildClinicByPatientHtml(rows: ClinicalEvolutionRow[], clinicName: stri
           .entry { margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid #E2E8F0; }
           .meta { font-size: 11px; color: #64748B; }
           .content { font-size: 13px; line-height: 1.5; margin: 0; }
+          .page-header { display: flex; justify-content: space-between; align-items: flex-start; }
+          .page-header-text { flex: 1; }
+          .page-logo { max-height: 60px; max-width: 120px; margin-left: 16px; }
         </style>
       </head>
       <body>
-        ${logoBase64 ? `<img src="${logoBase64}" style="max-height:60px; max-width:180px; margin-bottom:12px;" />` : ""}
         ${pagesHtml}
         ${therapistFooter}
       </body>
