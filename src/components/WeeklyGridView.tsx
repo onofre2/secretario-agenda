@@ -1,11 +1,11 @@
 import React, { useState, useMemo } from "react";
-import { View, Text, ScrollView, StyleSheet, Pressable, Modal } from "react-native";
+import { View, Text, ScrollView, StyleSheet, Pressable, Modal, Alert } from "react-native";
 import { spacing, radius } from "../theme/colors";
 import { useTheme } from "../context/ThemeContext";
 import { WEEKDAYS } from "../utils/weekdays";
 import { formatCurrency } from "../utils/date";
 import { getClinicColor } from "../utils/clinicColors";
-import { exportWeeklyMapPdf } from "../reports/exportWeeklyMapPdf";
+import { exportWeeklyMapPdf, exportWeeklyGridMapPdf } from "../reports/exportWeeklyMapPdf";
 
 interface ScheduleItem {
   id: number;
@@ -85,7 +85,33 @@ export default function WeeklyGridView({ schedules, onReminderPress }: Props) {
   const worstDay = dayRevenue.length > 0 ? dayRevenue.reduce((a, b) => (b.value < a.value ? b : a)) : null;
 
   const handleExportMap = async () => {
-    await exportWeeklyMapPdf(schedules, clinicHours, dayRevenue);
+    const clinicNames = Array.from(
+      new Set(schedules.map((s) => s.clinic_name).filter((n): n is string => !!n))
+    ).sort();
+
+    const options: { text: string; onPress?: () => void; style?: "cancel" }[] = [
+      {
+        text: "Mapa visual completo",
+        onPress: async () => {
+          await exportWeeklyGridMapPdf(schedules);
+        },
+      },
+      ...clinicNames.map((name) => ({
+        text: `Mapa: ${name}`,
+        onPress: async () => {
+          await exportWeeklyGridMapPdf(schedules, name);
+        },
+      })),
+      {
+        text: "Relatorio detalhado (lista)",
+        onPress: async () => {
+          await exportWeeklyMapPdf(schedules, clinicHours, dayRevenue);
+        },
+      },
+      { text: "Cancelar", style: "cancel" as const },
+    ];
+
+    Alert.alert("Exportar mapa da agenda", "Escolha o formato:", options);
   };
 
   const styles = useMemo(() => StyleSheet.create({
