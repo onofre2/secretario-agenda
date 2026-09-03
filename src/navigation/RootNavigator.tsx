@@ -28,7 +28,7 @@ const navTheme = {
 };
 
 const TAB_ICONS: Record<string, string> = {
-  Hoje: "📅",
+  Hoje: "✅",
   Agenda: "🗓️",
   Pacientes: "🧑‍⚕️",
   Clínicas: "🏥",
@@ -55,11 +55,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
         };
         return (
           <View key={route.key} style={styles.tabItem} onTouchEnd={onPress}>
-            {route.name === "Hoje" ? (
-              <Text style={{ fontSize: 16, fontWeight: "700", opacity: isFocused ? 1 : 0.6, color: isFocused ? colors.primary : colors.textMuted }}>{new Date().getDate()}</Text>
-            ) : (
-              <Text style={{ fontSize: 18, opacity: isFocused ? 1 : 0.6 }}>{TAB_ICONS[route.name]}</Text>
-            )}
+            <Text style={{ fontSize: 18, opacity: isFocused ? 1 : 0.6 }}>{TAB_ICONS[route.name]}</Text>
             <Text style={[styles.tabLabel, { color: isFocused ? colors.primary : colors.textMuted }]}>
               {route.name}
             </Text>
@@ -107,9 +103,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: 4,
+    paddingHorizontal: 2,
   },
   tabLabel: {
-    fontSize: 10,
+    fontSize: 9,
     marginTop: 2,
+    textAlign: "center",
   },
 });
