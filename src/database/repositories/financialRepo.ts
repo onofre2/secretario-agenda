@@ -184,3 +184,26 @@ export async function getMonthlyAttendanceByClinic(): Promise<MonthlyClinicAtten
      ORDER BY month ASC, c.name ASC`
   );
 }
+
+export interface ClinicPresentCount {
+  clinic_name: string;
+  count: number;
+}
+
+/**
+ * Conta apenas os atendimentos com presenca confirmada por clinica no periodo.
+ * Usado exclusivamente pelo card de estatisticas da aba Clinicas.
+ * Nao substitui getAppointmentsCountByClinic, que continua servindo Relatorios/Financeiro.
+ */
+export async function getPresentCountByClinic(startDate: string, endDate: string): Promise<ClinicPresentCount[]> {
+  const db = await getDb();
+  return db.getAllAsync<ClinicPresentCount>(
+    `SELECT c.name as clinic_name, COUNT(*) as count
+     FROM appointments a
+     JOIN clinics c ON c.id = a.clinic_id
+     WHERE a.date BETWEEN ? AND ? AND a.status = 'present'
+     GROUP BY c.id
+     ORDER BY c.name ASC`,
+    [startDate, endDate]
+  );
+}

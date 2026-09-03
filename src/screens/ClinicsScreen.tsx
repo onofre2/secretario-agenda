@@ -10,7 +10,7 @@ import FloatingAddButton from "../components/FloatingAddButton";
 import PatientTimelineModal from "../components/PatientTimelineModal";
 import ClinicStatsList, { ClinicStatsRow } from "../components/ClinicStatsList";
 import { listSchedules } from "../database/repositories/schedulesRepo";
-import { getAttendanceByClinic, getAppointmentsCountByClinic } from "../database/repositories/financialRepo";
+import { getAttendanceByClinic, getAppointmentsCountByClinic, getPresentCountByClinic } from "../database/repositories/financialRepo";
 import { todayISO } from "../utils/date";
 import { getRangeFor } from "../utils/period";
 import {
@@ -94,8 +94,8 @@ export default function ClinicsScreen() {
     const today = todayISO();
     const monthRange = getRangeFor("month");
     const [monthCounts, dayCounts, dayAttendance] = await Promise.all([
-      getAppointmentsCountByClinic(monthRange.start, monthRange.end),
-      getAppointmentsCountByClinic(today, today),
+      getPresentCountByClinic(monthRange.start, monthRange.end),
+      getPresentCountByClinic(today, today),
       getAttendanceByClinic(today, today),
     ]);
     const monthMap = new Map(monthCounts.map((c) => [c.clinic_name, c.count]));
