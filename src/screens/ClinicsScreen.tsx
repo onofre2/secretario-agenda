@@ -56,6 +56,8 @@ export default function ClinicsScreen() {
     },
     cardTitle: { color: colors.text, fontSize: 17, fontWeight: "600" },
     cardSubtitle: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
+    cardHeaderRow: { flexDirection: "row", alignItems: "center", gap: 12 },
+    cardLogo: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.surfaceLight },
     cardActions: {
       flexDirection: "row",
       gap: spacing.sm,
@@ -236,10 +238,15 @@ export default function ClinicsScreen() {
           }
         renderItem={({ item }) => (
           <View style={styles.card}>
-            <Pressable onPress={() => openEdit(item)}>
-              <Text style={styles.cardTitle}>{item.name}</Text>
-              {!!item.address && <Text style={styles.cardSubtitle}>{item.address}</Text>}
-              {!!item.phone && <Text style={styles.cardSubtitle}>{item.phone}</Text>}
+            <Pressable onPress={() => openEdit(item)} style={styles.cardHeaderRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.cardTitle}>{item.name}</Text>
+                {!!item.address && <Text style={styles.cardSubtitle}>{item.address}</Text>}
+                {!!item.phone && <Text style={styles.cardSubtitle}>{item.phone}</Text>}
+              </View>
+              {!!item.logo_path && (
+                <Image source={{ uri: item.logo_path }} style={styles.cardLogo} />
+              )}
             </Pressable>
             <View style={styles.cardActions}>
               <Pressable style={styles.cardActionBtn} onPress={() => openPatientsModal(item)}>
