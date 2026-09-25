@@ -97,7 +97,7 @@ export default function ClinicsScreen() {
     const monthRange = getRangeFor("month");
     const [monthCounts, dayCounts, dayAttendance] = await Promise.all([
       getPresentCountByClinic(monthRange.start, monthRange.end),
-      getPresentCountByClinic(today, today),
+      getAppointmentsCountByClinic(today, today),
       getAttendanceByClinic(today, today),
     ]);
     const monthMap = new Map(monthCounts.map((c) => [c.clinic_name, c.count]));
