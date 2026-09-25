@@ -51,7 +51,7 @@ export default function SettingsScreen() {
     signaturePreview: { width: "100%", height: 80, marginVertical: spacing.sm, backgroundColor: colors.surfaceLight, borderRadius: radius.sm },
     warningText: { color: colors.danger, fontSize: 13, lineHeight: 19 },
     creditFooter: { alignItems: "center", marginTop: spacing.lg, marginBottom: spacing.xl, opacity: 0.7 },
-    creditAvatar: { width: 36, height: 36, borderRadius: 18, marginBottom: 4 },
+    creditAvatar: { width: 96, height: 96, marginBottom: 4 },
     creditText: { color: colors.textMuted, fontSize: 12, fontWeight: "600" },
   }), [colors]);
 
@@ -258,7 +258,7 @@ export default function SettingsScreen() {
         </Section>
 
         <View style={styles.creditFooter}>
-          <Image source={require("../../assets/fisionofre_novo.png")} style={styles.creditAvatar} />
+          <Image source={require("../../assets/fisionofre_novo.png")} style={styles.creditAvatar} resizeMode="contain" />
           <Text style={styles.creditText}>Desenvolvido por @fisionofre</Text>
         </View>
     </ScrollView>
