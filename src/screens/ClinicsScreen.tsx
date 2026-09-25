@@ -228,7 +228,8 @@ export default function ClinicsScreen() {
     try {
       const monthRange = getRangeFor("month");
       const rows = await getReportRowsByClinic(clinic.id, monthRange.start, monthRange.end);
-      await exportClinicAttendancePdf(rows, clinic.name, monthRange.label);
+      const logoBase64 = await getClinicLogoBase64(clinic.logo_path);
+      await exportClinicAttendancePdf(rows, clinic.name, monthRange.label, logoBase64);
     } finally {
       setExportingClinicId(null);
     }

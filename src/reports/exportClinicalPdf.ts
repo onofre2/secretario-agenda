@@ -125,7 +125,7 @@ function buildClinicByPatientHtml(rows: ClinicalEvolutionRow[], clinicName: stri
           .content { font-size: 13px; line-height: 1.5; margin: 0; }
           .page-header { display: flex; justify-content: space-between; align-items: flex-start; }
           .page-header-text { flex: 1; }
-          .page-logo { max-height: 60px; max-width: 120px; margin-left: 16px; }
+          .page-logo { max-height: 130px; max-width: 240px; margin-left: 16px; }
         </style>
       </head>
       <body>
