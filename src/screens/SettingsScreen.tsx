@@ -13,6 +13,7 @@ import { DEFAULT_LEAD_MINUTES } from "../notifications/config";
 import * as Notifications from "expo-notifications";
 import { scheduleAllPendingForToday, scheduleMorningAgendaNotification, scheduleMonthlyBackupNotification, scheduleYearEndBackupNotification, scheduleFreeSlotsNotification, cancelFreeSlotsNotification } from "../notifications/scheduler";
 import { WorkDay, DEFAULT_WORK_HOURS } from "../utils/freeSlots";
+import { exportMonthlyReportPdf, monthLabelFromKey } from "../reports/exportMonthlyReportPdf";
 
 const WEEKDAY_LABEL: Record<number, string> = { 0: "Domingo", 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado" };
 
@@ -26,6 +27,7 @@ export default function SettingsScreen() {
   const [busy, setBusy] = useState<"backup" | "restore" | null>(null);
   const [signaturePath, setSignaturePath] = useState<string | null>(null);
   const [workHours, setWorkHours] = useState<WorkDay[]>(DEFAULT_WORK_HOURS);
+  const [exportingMonth, setExportingMonth] = useState(false);
 
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
@@ -118,6 +120,32 @@ export default function SettingsScreen() {
 
   const updateWorkHour = (weekday: number, field: "start" | "end", value: string) => {
     setWorkHours((prev) => prev.map((w) => (w.weekday === weekday ? { ...w, [field]: value } : w)));
+  };
+
+  const handleExportMonth = () => {
+    const now = new Date();
+    const options: { text: string; onPress?: () => void; style?: "cancel" }[] = [];
+
+    for (let i = 0; i < 12; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+      options.push({
+        text: monthLabelFromKey(key),
+        onPress: async () => {
+          setExportingMonth(true);
+          try {
+            await exportMonthlyReportPdf(key);
+          } catch (err) {
+            Alert.alert("Erro ao gerar PDF", String(err));
+          } finally {
+            setExportingMonth(false);
+          }
+        },
+      });
+    }
+
+    options.push({ text: "Cancelar", style: "cancel" });
+    Alert.alert("Exportar mes em PDF", "Escolha o mes:", options);
   };
 
   const handleSaveWorkHours = async () => {
@@ -282,7 +310,17 @@ export default function SettingsScreen() {
           variant="outline"
           disabled={busy !== null}
         />
-        {busy && <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.sm }} />}
+        <PrimaryButton
+          label={exportingMonth ? "Gerando PDF..." : "Exportar mes em PDF"}
+          onPress={handleExportMonth}
+          variant="outline"
+          disabled={exportingMonth}
+        />
+        <Text style={styles.hint}>
+          Relatorio legivel do mes escolhido: presencas, faltas e financeiro de cada clinica.
+          Nenhum dado e apagado, voce pode exportar meses anteriores quando quiser.
+        </Text>
+        {(busy || exportingMonth) && <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.sm }} />}
       </Section>
 
         <Section title="Dados do terapeuta" styles={styles}>
