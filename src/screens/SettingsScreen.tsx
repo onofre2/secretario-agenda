@@ -106,11 +106,14 @@ export default function SettingsScreen() {
       await setSetting(SETTINGS_KEYS.MONTHLY_BACKUP_MONTH, "");
       await setSetting(SETTINGS_KEYS.YEAR_END_BACKUP_NOTIFICATION_ID, "");
       await setSetting(SETTINGS_KEYS.YEAR_END_BACKUP_YEAR, "");
+      await setSetting(SETTINGS_KEYS.FREE_SLOTS_NOTIFICATION_ID, "");
+      await setSetting(SETTINGS_KEYS.FREE_SLOTS_WEEK, "");
     } else {
       await scheduleAllPendingForToday();
       await scheduleMorningAgendaNotification();
       await scheduleMonthlyBackupNotification();
       await scheduleYearEndBackupNotification();
+      await scheduleFreeSlotsNotification();
     }
   };
 
