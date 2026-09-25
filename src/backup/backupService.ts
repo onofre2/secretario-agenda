@@ -55,12 +55,12 @@ export async function markBackupDone(): Promise<void> {
   await setSetting(SETTINGS_KEYS.LAST_BACKUP_DATE, new Date().toISOString());
 }
 
-/** Retorna true se já passaram 31 dias ou mais desde o último backup (ou se nunca foi feito). */
+/** Retorna true se já passaram 365 dias ou mais desde o último backup (ou se nunca foi feito). */
 export async function isBackupOverdue(): Promise<boolean> {
   const lastBackup = await getSetting(SETTINGS_KEYS.LAST_BACKUP_DATE);
   if (!lastBackup) return true;
   const last = new Date(lastBackup).getTime();
   const now = Date.now();
   const daysSince = (now - last) / (1000 * 60 * 60 * 24);
-  return daysSince >= 31;
+  return daysSince >= 365;
 }
