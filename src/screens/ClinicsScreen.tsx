@@ -19,7 +19,7 @@ import {
   updateClinic,
   deleteClinic,
 } from "../database/repositories/clinicsRepo";
-import { pickClinicLogo, getClinicLogoBase64 } from "../utils/clinicLogoImport";
+import { pickClinicLogo, getClinicLogoBase64, removeClinicLogo } from "../utils/clinicLogoImport";
 import { listPatientsByClinic } from "../database/repositories/patientsRepo";
 import { getClinicalEvolutionByClinic, getReportRowsByClinic } from "../database/repositories/reportsRepo";
 import { exportClinicalEvolutionAsPdf, exportClinicPatientsEvolutionAsPdf } from "../reports/exportClinicalPdf";
@@ -167,6 +167,21 @@ export default function ClinicsScreen() {
     }
   };
 
+  const handleRemoveLogo = (clinicId: number) => {
+    Alert.alert("Excluir logo", "Remover a logo desta clinica?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Excluir",
+        style: "destructive",
+        onPress: async () => {
+          await removeClinicLogo(clinicId);
+          setForm((f) => ({ ...f, logo_path: null }));
+          await load();
+        },
+      },
+    ]);
+  };
+
   const handleDelete = () => {
     if (!editingId) return;
     Alert.alert(
@@ -287,6 +302,9 @@ export default function ClinicsScreen() {
                 <Image source={{ uri: form.logo_path }} style={{ width: 80, height: 80, borderRadius: 8, marginBottom: 8 }} resizeMode="contain" />
               )}
               <PrimaryButton label={form.logo_path ? "Trocar logo" : "Adicionar logo"} variant="outline" onPress={() => handlePickLogo(editingId)} />
+              {!!form.logo_path && (
+                <PrimaryButton label="Excluir logo" variant="outline" onPress={() => handleRemoveLogo(editingId)} style={{ marginTop: 8 }} />
+              )}
             </View>
           )}
           <FormInput label="Endereço" value={form.address} onChangeText={(v) => setForm({ ...form, address: v })} />
