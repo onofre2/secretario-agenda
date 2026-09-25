@@ -12,7 +12,7 @@ import {
   TodayAppointment,
 } from "../database/repositories/appointmentsRepo";
 import { generateAppointmentsForDate } from "../database/repositories/schedulesRepo";
-import { scheduleAllPendingForToday, scheduleMorningAgendaNotification, scheduleYearEndBackupNotification, scheduleMonthlyBackupNotification } from "../notifications/scheduler";
+import { scheduleAllPendingForToday, scheduleMorningAgendaNotification, scheduleYearEndBackupNotification, scheduleMonthlyBackupNotification, scheduleFreeSlotsNotification } from "../notifications/scheduler";
 import { speakTodaySchedule, speakEndOfDaySummary } from "../voice/voiceService";
 import AppointmentCard from "../components/AppointmentCard";
 
@@ -60,6 +60,7 @@ export default function TodayScreen() {
     scheduleAllPendingForToday().catch((err) => console.error("Erro ao agendar notificações:", err));
     scheduleMorningAgendaNotification().catch((err) => console.error("Erro ao agendar notificacao matinal:", err));
     scheduleYearEndBackupNotification().catch((err) => console.error("Erro ao agendar notificacao de backup anual:", err));
+    scheduleFreeSlotsNotification().catch((err) => console.error("Erro ao agendar notificacao de horarios livres:", err));
   }, [date]);
 
   // Agenda o lembrete mensal de backup uma unica vez na montagem.

@@ -8,6 +8,8 @@ import {
   clearAllNotificationLogs,
 } from "../database/repositories/notificationsRepo";
 import { todayISO } from "../utils/date";
+import { WorkDay, DEFAULT_WORK_HOURS, calculateFreeSlots, buildFreeSlotsMessage } from "../utils/freeSlots";
+import { listActiveScheduleSlots } from "../database/repositories/schedulesRepo";
 import { getSetting, setSetting, SETTINGS_KEYS } from "../database/repositories/settingsRepo";
 
 /** Calcula o Date real de disparo: horário do compromisso menos os minutos de antecedência. */
@@ -319,4 +321,61 @@ export async function scheduleMonthlyBackupNotification(): Promise<void> {
 
   await setSetting(SETTINGS_KEYS.MONTHLY_BACKUP_NOTIFICATION_ID, identifier);
   await setSetting(SETTINGS_KEYS.MONTHLY_BACKUP_MONTH, targetMonthKey);
+}
+
+/** Cancela a notificacao semanal de horarios livres previamente agendada. */
+export async function cancelFreeSlotsNotification(): Promise<void> {
+  const identifier = await getSetting(SETTINGS_KEYS.FREE_SLOTS_NOTIFICATION_ID);
+  if (identifier) {
+    await Notifications.cancelScheduledNotificationAsync(identifier);
+    await setSetting(SETTINGS_KEYS.FREE_SLOTS_NOTIFICATION_ID, "");
+  }
+}
+
+/**
+ * Agenda a notificacao semanal com os horarios livres da agenda, disparada
+ * toda segunda-feira as 08:00. Idempotente por semana (FREE_SLOTS_WEEK).
+ */
+export async function scheduleFreeSlotsNotification(): Promise<void> {
+  const enabled = await getSetting(SETTINGS_KEYS.NOTIFICATIONS_ENABLED);
+  if (enabled === "0") {
+    await cancelFreeSlotsNotification();
+    return;
+  }
+
+  const stored = await getSetting(SETTINGS_KEYS.WORK_HOURS);
+  const workHours: WorkDay[] = stored ? JSON.parse(stored) : DEFAULT_WORK_HOURS;
+
+  const busy = await listActiveScheduleSlots();
+  const freeDays = calculateFreeSlots(workHours, busy);
+  const message = buildFreeSlotsMessage(freeDays);
+
+  // proxima segunda-feira as 08:00
+  const now = new Date();
+  const trigger = new Date(now);
+  const daysUntilMonday = (8 - now.getDay()) % 7 || 7;
+  trigger.setDate(now.getDate() + daysUntilMonday);
+  trigger.setHours(8, 0, 0, 0);
+
+  const weekKey = trigger.toISOString().slice(0, 10);
+  const alreadyScheduled = await getSetting(SETTINGS_KEYS.FREE_SLOTS_WEEK);
+  if (alreadyScheduled === weekKey) return;
+
+  await cancelFreeSlotsNotification();
+
+  const identifier = await Notifications.scheduleNotificationAsync({
+    content: {
+      title: "Horários livres da semana",
+      body: message,
+      data: { freeSlots: true },
+      sound: "default",
+    },
+    trigger: {
+      date: trigger,
+      channelId: "appointments",
+    },
+  });
+
+  await setSetting(SETTINGS_KEYS.FREE_SLOTS_NOTIFICATION_ID, identifier);
+  await setSetting(SETTINGS_KEYS.FREE_SLOTS_WEEK, weekKey);
 }

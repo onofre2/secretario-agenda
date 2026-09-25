@@ -117,3 +117,11 @@ export async function setScheduleReminder(id: ID, reminder: string | null): Prom
     [reminder, id]
   );
 }
+
+/** Retorna weekday + horario de todos os agendamentos recorrentes ativos. */
+export async function listActiveScheduleSlots(): Promise<{ weekday: number; time: string }[]> {
+  const db = await getDb();
+  return db.getAllAsync<{ weekday: number; time: string }>(
+    "SELECT weekday, time FROM schedules WHERE active = 1 ORDER BY weekday ASC, time ASC"
+  );
+}
