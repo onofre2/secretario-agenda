@@ -1,6 +1,6 @@
 import React, { useCallback, useMemo, useState } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { View, Text, StyleSheet, Switch, Alert, ActivityIndicator, ScrollView, Image } from "react-native";
+import { View, Text, StyleSheet, Switch, Alert, ActivityIndicator, ScrollView, Image, TextInput } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { spacing, radius } from "../theme/colors";
 import { useTheme } from "../context/ThemeContext";
@@ -11,7 +11,10 @@ import { pickSignatureImage, removeSignatureImage } from "../utils/signatureImpo
 import { exportBackup, restoreBackup, markBackupDone } from "../backup/backupService";
 import { DEFAULT_LEAD_MINUTES } from "../notifications/config";
 import * as Notifications from "expo-notifications";
-import { scheduleAllPendingForToday, scheduleMorningAgendaNotification, scheduleMonthlyBackupNotification, scheduleYearEndBackupNotification } from "../notifications/scheduler";
+import { scheduleAllPendingForToday, scheduleMorningAgendaNotification, scheduleMonthlyBackupNotification, scheduleYearEndBackupNotification, scheduleFreeSlotsNotification, cancelFreeSlotsNotification } from "../notifications/scheduler";
+import { WorkDay, DEFAULT_WORK_HOURS } from "../utils/freeSlots";
+
+const WEEKDAY_LABEL: Record<number, string> = { 0: "Domingo", 1: "Segunda", 2: "Terça", 3: "Quarta", 4: "Quinta", 5: "Sexta", 6: "Sábado" };
 
 export default function SettingsScreen() {
   const { colors, isDark, toggleTheme } = useTheme();
@@ -22,6 +25,7 @@ export default function SettingsScreen() {
   const [therapistRegistration, setTherapistRegistration] = useState("");
   const [busy, setBusy] = useState<"backup" | "restore" | null>(null);
   const [signaturePath, setSignaturePath] = useState<string | null>(null);
+  const [workHours, setWorkHours] = useState<WorkDay[]>(DEFAULT_WORK_HOURS);
 
   const styles = useMemo(() => StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
@@ -53,6 +57,11 @@ export default function SettingsScreen() {
     creditFooter: { alignItems: "center", marginTop: spacing.lg, marginBottom: spacing.xl, opacity: 0.7 },
     creditAvatar: { width: 96, height: 96, marginBottom: 4 },
     creditText: { color: colors.textMuted, fontSize: 12, fontWeight: "600" },
+    workRow: { marginBottom: 12, borderBottomWidth: 1, borderBottomColor: colors.border, paddingBottom: 10 },
+    workDayCol: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
+    workTimeCol: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 8 },
+    workInput: { flex: 1, backgroundColor: colors.surfaceLight, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.border, color: colors.text, paddingHorizontal: 12, paddingVertical: 8, textAlign: "center" },
+    workSep: { color: colors.textMuted, fontSize: 13 },
   }), [colors]);
 
   const load = useCallback(async () => {
@@ -68,6 +77,10 @@ export default function SettingsScreen() {
     if (tp) setTherapistProfession(tp);
     const tr = await getSetting(SETTINGS_KEYS.THERAPIST_REGISTRATION);
     if (tr) setTherapistRegistration(tr);
+    const wh = await getSetting(SETTINGS_KEYS.WORK_HOURS);
+    if (wh) {
+      try { setWorkHours(JSON.parse(wh)); } catch { /* mantem o padrao */ }
+    }
   }, []);
 
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -97,6 +110,22 @@ export default function SettingsScreen() {
       await scheduleMonthlyBackupNotification();
       await scheduleYearEndBackupNotification();
     }
+  };
+
+  const toggleWorkDay = (weekday: number) => {
+    setWorkHours((prev) => prev.map((w) => (w.weekday === weekday ? { ...w, enabled: w.enabled === false } : w)));
+  };
+
+  const updateWorkHour = (weekday: number, field: "start" | "end", value: string) => {
+    setWorkHours((prev) => prev.map((w) => (w.weekday === weekday ? { ...w, [field]: value } : w)));
+  };
+
+  const handleSaveWorkHours = async () => {
+    await setSetting(SETTINGS_KEYS.WORK_HOURS, JSON.stringify(workHours));
+    await setSetting(SETTINGS_KEYS.FREE_SLOTS_WEEK, "");
+    await cancelFreeSlotsNotification();
+    await scheduleFreeSlotsNotification();
+    Alert.alert("Salvo", "Dias de trabalho atualizados.");
   };
 
   const handleSaveLeadMinutes = async () => {
@@ -196,6 +225,45 @@ export default function SettingsScreen() {
           padrão nesta versão; o ajuste acima fica salvo para uso no próximo módulo de
           notificações configuráveis.
         </Text>
+      </Section>
+
+      <Section title="Dias de trabalho" styles={styles}>
+        <Text style={styles.hint}>
+          Configure os dias e horarios em que voce atende. Toda segunda-feira o app avisa
+          quais horarios da semana estao livres.
+        </Text>
+        {workHours.map((w) => (
+          <View key={w.weekday} style={styles.workRow}>
+            <View style={styles.workDayCol}>
+              <Text style={styles.rowLabel}>{WEEKDAY_LABEL[w.weekday]}</Text>
+              <Switch
+                value={w.enabled}
+                onValueChange={() => toggleWorkDay(w.weekday)}
+                trackColor={{ false: colors.surfaceLight, true: colors.primary }}
+              />
+            </View>
+            {w.enabled && (
+              <View style={styles.workTimeCol}>
+                <TextInput
+                  style={styles.workInput}
+                  value={w.start}
+                  onChangeText={(v) => updateWorkHour(w.weekday, "start", v)}
+                  placeholder="08:00"
+                  placeholderTextColor={colors.textMuted}
+                />
+                <Text style={styles.workSep}>as</Text>
+                <TextInput
+                  style={styles.workInput}
+                  value={w.end}
+                  onChangeText={(v) => updateWorkHour(w.weekday, "end", v)}
+                  placeholder="19:00"
+                  placeholderTextColor={colors.textMuted}
+                />
+              </View>
+            )}
+          </View>
+        ))}
+        <PrimaryButton label="Salvar dias de trabalho" onPress={handleSaveWorkHours} style={{ marginTop: 12 }} />
       </Section>
 
       <Section title="Backup e Restauração" styles={styles}>
