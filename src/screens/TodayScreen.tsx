@@ -12,7 +12,7 @@ import {
   TodayAppointment,
 } from "../database/repositories/appointmentsRepo";
 import { generateAppointmentsForDate } from "../database/repositories/schedulesRepo";
-import { scheduleAllPendingForToday, scheduleMorningAgendaNotification, scheduleYearEndBackupNotification, cleanupOrphanedNotificationsOnce, scheduleMonthlyBackupNotification } from "../notifications/scheduler";
+import { scheduleAllPendingForToday, scheduleMorningAgendaNotification, scheduleYearEndBackupNotification, scheduleMonthlyBackupNotification } from "../notifications/scheduler";
 import { speakTodaySchedule, speakEndOfDaySummary } from "../voice/voiceService";
 import AppointmentCard from "../components/AppointmentCard";
 
@@ -62,17 +62,14 @@ export default function TodayScreen() {
     scheduleYearEndBackupNotification().catch((err) => console.error("Erro ao agendar notificacao de backup anual:", err));
   }, [date]);
 
-  // Roda uma unica vez na montagem: limpeza de notificacoes orfas e agendamento
-  // do lembrete mensal de backup (dia 28). Fora do load para nao repetir a cada foco da tela.
+  // Agenda o lembrete mensal de backup uma unica vez na montagem.
+  // A limpeza de notificacoes orfas foi removida: ela cancelava TODAS as notificacoes
+  // do sistema e corria em paralelo com o load(), apagando os lembretes de compromisso
+  // recem-agendados.
   useEffect(() => {
-    (async () => {
-      try {
-        await cleanupOrphanedNotificationsOnce();
-        await scheduleMonthlyBackupNotification();
-      } catch (err) {
-        console.error("Erro na configuracao inicial de notificacoes:", err);
-      }
-    })();
+    scheduleMonthlyBackupNotification().catch((err) =>
+      console.error("Erro ao agendar notificacao mensal de backup:", err)
+    );
   }, []);
 
   useFocusEffect(
