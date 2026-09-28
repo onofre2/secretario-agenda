@@ -85,7 +85,7 @@ export default function AgendaScreen() {
 
   const load = useCallback(async () => {
     const [scheduleList, patientList, clinicList] = await Promise.all([
-      listSchedules(true),
+      listSchedules(false),
       listPatients(),
       listClinics(),
     ]);
@@ -173,16 +173,12 @@ export default function AgendaScreen() {
     }
   };
 
-  const handlePause = async (s: ScheduleWithNames) => {
-    const cancelledIds = await pauseSchedule(s.id, false);
+  const handleTogglePause = async (s: ScheduleWithNames) => {
+    const isPaused = !s.active;
+    const cancelledIds = await pauseSchedule(s.id, isPaused);
     for (const appointmentId of cancelledIds) {
       await cancelForAppointment(appointmentId);
     }
-    await load();
-  };
-
-  const handleDuplicate = async (s: ScheduleWithNames) => {
-    await duplicateSchedule(s.id);
     await load();
   };
 
@@ -278,11 +274,10 @@ export default function AgendaScreen() {
                 </Text>
               </Pressable>
               <View style={styles.actionsRow}>
-                <Pressable onPress={() => handlePause(item)}>
-                  <Text style={styles.actionLink}>Pausar</Text>
-                </Pressable>
-                <Pressable onPress={() => handleDuplicate(item)}>
-                  <Text style={styles.actionLink}>Duplicar</Text>
+                <Pressable onPress={() => handleTogglePause(item)}>
+                  <Text style={[styles.actionLink, !item.active && { color: "#F59E0B", fontWeight: "700" }]}>
+                    {!item.active ? "Pausado" : "Pausar"}
+                  </Text>
                 </Pressable>
                 <Pressable onPress={() => openEdit(item)}>
                   <Text style={[styles.actionLink, { color: colors.primary }]}>Editar</Text>
