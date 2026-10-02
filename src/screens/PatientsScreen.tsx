@@ -19,6 +19,8 @@ import {
   deletePatient,
 } from "../database/repositories/patientsRepo";
 import { listClinics } from "../database/repositories/clinicsRepo";
+import { listSchedules, pauseSchedule } from "../database/repositories/schedulesRepo";
+import { cancelForAppointment } from "../notifications/scheduler";
 import { Patient, Clinic, NoteProfile } from "../database/types";
 
 const emptyForm = {
@@ -103,6 +105,8 @@ export default function PatientsScreen() {
     whatsappBtn: { backgroundColor: "#25D366", width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
     cardSubtitle: { color: colors.textMuted, fontSize: 13, marginTop: 2 },
     editLabel: { color: colors.primary, fontSize: 12, fontWeight: "600", marginTop: 4 },
+    patientActions: { flexDirection: "row", justifyContent: "space-between", marginTop: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border },
+    patientActionText: { fontSize: 13, fontWeight: "700", color: colors.textMuted },
     historyLink: { marginTop: spacing.sm, backgroundColor: colors.primary, borderRadius: radius.sm, paddingVertical: spacing.sm, alignItems: "center" },
     historyLinkText: { color: "#0F172A", fontSize: 13, fontWeight: "700" },
     empty: { color: colors.textMuted, textAlign: "center", marginTop: spacing.xl },
@@ -115,6 +119,44 @@ export default function PatientsScreen() {
     profileText: { color: colors.textMuted, fontSize: 12, fontWeight: "600" },
     profileTextActive: { color: "#0F172A" },
   }), [colors]);
+
+  const handleDeletePatient = (p: Patient) => {
+    Alert.alert(
+      "Excluir paciente",
+      `Excluir ${p.full_name}? Isso apaga tambem agenda, evolucoes e registros financeiros dele. Para apenas tirar da agenda, use Pausar.`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Excluir",
+          style: "destructive",
+          onPress: async () => {
+            const all = await listSchedules(false);
+            for (const sc of all.filter((x: any) => x.patient_id === p.id)) {
+              const ids = await pauseSchedule(sc.id, false);
+              for (const appId of ids) await cancelForAppointment(appId);
+            }
+            await deletePatient(p.id);
+            await load(selectedClinicId);
+          },
+        },
+      ]
+    );
+  };
+
+  const handleTogglePatientPause = async (patientId: number) => {
+    const all = await listSchedules(false);
+    const mine = all.filter((sc: any) => sc.patient_id === patientId);
+    if (mine.length === 0) {
+      Alert.alert("Sem horario", "Este paciente nao tem horario cadastrado na agenda.");
+      return;
+    }
+    const shouldActivate = mine.every((sc: any) => !sc.active);
+    for (const sc of mine) {
+      const ids = await pauseSchedule(sc.id, shouldActivate);
+      for (const appId of ids) await cancelForAppointment(appId);
+    }
+    await load(selectedClinicId);
+  };
 
   const load = useCallback(async (clinicId: number | "all") => {
     const clinicList = await listClinics();
@@ -295,6 +337,19 @@ export default function PatientsScreen() {
                 }
               >
                 <FontAwesome name="whatsapp" size={22} color="#FFFFFF" />
+              </Pressable>
+            </View>
+            <View style={styles.patientActions}>
+              <Pressable onPress={() => handleTogglePatientPause(item.id)}>
+                <Text style={[styles.patientActionText, !activePatientIds.has(item.id) && { color: "#F59E0B" }]}>
+                  {!activePatientIds.has(item.id) ? "Retomar" : "Pausar"}
+                </Text>
+              </Pressable>
+              <Pressable onPress={() => openEdit(item)}>
+                <Text style={[styles.patientActionText, { color: colors.primary }]}>Editar</Text>
+              </Pressable>
+              <Pressable onPress={() => handleDeletePatient(item)}>
+                <Text style={[styles.patientActionText, { color: colors.danger }]}>Excluir</Text>
               </Pressable>
             </View>
             <Pressable onPress={() => setTimelinePatient(item)} style={styles.historyLink}>
